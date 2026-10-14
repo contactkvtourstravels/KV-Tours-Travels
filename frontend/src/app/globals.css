@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #202124;
+  --surface-smoke: #f0f2f5;
+  --surface-soft: #f7f8fa;
+  --surface-card: #ffffff;
+  --text-primary: #202124;
+  --text-secondary: #5f6368;
+  --border-light: #e2e4e8;
+  --border-subtle: #ebedf0;
+  --smoke-primary: #24292f;
+  --smoke-hover: #1b1e23;
+  --smoke-accent: #3d4450;
+  --smoke-light: #eceff3;
+  --smoke-border: #d3d8df;
+  /* Compatibility tokens mapped to refined smoky grey */
+  --gold: #24292f;
+  --gold-hover: #1b1e23;
+  --gold-light: #eceff3;
+  --gold-border: #d3d8df;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-smoke: var(--surface-smoke);
+  --color-soft: var(--surface-soft);
+  --color-card: var(--surface-card);
+  --color-smoke-primary: var(--smoke-primary);
+  --color-smoke-hover: var(--smoke-hover);
+  --color-smoke-accent: var(--smoke-accent);
+  --color-smoke-light: var(--smoke-light);
+  --color-smoke-border: var(--smoke-border);
+  --color-gold: var(--smoke-primary);
+  --color-gold-hover: var(--smoke-hover);
+  --color-gold-light: var(--smoke-light);
+  --color-gold-border: var(--smoke-border);
+  --color-charcoal: var(--text-primary);
+  --color-muted: var(--text-secondary);
+  --color-border: var(--border-light);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: #ffffff;
+  color: #202124;
+}
+
+body {
+  min-height: 100%;
+  margin: 0;
+  background-color: #ffffff;
+  color: #202124;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Refined Luxury Scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f7f7f5;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d4d6d9;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3d4450;
+}
+
+/* Luxury Card Shadow Utilities */
+.luxury-card {
+  background-color: #ffffff;
+  border: 1px solid #e2e4e8;
+  border-radius: 1.25rem;
+  box-shadow: 0 4px 20px -2px rgba(32, 33, 36, 0.04), 0 2px 6px -1px rgba(32, 33, 36, 0.02);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.luxury-card:hover {
+  border-color: #d3d8df;
+  box-shadow: 0 12px 30px -4px rgba(36, 41, 47, 0.08), 0 4px 10px -2px rgba(32, 33, 36, 0.04);
+  transform: translateY(-2px);
+}
+
+/* Glassmorphism utility for light luxury theme */
+.glass-nav {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(228, 229, 231, 0.85);
+}
+
+.glass-pill {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(228, 229, 231, 0.9);
+}
+
+/* Smoky Slate Gradient Text & Button Utilities */
+.smoke-gradient-text,
+.gold-gradient-text {
+  background: linear-gradient(135deg, #24292f 0%, #3d4450 50%, #1b1e23 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.smoke-gradient-bg,
+.gold-gradient-bg {
+  background: linear-gradient(135deg, #24292f 0%, #3d4450 100%);
+}
+
+.smoke-btn,
+.gold-btn {
+  background-color: #24292f;
+  color: #ffffff;
+  transition: all 0.25s ease;
+}
+
+.smoke-btn:hover,
+.gold-btn:hover {
+  background-color: #3d4450;
+  box-shadow: 0 6px 18px -2px rgba(36, 41, 47, 0.25);
+}
+
+/* ==========================================================================
+   Luxury Print & PDF Formatting
+   ========================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm 12mm 12mm;
+  }
+
+  *,
+  *::before,
+  *::after {
+    text-shadow: none !important;
+    box-shadow: none !important;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #111827 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.35 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  /* Prevent page breaks inside cards, tables, sections */
+  .no-break,
+  .print-break-inside-avoid,
+  tr,
+  blockquote,
+  table,
+  figure {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  /* Force background colors and borders in print */
+  .print-bg-card {
+    background-color: #f9fafb !important;
+  }
+
+  .print-border-gold {
+    border-color: #c5a880 !important;
+  }
+}

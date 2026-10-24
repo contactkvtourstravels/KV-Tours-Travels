@@ -139,7 +139,13 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":
-        """Enforce strict production checks to prevent insecure deployment."""
+        """Enforce strict production checks and normalize database connection schemes."""
+        url = self.database_url
+        if url.startswith("postgres://"):
+            self.database_url = url.replace("postgres://", "postgresql+psycopg://", 1)
+        elif url.startswith("postgresql://") and not url.startswith("postgresql+"):
+            self.database_url = url.replace("postgresql://", "postgresql+psycopg://", 1)
+
         if self.app_env == "production":
             sec_val = self.secret_key.get_secret_value()
             if sec_val in (

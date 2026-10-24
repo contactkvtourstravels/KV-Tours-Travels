@@ -144,4 +144,5 @@ PROJECT_STATUS.md       Architecture, decisions, risks, roadmap, phase record
 ### Not implemented (Strictly deferred to Phase 11+):
 - Production containerization & cloud deployment (Phase 11)
 - Redis cache & background worker daemon orchestration (Phase 11)
-- Marketing automation, CRM pipelines, loyalty programs (strictly excluded)
+- Marketing automation, CRM pipelines, loyalty programs (strictly excluded)#   t r a v e l _ a g e n c y  
+ 

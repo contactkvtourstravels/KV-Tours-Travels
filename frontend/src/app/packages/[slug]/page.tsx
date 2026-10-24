@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { TravelImage } from "@/components/public/TravelImage";
 import {
   AlertCircle,
   ArrowLeft,
@@ -25,40 +26,38 @@ import {
 } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { PackageDetailClientActions } from "./PackageDetailClientActions";
+import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 
 interface PackagePageProps {
   params: Promise<{ slug: string }>;
 }
 
-const DESTINATION_FALLBACKS: Record<string, string> = {
-  maldives: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1800&q=85",
-  lakshadweep: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1800&q=85",
-  kazakhstan: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1800&q=85",
-  manali: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1800&q=85",
-  default: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1800&q=85",
-};
-
 export async function generateMetadata({ params }: PackagePageProps): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const pkg = await publicCatalogApi.getPackage(slug);
-    const title = pkg.seo_title || `${pkg.name} | KV Tours & Travels Coimbatore`;
+    const [pkg, settings] = await Promise.all([
+      publicCatalogApi.getPackage(slug),
+      publicCatalogApi.getSettings().catch(() => null),
+    ]);
+    const agencyName = settings?.public_display_name || settings?.agency_name || "Travel Agency";
+    const siteUrl = settings?.website_url || "https://wildroot.in";
+    const title = pkg.seo_title || `${pkg.name} | ${agencyName}`;
     const description =
       pkg.seo_description ||
       pkg.short_description ||
-      `Experience ${pkg.name} with KV Tours & Travels Coimbatore. ${pkg.duration_days} Days / ${pkg.duration_nights} Nights starting from ₹${Number(pkg.base_price).toLocaleString("en-IN")}.`;
+      `Experience ${pkg.name} with ${agencyName}. ${pkg.duration_days} Days / ${pkg.duration_nights} Nights starting from ₹${Number(pkg.base_price).toLocaleString("en-IN")}.`;
 
     return {
       title,
       description,
       alternates: {
-        canonical: `https://kvtours.in/packages/${slug}`,
+        canonical: `${siteUrl}/packages/${slug}`,
       },
       openGraph: {
         title,
         description,
-        url: `https://kvtours.in/packages/${slug}`,
-        images: pkg.images[0]?.image_url ? [pkg.images[0].image_url] : [],
+        url: `${siteUrl}/packages/${slug}`,
+        images: pkg.cover_image_url ? [pkg.cover_image_url] : pkg.images[0]?.image_url ? [pkg.images[0].image_url] : [],
       },
       twitter: {
         card: "summary_large_image",
@@ -68,7 +67,7 @@ export async function generateMetadata({ params }: PackagePageProps): Promise<Me
     };
   } catch {
     return {
-      title: "Package Not Found | KV Tours & Travels",
+      title: "Package Not Found",
     };
   }
 }
@@ -79,6 +78,8 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
   let pkg: PublicPackageDetail;
   let onlinePaymentsEnabled = false;
   let maintenanceMsg: string | undefined;
+  let agencyName = "Travel Agency";
+  let whatsappNumber: string | undefined;
 
   try {
     const [pkgData, settingsData] = await Promise.all([
@@ -88,26 +89,22 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
     pkg = pkgData;
     onlinePaymentsEnabled = Boolean(settingsData?.online_payments_enabled);
     maintenanceMsg = settingsData?.online_payments_maintenance_message;
+    agencyName = settingsData?.public_display_name || settingsData?.agency_name || "Travel Agency";
+    whatsappNumber = settingsData?.support_whatsapp || settingsData?.whatsapp_number;
   } catch {
     notFound();
   }
 
   const waUrl = getWhatsAppClickToChatUrl(
-    null,
-    `Hi KV Tours & Travels Coimbatore, I am interested in booking the "${pkg.name}" (${pkg.duration_days}D/${pkg.duration_nights}N) package. Please share availability and payment details.`
+    whatsappNumber,
+    `Hi ${agencyName}, I am interested in booking the "${pkg.name}" (${pkg.duration_days}D/${pkg.duration_nights}N) package. Please share availability and payment details.`
   );
 
-  const heroImg =
-    pkg.images[0]?.image_url ||
-    (Object.keys(DESTINATION_FALLBACKS).find((k) =>
-      pkg.slug.toLowerCase().includes(k) || pkg.destination_slug.toLowerCase().includes(k)
-    )
-      ? DESTINATION_FALLBACKS[
-          Object.keys(DESTINATION_FALLBACKS).find((k) =>
-            pkg.slug.toLowerCase().includes(k) || pkg.destination_slug.toLowerCase().includes(k)
-          )!
-        ]
-      : DESTINATION_FALLBACKS.default);
+  const rawHero =
+    pkg.cover_image_url ||
+    pkg.images?.[0]?.image_url ||
+    getDestinationFallback(pkg.slug || pkg.destination_slug || pkg.destination_name);
+  const heroImg = getSafeImageUrl(rawHero);
 
   // Schema.org structured data
   const structuredData = {
@@ -132,19 +129,19 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://kvtours.in",
+        item: "https://wildroot.in",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Packages",
-        item: "https://kvtours.in/packages",
+        item: "https://wildroot.in/packages",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: pkg.name,
-        item: `https://kvtours.in/packages/${slug}`,
+        item: `https://wildroot.in/packages/${slug}`,
       },
     ],
   };
@@ -162,11 +159,12 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
 
       {/* 1. HERO HEADER */}
       <section className="relative min-h-[65vh] sm:min-h-[75vh] flex items-end overflow-hidden bg-black">
-        <Image
+        <TravelImage
           src={heroImg}
           alt={pkg.name}
           fill
           priority
+          fallbackSlug={pkg.slug || pkg.destination_slug}
           sizes="100vw"
           className="object-cover object-center scale-105"
         />
@@ -259,7 +257,7 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
                     <p className="whitespace-pre-line">{pkg.description}</p>
                   ) : (
                     <p>
-                      Join KV Tours & Travels on a handcrafted {pkg.duration_days}-day luxury journey through {pkg.destination_name}. From private airport greetings and handpicked accommodations to curated excursions, every moment is planned with elegance and care.
+                      Join {agencyName} on a handcrafted {pkg.duration_days}-day luxury journey through {pkg.destination_name}. From private airport greetings and handpicked accommodations to curated excursions, every moment is planned with elegance and care.
                     </p>
                   )}
                 </div>
@@ -614,8 +612,8 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
                                 ) : (
                                   <a
                                     href={getWhatsAppClickToChatUrl(
-                                      DEFAULT_WHATSAPP_NUMBER,
-                                      `Hi KV Tours Coimbatore, I would like to inquire about the "${pkg.name}" departure on ${depDate} (₹${Number(price).toLocaleString("en-IN")}). Please share itinerary and payment details.`
+                                      whatsappNumber || DEFAULT_WHATSAPP_NUMBER,
+                                      `Hi ${agencyName}, I would like to inquire about the "${pkg.name}" departure on ${depDate} (₹${Number(price).toLocaleString("en-IN")}). Please share itinerary and payment details.`
                                     )}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -631,8 +629,8 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
                               )}
                               <a
                                 href={getWhatsAppClickToChatUrl(
-                                  DEFAULT_WHATSAPP_NUMBER,
-                                  `Hi KV Tours Coimbatore, I want to inquire about the ${pkg.name} departure on ${depDate}.`
+                                  whatsappNumber || DEFAULT_WHATSAPP_NUMBER,
+                                  `Hi ${agencyName}, I want to inquire about the ${pkg.name} departure on ${depDate}.`
                                 )}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -717,14 +715,40 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
                   </div>
                 </div>
               )}
+              {/* Photo Gallery Grid if images exist */}
+              {pkg.images && pkg.images.length > 0 && (
+                <div className="pt-8 border-t border-[#E4E5E7]">
+                  <span className="text-[#5F6368] text-xs uppercase tracking-[0.25em] font-semibold block mb-2">
+                    Visual Showcase
+                  </span>
+                  <h3 className="text-2xl font-serif font-bold text-[#202124] mb-6">Photo Gallery</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    {pkg.images.map((img, idx) => (
+                      <div
+                        key={idx}
+                        className="relative h-48 rounded-2xl overflow-hidden border border-[#E4E5E7] group shadow-sm bg-[#F7F7F5]"
+                      >
+                        <TravelImage
+                          src={getSafeImageUrl(img.image_url)}
+                          alt={img.alt_text || `${pkg.name} photo ${idx + 1}`}
+                          fill
+                          fallbackSlug={pkg.slug || pkg.destination_slug}
+                          sizes="(max-width: 768px) 100vw, 33vw"
+                          className="object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Column: Sticky Concierge Booking Card */}
             <div>
-              <div className="sticky top-28 p-8 rounded-3xl bg-[#F7F7F5] border border-[#E4E5E7] shadow-xl space-y-6">
+              <div className="sticky top-28 p-5 sm:p-8 rounded-3xl bg-[#F7F7F5] border border-[#E4E5E7] shadow-xl space-y-6">
                 <div>
                   <span className="text-[#5F6368] text-xs uppercase tracking-widest font-semibold block mb-1">
-                    KV Tours Travel Concierge
+                    {agencyName} Travel Concierge
                   </span>
                   <h3 className="text-2xl font-serif font-bold text-[#202124]">
                     Book / Enquire Journey

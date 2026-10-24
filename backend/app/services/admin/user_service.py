@@ -10,6 +10,12 @@ from sqlalchemy.orm import Session, joinedload
 
 from app.core.auth import revoke_all_sessions_for_user
 from app.core.errors import ApiError
+from app.core.permissions import (
+    AUTHORIZED_SUPER_ADMIN_EMAIL,
+    ROLE_SUPER_ADMIN,
+    get_user_roles,
+    normalize_admin_email,
+)
 from app.models.user import Role, User, UserRole
 from app.schemas.admin import AdminUserResponse, PaginatedResponse
 from app.services.admin.audit_service import record_audit_log
@@ -18,11 +24,7 @@ from app.services.admin.utils import paginate
 
 def serialize_admin_user(user: User) -> AdminUserResponse:
     """Safely serialize User model into AdminUserResponse without sensitive data."""
-    roles = [
-        assignment.role.name
-        for assignment in user.role_assignments
-        if assignment.role is not None
-    ]
+    roles = get_user_roles(user)
     return AdminUserResponse(
         id=user.id,
         email=user.email,
@@ -32,6 +34,7 @@ def serialize_admin_user(user: User) -> AdminUserResponse:
         status=user.status,
         is_deleted=user.is_deleted,
         roles=roles,
+        is_email_verified=getattr(user, "is_email_verified", False),
         created_at=user.created_at,
         updated_at=user.updated_at,
     )
@@ -205,11 +208,30 @@ def update_user_roles(
                 message=f"Role '{r_name}' is not a recognized system role.",
             )
 
+    # Strict Super Admin Authorization Lock
+    if ROLE_SUPER_ADMIN in new_roles:
+        target_email = normalize_admin_email(user.email_normalized or user.email)
+        if target_email != AUTHORIZED_SUPER_ADMIN_EMAIL:
+            raise ApiError(
+                status_code=403,
+                code="SUPER_ADMIN_EXCLUSIVE",
+                message=f"Only the authorized Super Admin account ({AUTHORIZED_SUPER_ADMIN_EMAIL}) may hold the super_admin role.",
+            )
+        if hasattr(user, "is_email_verified") and not user.is_email_verified:
+            raise ApiError(
+                status_code=400,
+                code="EMAIL_NOT_VERIFIED",
+                message="Super Admin privileges require email ownership to be verified before role assignment.",
+            )
+
     old_roles = [
         assignment.role.name
         for assignment in user.role_assignments
         if assignment.role is not None
     ]
+
+    # Invalidate all active sessions for this user so stale sessions cannot retain previous privileges
+    revoke_all_sessions_for_user(db, user.id)
 
     # Delete existing assignments
     db.execute(delete(UserRole).where(UserRole.user_id == user.id))

@@ -12,6 +12,7 @@ from sqlalchemy import select
 
 from app.core.permissions import (
     ALL_ROLES,
+    AUTHORIZED_SUPER_ADMIN_EMAIL,
     ROLE_SUPER_ADMIN,
     has_role,
 )
@@ -83,6 +84,13 @@ def _perform_bootstrap(
     password: str,
     reset_password: bool = False,
 ) -> None:
+    if normalized_email != AUTHORIZED_SUPER_ADMIN_EMAIL:
+        raise ValueError(
+            f"Security policy violation: Only the designated authorized Super Admin account "
+            f"({AUTHORIZED_SUPER_ADMIN_EMAIL}) is permitted to hold the super_admin role. "
+            f"Attempted email: '{email}'."
+        )
+
     # Seed standard roles first
     seed_standard_roles(db)
 
@@ -96,6 +104,7 @@ def _perform_bootstrap(
     ).scalar_one_or_none()
 
     if user:
+        user.is_email_verified = True
         is_already_super = has_role(user, ROLE_SUPER_ADMIN)
         if not is_already_super:
             # Assign super_admin role
@@ -145,6 +154,7 @@ def _perform_bootstrap(
         last_name=last_name.strip(),
         status="active",
         is_deleted=False,
+        is_email_verified=True,
     )
     db.add(new_admin)
     db.flush()

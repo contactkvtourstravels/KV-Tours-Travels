@@ -139,6 +139,7 @@ class AdminUserResponse(BaseModel):
     status: str
     is_deleted: bool
     roles: list[str]
+    is_email_verified: bool = False
     created_at: datetime
     updated_at: datetime
 
@@ -857,9 +858,11 @@ class AdminSiteSettingsResponse(BaseModel):
 
     # Business Identity
     legal_business_name: str | None = None
-    agency_name: str = "KV TOURS & TRAVELS"
+    agency_name: str = "Wild Root"
     public_display_name: str | None = None
-    tagline: str = "Coimbatore • Luxury & Adventure Journeys"
+    admin_panel_name: str | None = None
+    admin_portal_subtitle: str | None = None
+    tagline: str = "Wild Root • Luxury & Adventure Journeys"
     logo_url: str | None = None
     favicon_url: str | None = None
     business_description: str | None = None
@@ -879,14 +882,14 @@ class AdminSiteSettingsResponse(BaseModel):
     secondary_phone: str | None = None
     support_whatsapp: str | None = None
     emergency_phone: str | None = None
-    contact_email: str = "contact@kvtours.in"
+    contact_email: str = "contact@wildroot.in"
     customer_support_email: str | None = None
     booking_email: str | None = None
     general_inquiry_email: str | None = None
     reply_to_email: str | None = None
 
     # Social and Online Presence
-    instagram_handle: str | None = "@kvtours_travels"
+    instagram_handle: str | None = "@wildroot"
     instagram_url: str | None = None
     facebook_url: str | None = None
     website_url: str | None = None
@@ -901,11 +904,11 @@ class AdminSiteSettingsResponse(BaseModel):
     # WhatsApp Click-to-Chat
     whatsapp_number: str = "+919442000000"
     whatsapp_country_code: str = "+91"
-    whatsapp_prefilled_message: str = "Hi KV Tours, I am interested in planning a trip."
-    whatsapp_package_message: str = "Hi KV Tours, I am interested in this package."
-    whatsapp_destination_message: str = "Hi KV Tours, I would like to know more about this destination."
-    whatsapp_custom_trip_message: str = "Hi KV Tours, I would like to plan a custom holiday."
-    whatsapp_booking_support_message: str = "Hi KV Tours, I need assistance with my booking."
+    whatsapp_prefilled_message: str = "Hi Wild Root, I am interested in planning a trip."
+    whatsapp_package_message: str = "Hi Wild Root, I am interested in this package."
+    whatsapp_destination_message: str = "Hi Wild Root, I would like to know more about this destination."
+    whatsapp_custom_trip_message: str = "Hi Wild Root, I would like to plan a custom holiday."
+    whatsapp_booking_support_message: str = "Hi Wild Root, I need assistance with my booking."
     whatsapp_enabled: bool = True
     whatsapp_show_floating_concierge: bool = True
     whatsapp_show_header_button: bool = True
@@ -935,20 +938,20 @@ class AdminSiteSettingsResponse(BaseModel):
     resend_webhook_signing_secret_masked: str | None = None
     resend_webhook_url: str | None = None
     resend_webhook_tunnel_url: str | None = None
-    email_sender_name: str = "KV Tours & Travels"
-    email_sender_email: str = "bookings@kvtours.in"
-    email_reply_to: str = "concierge@kvtours.in"
-    admin_notification_email: str | None = "admin@kvtours.in"
+    email_sender_name: str = "Wild Root"
+    email_sender_email: str = "bookings@wildroot.in"
+    email_reply_to: str = "concierge@wildroot.in"
+    admin_notification_email: str | None = "admin@wildroot.in"
     email_enabled: bool = True
     email_booking_confirmation_enabled: bool = True
     email_inquiry_ack_enabled: bool = True
     email_payment_receipt_enabled: bool = True
     email_cancellation_updates_enabled: bool = True
     email_trip_reminders_enabled: bool = True
-    email_subject_booking_confirmation: str = "Your Booking Confirmation — KV Tours & Travels"
-    email_subject_payment_receipt: str = "Payment Receipt — KV Tours & Travels"
-    email_subject_inquiry_ack: str = "Inquiry Received — KV Tours & Travels"
-    email_subject_trip_reminder: str = "Your Upcoming Journey with KV Tours & Travels"
+    email_subject_booking_confirmation: str = "Your Booking Confirmation — Wild Root"
+    email_subject_payment_receipt: str = "Payment Receipt — Wild Root"
+    email_subject_inquiry_ack: str = "Inquiry Received — Wild Root"
+    email_subject_trip_reminder: str = "Your Upcoming Journey with Wild Root"
 
     # Homepage Content & Visibility
     hero_headline: str = "Handcrafted Journeys Beyond the Ordinary"
@@ -996,6 +999,18 @@ class AdminSiteSettingsResponse(BaseModel):
     google_maps_display_enabled: bool = True
     google_maps_directions_url: str | None = None
     office_location_label: str | None = None
+
+    # Travel Voucher & PDF Settings
+    pdf_header_title: str | None = None
+    pdf_header_subtitle: str | None = None
+    pdf_office_address: str | None = None
+    pdf_contact_info: str | None = None
+    pdf_checkin_instructions: str | None = None
+    pdf_logistics_notice: str | None = None
+    pdf_helpline_info: str | None = None
+    pdf_footer_declaration: str | None = None
+    pdf_badge_label: str | None = None
+    pdf_logo_url: str | None = None
 
     updated_at: datetime | None = None
 
@@ -1065,6 +1080,8 @@ class AdminSiteSettingsUpdateRequest(BaseModel):
     agency_name: str | None = None
     public_display_name: str | None = None
     short_name: str | None = None
+    admin_panel_name: str | None = None
+    admin_portal_subtitle: str | None = None
     tagline: str | None = None
     logo_url: str | None = None
     secondary_logo_url: str | None = None
@@ -1192,6 +1209,18 @@ class AdminSiteSettingsUpdateRequest(BaseModel):
     promo_banner_link: str | None = None
     best_offers_enabled: bool | None = None
 
+    # Travel Voucher & PDF Settings
+    pdf_header_title: str | None = None
+    pdf_header_subtitle: str | None = None
+    pdf_office_address: str | None = None
+    pdf_contact_info: str | None = None
+    pdf_checkin_instructions: str | None = None
+    pdf_logistics_notice: str | None = None
+    pdf_helpline_info: str | None = None
+    pdf_footer_declaration: str | None = None
+    pdf_badge_label: str | None = None
+    pdf_logo_url: str | None = None
+
     @field_validator(
         "contact_phone",
         "secondary_phone",
@@ -1233,6 +1262,7 @@ class AdminSiteSettingsUpdateRequest(BaseModel):
         "hero_image_url",
         "promo_banner_link",
         "seo_og_image_url",
+        "pdf_logo_url",
         mode="before",
     )
     @classmethod

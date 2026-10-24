@@ -230,6 +230,8 @@ class PublicSiteSettings(BaseModel):
     agency_name: str
     public_display_name: str | None = None
     short_name: str | None = None
+    admin_panel_name: str | None = None
+    admin_portal_subtitle: str | None = None
     tagline: str
     logo_url: str | None = None
     secondary_logo_url: str | None = None
@@ -327,3 +329,15 @@ class PublicSiteSettings(BaseModel):
     best_offers_enabled: bool = True
     online_payments_enabled: bool = False
     online_payments_maintenance_message: str | None = None
+
+    # Travel Voucher & PDF Settings
+    pdf_header_title: str | None = None
+    pdf_header_subtitle: str | None = None
+    pdf_office_address: str | None = None
+    pdf_contact_info: str | None = None
+    pdf_checkin_instructions: str | None = None
+    pdf_logistics_notice: str | None = None
+    pdf_helpline_info: str | None = None
+    pdf_footer_declaration: str | None = None
+    pdf_badge_label: str | None = None
+    pdf_logo_url: str | None = None

@@ -8,7 +8,6 @@ import { motion } from "framer-motion";
 import {
   ArrowRight,
   Calendar,
-  Car,
   CheckCircle,
   ChevronLeft,
   ChevronRight,
@@ -34,35 +33,11 @@ import {
   type HomePageContent,
 } from "@/lib/api";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
+import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
+import { TravelImage } from "@/components/public/TravelImage";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { QuickInquiryModal } from "@/components/public/QuickInquiryModal";
 import { BestOffersSection } from "@/components/public/BestOffersSection";
-
-// Luxury curated photography fallbacks if specific destination or package lacks Cloudinary asset
-const DESTINATION_FALLBACKS: Record<string, string> = {
-  ooty: "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=1200&q=80",
-  kodaikanal: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
-  munnar: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=1200&q=80",
-  wayanad: "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=1200&q=80",
-  coorg: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80",
-  chikmagalur: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
-  rameswaram: "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=1200&q=80",
-  madurai: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80",
-  kanyakumari: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
-  pondicherry: "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=1200&q=80",
-  mysore: "https://images.unsplash.com/photo-1605649487212-47bdab064df8?auto=format&fit=crop&w=1200&q=80",
-  alleppey: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=1200&q=80",
-  hampi: "https://images.unsplash.com/photo-1605649487212-47bdab064df8?auto=format&fit=crop&w=1200&q=80",
-  maldives: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1200&q=80",
-  lakshadweep: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
-  bali: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=80",
-  manali: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80",
-  kazakhstan: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
-  japan: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
-  andaman: "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=1200&q=80",
-  varanasi: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80",
-  default: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=80",
-};
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -131,25 +106,35 @@ function HomeContent() {
 
   const waUrl = getWhatsAppClickToChatUrl(
     settings?.whatsapp_number,
-    "Hi KV Tours & Travels Coimbatore, I am looking to plan a holiday journey. Please assist me."
+    `Hi ${settings?.public_display_name || "The Wild Root"} ${settings?.city || "Palakkad"}, I am looking to plan a holiday journey. Please assist me.`
   );
 
   const getDestinationImg = (dest: PublicDestinationListItem) => {
-    if (dest.featured_image?.image_url) return dest.featured_image.image_url;
-    const key = Object.keys(DESTINATION_FALLBACKS).find((k) =>
-      dest.slug.toLowerCase().includes(k)
-    );
-    return key ? DESTINATION_FALLBACKS[key] : DESTINATION_FALLBACKS.default;
+    let raw = "";
+    if (dest.cover_image_url) raw = dest.cover_image_url;
+    else if (dest.featured_image?.image_url) raw = dest.featured_image.image_url;
+    else {
+      const key = Object.keys(DESTINATION_FALLBACKS).find((k) =>
+        dest.slug.toLowerCase().includes(k)
+      );
+      raw = key ? DESTINATION_FALLBACKS[key] : DESTINATION_FALLBACKS.default;
+    }
+    return getSafeImageUrl(raw);
   };
 
   const getPackageImg = (pkg: PublicPackageListItem) => {
-    if (pkg.featured_image?.image_url) return pkg.featured_image.image_url;
-    const key = Object.keys(DESTINATION_FALLBACKS).find(
-      (k) =>
-        pkg.slug.toLowerCase().includes(k) ||
-        pkg.destination_slug.toLowerCase().includes(k)
-    );
-    return key ? DESTINATION_FALLBACKS[key] : DESTINATION_FALLBACKS.default;
+    let raw = "";
+    if (pkg.cover_image_url) raw = pkg.cover_image_url;
+    else if (pkg.featured_image?.image_url) raw = pkg.featured_image.image_url;
+    else {
+      const key = Object.keys(DESTINATION_FALLBACKS).find(
+        (k) =>
+          pkg.slug.toLowerCase().includes(k) ||
+          pkg.destination_slug.toLowerCase().includes(k)
+      );
+      raw = key ? DESTINATION_FALLBACKS[key] : DESTINATION_FALLBACKS.default;
+    }
+    return getSafeImageUrl(raw);
   };
 
   // Filter destinations based on International vs India & Around
@@ -178,6 +163,10 @@ function HomeContent() {
   const filteredDestinations = sortedDestinations.filter((d) =>
     destFilter === "domestic" ? isIndia(d) : !isIndia(d)
   );
+
+  const carouselDestinations = useMemo(() => {
+    return filteredDestinations.slice(0, 16);
+  }, [filteredDestinations]);
 
   // Prioritize featured travel packages configured in Main Website / Settings
   const featuredPkgIds =
@@ -298,7 +287,7 @@ function HomeContent() {
             />
           ) : (
             <Image
-              src={pageContent?.hero?.image_url || "/images/hero/hero-4k.webp"}
+              src={getSafeImageUrl(pageContent?.hero?.image_url, "/images/hero/hero-4k.webp")}
               alt="KV Tours & Travels luxury destination escape"
               fill
               priority
@@ -568,7 +557,7 @@ function HomeContent() {
                 Itineraries Being Curated
               </h3>
               <p className="text-[#5F6368] text-sm mt-1">
-                Our destination specialists in Coimbatore are currently scheduling new departures for this category. Contact our concierge for bespoke planning.
+                Our destination specialists in {settings?.city || "Palakkad"} are currently scheduling new departures for this category. Contact our concierge for bespoke planning.
               </p>
               <Link
                 href="/contact"
@@ -584,17 +573,18 @@ function HomeContent() {
               className="flex gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 pt-1 snap-x snap-mandatory"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
-              {filteredDestinations.map((dest) => (
+              {carouselDestinations.map((dest) => (
                 <Link
                   key={dest.id}
                   href={`/destinations/${dest.slug}`}
                   className="group relative w-[290px] sm:w-[330px] md:w-[350px] h-[470px] sm:h-[490px] rounded-3xl shrink-0 overflow-hidden border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-between p-6 shadow-sm hover:shadow-2xl bg-[#202124] snap-start cursor-pointer"
                 >
                   {/* Destination Cover Image */}
-                  <Image
+                  <TravelImage
                     src={getDestinationImg(dest)}
                     alt={dest.name}
                     fill
+                    fallbackSlug={dest.slug}
                     sizes="(max-width: 768px) 290px, (max-width: 1200px) 330px, 350px"
                     className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
                   />
@@ -727,10 +717,11 @@ function HomeContent() {
                 >
                   {/* Package Cover Image */}
                   <div className="relative h-64 overflow-hidden">
-                    <Image
+                    <TravelImage
                       src={getPackageImg(pkg)}
                       alt={pkg.name}
                       fill
+                      fallbackSlug={pkg.slug || pkg.destination_slug}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
@@ -832,10 +823,11 @@ function HomeContent() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Card 1: Spiritual Journeys (Hero / Wide Card) */}
             <div className="md:col-span-2 relative min-h-[380px] rounded-3xl overflow-hidden group border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-end p-8 bg-[#202124] shadow-sm hover:shadow-xl">
-              <Image
+              <TravelImage
                 src="https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1600&q=80"
                 alt="Sacred Varanasi ghats and temple heritage"
                 fill
+                fallbackSlug="varanasi"
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 66vw, 66vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
               />
@@ -872,10 +864,11 @@ function HomeContent() {
 
             {/* Card 2: Beach Escapes */}
             <div className="relative min-h-[380px] rounded-3xl overflow-hidden group border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-end p-8 bg-[#202124] shadow-sm hover:shadow-xl">
-              <Image
+              <TravelImage
                 src="https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1200&q=80"
                 alt="Tropical overwater bungalow beach escape"
                 fill
+                fallbackSlug="maldives"
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
               />
@@ -906,10 +899,11 @@ function HomeContent() {
 
             {/* Card 3: Japan Experiences */}
             <div className="relative min-h-[360px] rounded-3xl overflow-hidden group border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-end p-8 bg-[#202124] shadow-sm hover:shadow-xl">
-              <Image
+              <TravelImage
                 src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80"
                 alt="Mount Fuji and Japanese cultural pagoda"
                 fill
+                fallbackSlug="japan"
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
               />
@@ -940,10 +934,11 @@ function HomeContent() {
 
             {/* Card 4: Escorted Group Tours */}
             <div className="relative min-h-[360px] rounded-3xl overflow-hidden group border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-end p-8 bg-[#202124] shadow-sm hover:shadow-xl">
-              <Image
+              <TravelImage
                 src="https://images.unsplash.com/photo-1539635278303-d4002c07eae3?auto=format&fit=crop&w=1200&q=80"
                 alt="Group travellers enjoying mountain adventure"
                 fill
+                fallbackSlug="manali"
                 sizes="(max-width: 768px) 100vw, 33vw"
                 className="object-cover group-hover:scale-105 transition-transform duration-700"
               />
@@ -986,7 +981,7 @@ function HomeContent() {
                   Build Your Own Itinerary
                 </h3>
                 <p className="text-white/80 text-xs sm:text-sm mt-3 leading-relaxed font-light">
-                  Have a specific route, family celebration, or custom dates? Our Coimbatore travel specialists customize every detail.
+                  Have a specific route, family celebration, or custom dates? Our {settings?.city || "Palakkad"} travel specialists customize every detail.
                 </p>
 
                 <div className="mt-6 space-y-2 text-xs text-white/90">
@@ -1069,14 +1064,14 @@ function HomeContent() {
                   return (
                     <div
                       key={dep.id}
-                      className="p-6 rounded-3xl bg-white border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all flex flex-col justify-between shadow-sm hover:shadow-xl"
+                      className="p-4 sm:p-6 rounded-3xl bg-white border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all flex flex-col justify-between shadow-sm hover:shadow-xl"
                     >
                       <div>
-                        <div className="flex items-center justify-between text-xs mb-3">
-                          <span className="px-3 py-1 rounded-full bg-[#F7F7F5] border border-[#E5E7EB] text-[#202124] uppercase tracking-wider font-semibold">
+                        <div className="flex items-center justify-between text-xs mb-3 gap-2">
+                          <span className="px-2.5 sm:px-3 py-1 rounded-full bg-[#F7F7F5] border border-[#E5E7EB] text-[#202124] uppercase tracking-wider font-semibold truncate max-w-[150px] sm:max-w-none">
                             {dep.destination_name}
                           </span>
-                          <span className="text-[#C5A880] flex items-center gap-1 font-semibold text-xs">
+                          <span className="text-[#C5A880] flex items-center gap-1 font-semibold text-xs shrink-0">
                             <Users className="w-3.5 h-3.5 text-[#C5A880]" />
                             {dep.available_capacity} seats left
                           </span>
@@ -1088,18 +1083,18 @@ function HomeContent() {
 
                         {/* Dates row */}
                         <div className="mt-4 p-3.5 rounded-2xl bg-[#F7F7F5] border border-[#E5E7EB] space-y-1.5 text-xs">
-                          <div className="flex items-center justify-between text-[#202124]">
-                            <span className="text-[#5F6368]">Departure:</span>
-                            <span className="font-semibold">{depDate}</span>
+                          <div className="flex items-center justify-between text-[#202124] gap-2">
+                            <span className="text-[#5F6368] shrink-0">Departure:</span>
+                            <span className="font-semibold truncate text-right">{depDate}</span>
                           </div>
                           {retDate && (
-                            <div className="flex items-center justify-between text-[#202124]">
-                              <span className="text-[#5F6368]">Return:</span>
-                              <span className="font-semibold">{retDate}</span>
+                            <div className="flex items-center justify-between text-[#202124] gap-2">
+                              <span className="text-[#5F6368] shrink-0">Return:</span>
+                              <span className="font-semibold truncate text-right">{retDate}</span>
                             </div>
                           )}
-                          <div className="flex items-center justify-between text-[#202124]">
-                            <span className="text-[#5F6368]">Duration:</span>
+                          <div className="flex items-center justify-between text-[#202124] gap-2">
+                            <span className="text-[#5F6368] shrink-0">Duration:</span>
                             <span className="font-semibold text-[#202124]">
                               {dep.duration_days}D / {dep.duration_nights}N
                             </span>
@@ -1107,18 +1102,18 @@ function HomeContent() {
                         </div>
                       </div>
 
-                      <div className="mt-6 pt-4 border-t border-[#E5E7EB] flex items-center justify-between">
-                        <div>
+                      <div className="mt-6 pt-4 border-t border-[#E5E7EB] flex items-center justify-between gap-3">
+                        <div className="min-w-0">
                           <span className="text-[10px] uppercase text-[#5F6368] block font-medium">
                             Package Price
                           </span>
-                          <span className="text-xl font-serif font-bold text-[#202124]">
+                          <span className="text-lg sm:text-xl font-serif font-bold text-[#202124] truncate block">
                             ₹{Number(price).toLocaleString("en-IN")}
                           </span>
                         </div>
                         <Link
                           href={`/packages/${dep.package_slug}`}
-                          className="h-9 px-4 rounded-full bg-[#202124] hover:bg-[#3D4450] text-white text-xs uppercase tracking-wider font-semibold flex items-center justify-center transition-all shadow-sm"
+                          className="h-9 px-3.5 sm:px-4 rounded-full bg-[#202124] hover:bg-[#3D4450] text-white text-xs uppercase tracking-wider font-semibold flex items-center justify-center transition-all shadow-sm shrink-0 whitespace-nowrap"
                         >
                           View Trip
                         </Link>
@@ -1150,7 +1145,7 @@ function HomeContent() {
                   Your Trip. <span className="text-[#C5A880] italic font-normal">Your Way.</span>
                 </h2>
                 <p className="mt-4 text-[#5F6368] text-sm sm:text-base leading-relaxed font-light">
-                  No rigid schedules or cookie-cutter templates. Whether you are designing an intimate honeymoon in the Maldives, an adventurous expedition through Kazakhstan, or a private family retreat to Manali, our Coimbatore concierge crafts an itinerary tailored entirely to your desires.
+                  No rigid schedules or cookie-cutter templates. Whether you are designing an intimate honeymoon in the Maldives, an adventurous expedition through Kazakhstan, or a private family retreat to Manali, our {settings?.city || "Palakkad"} concierge crafts an itinerary tailored entirely to your desires.
                 </p>
 
                 {/* 4 Pillars of Custom Planning */}
@@ -1197,75 +1192,7 @@ function HomeContent() {
         )}
       </div>
 
-      {/* =========================================================================
-          CHAUFFEUR FLEET & OUTSTATION CABS (Coimbatore Hub)
-         ========================================================================= */}
-      <section className="py-20 bg-[#1E2229] text-white relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#C5A880_1px,transparent_1px)] [background-size:20px_20px]" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 pb-12 border-b border-white/10">
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#C5A880] text-xs font-semibold uppercase tracking-widest mb-3">
-                <Car className="w-3.5 h-3.5" />
-                <span>KV Chauffeur Services</span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl font-serif font-bold text-white tracking-tight">
-                Coimbatore Outstation Cabs & Airport CJB Fleet
-              </h2>
-              <p className="mt-2 text-sm sm:text-base text-[#94A3B8] max-w-2xl">
-                Need reliable ground transportation? Book our sanitised sedans, Innova Crysta SUVs, and luxury Tempo Travellers for Ooty, Munnar, Kodaikanal, Valparai, and Isha Yoga.
-              </p>
-            </div>
-            <div className="flex flex-wrap items-center gap-3 shrink-0">
-              <Link
-                href="/cabs"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#C5A880] hover:bg-[#B39368] text-[#1E2229] font-bold text-xs uppercase tracking-wider transition-all shadow-md"
-              >
-                <span>View Full Fleet & Book</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-10">
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-              <div className="text-[#C5A880] text-xs font-bold uppercase tracking-wider mb-2">Hill Station Transfers</div>
-              <h3 className="text-lg font-bold font-serif text-white">Coimbatore to Ooty & Munnar</h3>
-              <p className="text-xs text-[#94A3B8] mt-1.5 leading-relaxed">
-                Expert mountain chauffeurs trained for 36 hairpin curves, tea garden viewpoints, and hotel door-to-door drops.
-              </p>
-              <div className="mt-4 pt-3 border-t border-white/10 flex justify-between items-center text-xs">
-                <span className="text-[#94A3B8]">Starting from:</span>
-                <span className="font-bold text-[#C5A880] text-sm">₹2,800</span>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-              <div className="text-[#C5A880] text-xs font-bold uppercase tracking-wider mb-2">Spiritual & Temple Circuits</div>
-              <h3 className="text-lg font-bold font-serif text-white">Isha Yoga, Madurai & Rameshwaram</h3>
-              <p className="text-xs text-[#94A3B8] mt-1.5 leading-relaxed">
-                Punctual same-day round trips to Adiyogi / Dhyanalinga, and comfortable highway temple tours across Tamil Nadu.
-              </p>
-              <div className="mt-4 pt-3 border-t border-white/10 flex justify-between items-center text-xs">
-                <span className="text-[#94A3B8]">Starting from:</span>
-                <span className="font-bold text-[#C5A880] text-sm">₹1,800</span>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-white/5 border border-white/10">
-              <div className="text-[#C5A880] text-xs font-bold uppercase tracking-wider mb-2">24/7 Airport Service</div>
-              <h3 className="text-lg font-bold font-serif text-white">Coimbatore Airport (CJB) Transfers</h3>
-              <p className="text-xs text-[#94A3B8] mt-1.5 leading-relaxed">
-                Flight delay monitoring, arrivals gate meet-and-greet, luggage assistance, and direct rides to Tiruppur, Erode, or hotels.
-              </p>
-              <div className="mt-4 pt-3 border-t border-white/10 flex justify-between items-center text-xs">
-                <span className="text-[#94A3B8]">Fixed Rate Sedan:</span>
-                <span className="font-bold text-[#C5A880] text-sm">₹1,600</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       {/* =========================================================================
           7. WHY KV TOURS (Verified Business Trust Indicators)
@@ -1290,10 +1217,10 @@ function HomeContent() {
                 <MapPin className="w-6 h-6 text-[#C5A880]" />
               </div>
               <h3 className="text-lg font-serif font-bold text-[#202124] mb-2">
-                Coimbatore Based
+                {settings?.city || "Palakkad"} Based
               </h3>
               <p className="text-[#5F6368] text-xs sm:text-sm leading-relaxed font-light">
-                Direct, accessible travel consultations right here in Coimbatore. You have a dedicated travel planner to coordinate your entire journey.
+                Direct, accessible travel consultations right here in {settings?.city || "Palakkad"}. You have a dedicated travel planner to coordinate your entire journey.
               </p>
             </div>
 

@@ -48,6 +48,20 @@ class WhatsAppService:
 
         return self.settings.whatsapp_number
 
+    def get_configured_agency_name(self, db: Session | None = None) -> str:
+        """Resolve public agency display name from SiteSetting or fallback."""
+        if db is not None:
+            try:
+                from app.services.catalog_service import get_public_settings
+
+                pub = get_public_settings(db)
+                val = pub.public_display_name or pub.agency_name
+                if val:
+                    return val
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Could not read public settings for WhatsApp: %s", exc)
+        return self.settings.agency_name
+
     def generate_click_to_chat_url(
         self, message: str, db: Session | None = None
     ) -> str:
@@ -61,26 +75,30 @@ class WhatsAppService:
         self, booking_ref: str, db: Session | None = None
     ) -> str:
         """Contextual action: Ask About My Booking."""
-        msg = f"Hi KV Tours & Travels, I need help with booking {booking_ref}."
+        agency = self.get_configured_agency_name(db)
+        msg = f"Hi {agency}, I need help with booking {booking_ref}."
         return self.generate_click_to_chat_url(msg, db)
 
     def build_trip_inquiry_url(
         self, booking_ref: str, package_title: str, db: Session | None = None
     ) -> str:
         """Contextual action: Ask About My Trip."""
-        msg = f"Hi KV Tours & Travels, I have a question regarding my upcoming trip '{package_title}' (Booking: {booking_ref})."
+        agency = self.get_configured_agency_name(db)
+        msg = f"Hi {agency}, I have a question regarding my upcoming trip '{package_title}' (Booking: {booking_ref})."
         return self.generate_click_to_chat_url(msg, db)
 
     def build_payment_help_url(
         self, booking_ref: str, db: Session | None = None
     ) -> str:
         """Contextual action: Need Help With Payment."""
-        msg = f"Hi KV Tours & Travels, I need assistance with payment for booking {booking_ref}."
+        agency = self.get_configured_agency_name(db)
+        msg = f"Hi {agency}, I need assistance with payment for booking {booking_ref}."
         return self.generate_click_to_chat_url(msg, db)
 
     def build_general_support_url(self, db: Session | None = None) -> str:
         """Contextual action: General Concierge Support."""
-        msg = "Hi KV Tours & Travels, I would like to inquire about your curated travel experiences."
+        agency = self.get_configured_agency_name(db)
+        msg = f"Hi {agency}, I would like to inquire about your curated travel experiences."
         return self.generate_click_to_chat_url(msg, db)
 
     # -------------------------------------------------------------
@@ -210,8 +228,9 @@ class WhatsAppService:
         self, db: Session, booking: Booking, user: User
     ) -> NotificationLog:
         phone = user.phone or self.get_configured_phone(db)
+        agency = self.get_configured_agency_name(db)
         msg = (
-            f"Hello {user.first_name}! Your booking {booking.booking_reference} with KV Tours & Travels "
+            f"Hello {user.first_name}! Your booking {booking.booking_reference} with {agency} "
             f"for '{booking.package.title}' is confirmed. Departure: {booking.departure.departure_date}. "
             f"View your voucher at {self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         )
@@ -283,8 +302,9 @@ class WhatsAppService:
         self, db: Session, booking: Booking, user: User, days_left: int = 7
     ) -> NotificationLog:
         phone = user.phone or self.get_configured_phone(db)
+        agency = self.get_configured_agency_name(db)
         msg = (
-            f"Hello {user.first_name}! Your KV Tours & Travels journey to '{booking.package.title}' "
+            f"Hello {user.first_name}! Your {agency} journey to '{booking.package.title}' "
             f"is only {days_left} days away (Departure: {booking.departure.departure_date}). We look forward to hosting you!"
         )
         return self.dispatch(

@@ -11,6 +11,7 @@ import httpx
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.core.cache import catalog_cache
 from app.core.config import get_settings
 from app.core.encryption import (
     DecryptionError,
@@ -243,12 +244,14 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
 
     return AdminSiteSettingsResponse(
         # Business Identity
-        legal_business_name=str(overrides.get("legal_business_name")) if overrides.get("legal_business_name") else None,
+        legal_business_name=str(overrides["legal_business_name"]) if "legal_business_name" in overrides and overrides["legal_business_name"] is not None else None,
         agency_name=str(overrides.get("agency_name") or overrides.get("public_display_name") or settings.agency_name),
         public_display_name=str(overrides.get("public_display_name") or overrides.get("agency_name") or settings.agency_name),
-        tagline=str(overrides.get("tagline", "Your Journey. Our Expertise.")),
-        logo_url=str(overrides.get("logo_url")) if overrides.get("logo_url") else None,
-        favicon_url=str(overrides.get("favicon_url")) if overrides.get("favicon_url") else None,
+        admin_panel_name=str(overrides.get("admin_panel_name")) if overrides.get("admin_panel_name") else None,
+        admin_portal_subtitle=str(overrides.get("admin_portal_subtitle")) if overrides.get("admin_portal_subtitle") else None,
+        tagline=str(overrides["tagline"]) if "tagline" in overrides and overrides["tagline"] is not None else "Your Journey. Our Expertise.",
+        logo_url=str(overrides["logo_url"]) if "logo_url" in overrides and overrides["logo_url"] is not None else None,
+        favicon_url=str(overrides["favicon_url"]) if "favicon_url" in overrides and overrides["favicon_url"] is not None else None,
         business_description=str(overrides.get("business_description")) if overrides.get("business_description") else None,
         registered_office_address=str(overrides.get("registered_office_address")) if overrides.get("registered_office_address") else None,
         office_address=str(
@@ -273,15 +276,15 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         emergency_phone=str(overrides.get("emergency_phone")) if overrides.get("emergency_phone") else None,
         contact_email=str(overrides.get("contact_email", settings.contact_email)),
         customer_support_email=str(overrides.get("customer_support_email")) if overrides.get("customer_support_email") else str(overrides.get("contact_email", settings.contact_email)),
-        booking_email=str(overrides.get("booking_email")) if overrides.get("booking_email") else "bookings@kvtours.in",
+        booking_email=str(overrides.get("booking_email")) if overrides.get("booking_email") else "bookings@wildroot.in",
         general_inquiry_email=str(overrides.get("general_inquiry_email")) if overrides.get("general_inquiry_email") else str(overrides.get("contact_email", settings.contact_email)),
-        reply_to_email=str(overrides.get("reply_to_email")) if overrides.get("reply_to_email") else "concierge@kvtours.in",
+        reply_to_email=str(overrides.get("reply_to_email")) if overrides.get("reply_to_email") else "concierge@wildroot.in",
 
         # Social and Online
-        instagram_handle=str(overrides.get("instagram_handle", "@kvtours_travels")),
-        instagram_url=str(overrides.get("instagram_url")) if overrides.get("instagram_url") else "https://instagram.com/kvtours_travels",
+        instagram_handle=str(overrides.get("instagram_handle", "@wildroot")),
+        instagram_url=str(overrides.get("instagram_url")) if overrides.get("instagram_url") else "https://instagram.com/wildroot",
         facebook_url=str(overrides.get("facebook_url")) if overrides.get("facebook_url") else None,
-        website_url=str(overrides.get("website_url")) if overrides.get("website_url") else "https://kvtours.in",
+        website_url=str(overrides.get("website_url")) if overrides.get("website_url") else "https://wildroot.in",
         google_maps_url=str(overrides.get("google_maps_url")) if overrides.get("google_maps_url") else None,
 
         # Business Information
@@ -296,13 +299,13 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         whatsapp_prefilled_message=str(
             overrides.get(
                 "whatsapp_prefilled_message",
-                "Hi KV Tours, I am interested in planning a trip.",
+                "Hi Wild Root, I am interested in planning a trip.",
             )
         ),
-        whatsapp_package_message=str(overrides.get("whatsapp_package_message", "Hi KV Tours, I am interested in this package.")),
-        whatsapp_destination_message=str(overrides.get("whatsapp_destination_message", "Hi KV Tours, I would like to know more about this destination.")),
-        whatsapp_custom_trip_message=str(overrides.get("whatsapp_custom_trip_message", "Hi KV Tours, I would like to plan a custom holiday.")),
-        whatsapp_booking_support_message=str(overrides.get("whatsapp_booking_support_message", "Hi KV Tours, I need assistance with my booking.")),
+        whatsapp_package_message=str(overrides.get("whatsapp_package_message", "Hi Wild Root, I am interested in this package.")),
+        whatsapp_destination_message=str(overrides.get("whatsapp_destination_message", "Hi Wild Root, I would like to know more about this destination.")),
+        whatsapp_custom_trip_message=str(overrides.get("whatsapp_custom_trip_message", "Hi Wild Root, I would like to plan a custom holiday.")),
+        whatsapp_booking_support_message=str(overrides.get("whatsapp_booking_support_message", "Hi Wild Root, I need assistance with my booking.")),
         whatsapp_enabled=_parse_bool(overrides.get("whatsapp_enabled"), True),
         whatsapp_show_floating_concierge=_parse_bool(overrides.get("whatsapp_show_floating_concierge"), True),
         whatsapp_show_header_button=_parse_bool(overrides.get("whatsapp_show_header_button"), True),
@@ -346,15 +349,15 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         resend_webhook_signing_secret_masked=resend_webhook_masked,
         resend_webhook_url=resend_webhook_url,
         resend_webhook_tunnel_url=tunnel_url if tunnel_url else None,
-        email_sender_name=str(overrides.get("email_sender_name", "KV Tours & Travels")),
+        email_sender_name=str(overrides.get("email_sender_name", "Wild Root")),
         email_sender_email=str(
             overrides.get(
                 "email_sender_email",
-                "onboarding@resend.dev" if str(overrides.get("email_environment_mode", "development")) == "development" else "bookings@kvtours.in",
+                "onboarding@resend.dev" if str(overrides.get("email_environment_mode", "development")) == "development" else "bookings@wildroot.in",
             )
         ),
-        email_reply_to=str(overrides.get("email_reply_to", "concierge@kvtours.in")),
-        admin_notification_email=str(overrides.get("admin_notification_email", "admin@kvtours.in")),
+        email_reply_to=str(overrides.get("email_reply_to", "concierge@wildroot.in")),
+        admin_notification_email=str(overrides.get("admin_notification_email", "admin@wildroot.in")),
         email_enabled=_parse_bool(overrides.get("email_enabled"), True),
         email_booking_confirmation_enabled=_parse_bool(
             overrides.get("email_booking_confirmation_enabled"), True
@@ -371,10 +374,10 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         email_trip_reminders_enabled=_parse_bool(
             overrides.get("email_trip_reminders_enabled"), True
         ),
-        email_subject_booking_confirmation=str(overrides.get("email_subject_booking_confirmation", "Your Booking Confirmation — KV Tours & Travels")),
-        email_subject_payment_receipt=str(overrides.get("email_subject_payment_receipt", "Payment Receipt — KV Tours & Travels")),
-        email_subject_inquiry_ack=str(overrides.get("email_subject_inquiry_ack", "Inquiry Received — KV Tours & Travels")),
-        email_subject_trip_reminder=str(overrides.get("email_subject_trip_reminder", "Your Upcoming Journey with KV Tours & Travels")),
+        email_subject_booking_confirmation=str(overrides.get("email_subject_booking_confirmation", "Your Booking Confirmation — Wild Root")),
+        email_subject_payment_receipt=str(overrides.get("email_subject_payment_receipt", "Payment Receipt — Wild Root")),
+        email_subject_inquiry_ack=str(overrides.get("email_subject_inquiry_ack", "Inquiry Received — Wild Root")),
+        email_subject_trip_reminder=str(overrides.get("email_subject_trip_reminder", "Your Upcoming Journey with Wild Root")),
 
         # Homepage Content & Visibility
         hero_headline=str(overrides.get("hero_headline", "Handcrafted Journeys Beyond the Ordinary")),
@@ -394,8 +397,8 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         best_offers_enabled=_parse_bool(overrides.get("best_offers_enabled"), True),
 
         # Rebranding, Typography & Identity
-        short_name=str(overrides.get("short_name")) if overrides.get("short_name") else None,
-        secondary_logo_url=str(overrides.get("secondary_logo_url")) if overrides.get("secondary_logo_url") else None,
+        short_name=str(overrides["short_name"]) if "short_name" in overrides and overrides["short_name"] is not None else None,
+        secondary_logo_url=str(overrides["secondary_logo_url"]) if "secondary_logo_url" in overrides and overrides["secondary_logo_url"] is not None else None,
         brand_primary_color=str(overrides.get("brand_primary_color", "#24292F")),
         brand_secondary_color=str(overrides.get("brand_secondary_color", "#C5A880")),
         brand_accent_color=str(overrides.get("brand_accent_color", "#D4AF37")),
@@ -427,6 +430,18 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         google_maps_directions_url=str(overrides.get("google_maps_directions_url")) if overrides.get("google_maps_directions_url") else None,
         office_location_label=str(overrides.get("office_location_label")) if overrides.get("office_location_label") else None,
 
+        # Travel Voucher & PDF Settings
+        pdf_header_title=str(overrides["pdf_header_title"]) if overrides.get("pdf_header_title") else None,
+        pdf_header_subtitle=str(overrides["pdf_header_subtitle"]) if overrides.get("pdf_header_subtitle") else None,
+        pdf_office_address=str(overrides["pdf_office_address"]) if overrides.get("pdf_office_address") else None,
+        pdf_contact_info=str(overrides["pdf_contact_info"]) if overrides.get("pdf_contact_info") else None,
+        pdf_checkin_instructions=str(overrides["pdf_checkin_instructions"]) if overrides.get("pdf_checkin_instructions") else None,
+        pdf_logistics_notice=str(overrides["pdf_logistics_notice"]) if overrides.get("pdf_logistics_notice") else None,
+        pdf_helpline_info=str(overrides["pdf_helpline_info"]) if overrides.get("pdf_helpline_info") else None,
+        pdf_footer_declaration=str(overrides["pdf_footer_declaration"]) if overrides.get("pdf_footer_declaration") else None,
+        pdf_badge_label=str(overrides["pdf_badge_label"]) if overrides.get("pdf_badge_label") else None,
+        pdf_logo_url=str(overrides["pdf_logo_url"]) if overrides.get("pdf_logo_url") else None,
+
         updated_at=latest_update,
     )
 
@@ -444,6 +459,8 @@ def update_admin_settings(
         "legal_business_name",
         "agency_name",
         "public_display_name",
+        "admin_panel_name",
+        "admin_portal_subtitle",
         "tagline",
         "logo_url",
         "favicon_url",
@@ -548,6 +565,16 @@ def update_admin_settings(
         "google_maps_display_enabled",
         "google_maps_directions_url",
         "office_location_label",
+        "pdf_header_title",
+        "pdf_header_subtitle",
+        "pdf_office_address",
+        "pdf_contact_info",
+        "pdf_checkin_instructions",
+        "pdf_logistics_notice",
+        "pdf_helpline_info",
+        "pdf_footer_declaration",
+        "pdf_badge_label",
+        "pdf_logo_url",
     ]
 
     # Harmonize aliases
@@ -639,6 +666,9 @@ def update_admin_settings(
             metadata={"changes": changes},
         )
         db.commit()
+        catalog_cache.invalidate(["settings", "offers", "destinations", "packages"])
+    else:
+        catalog_cache.invalidate(["settings"])
 
     return get_admin_settings(db)
 

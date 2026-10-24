@@ -41,10 +41,11 @@ def get_customer_dashboard(
 @router.get("/profile", response_model=CustomerProfileResponse)
 def get_customer_profile(
     current_user: CurrentUser,
+    db: DbSession,
 ) -> CustomerProfileResponse:
     """Retrieve customer profile information."""
     service = get_customer_portal_service()
-    return service.get_profile(user=current_user)
+    return service.get_profile(user=current_user, db=db)
 
 
 @router.put("/profile", response_model=CustomerProfileResponse)

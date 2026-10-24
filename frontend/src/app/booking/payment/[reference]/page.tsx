@@ -37,6 +37,7 @@ import {
   DEFAULT_WHATSAPP_NUMBER,
   getWhatsAppClickToChatUrl,
 } from "@/lib/constants";
+import { useBranding } from "@/context/BrandingContext";
 
 interface RazorpayInstance {
   open: () => void;
@@ -53,6 +54,7 @@ declare global {
 }
 
 function PaymentContent() {
+  const { displayName, shortName, city, getWhatsAppUrl } = useBranding();
   const params = useParams();
   const router = useRouter();
   const reference = params?.reference as string;
@@ -137,6 +139,63 @@ function PaymentContent() {
     loadBooking();
   }, [loadBooking]);
 
+  // Authoritative financial calculations
+  const totalAmount = booking ? Number(booking.total) : 0;
+  const totalPaid = booking ? Number(booking.total_paid || 0) : 0;
+  const outstandingBalance = booking
+    ? Math.max(0, Number(booking.outstanding_balance ?? totalAmount - totalPaid))
+    : 0;
+
+  const depositPercentage = bankDetails
+    ? Number(bankDetails.default_deposit_percentage || 25)
+    : 25;
+  const defaultDepositCalc = Math.round(totalAmount * (depositPercentage / 100));
+  const minDeposit = bankDetails ? Number(bankDetails.min_deposit_amount || 5000) : 5000;
+  const depositAmount = booking
+    ? Number(
+        booking.deposit_amount ||
+          Math.min(outstandingBalance, Math.max(minDeposit, defaultDepositCalc))
+      )
+    : 0;
+
+  const maxOnlineLimit = bankDetails
+    ? Number(bankDetails.max_online_single_payment_limit || 500000)
+    : 500000;
+  const isFullAboveLimit = outstandingBalance > maxOnlineLimit;
+
+  // Determine active availability of each payment system
+  const isOnlinePaymentsActive = Boolean(siteSettings?.online_payments_enabled);
+  const isBankTransferActive = Boolean(bankDetails?.bank_transfer_enabled);
+  const isBranchPaymentActive = Boolean(bankDetails?.branch_payment_enabled);
+  const isSplitPaymentActive =
+    isOnlinePaymentsActive &&
+    Boolean(bankDetails?.split_payments_enabled) &&
+    outstandingBalance > depositAmount;
+  const isFullOnlineActive = isOnlinePaymentsActive && !isFullAboveLimit;
+
+  // Auto-align selected payment method with enabled options
+  useEffect(() => {
+    if (loading) return;
+    const availableMethods: Array<
+      "full_online" | "deposit_online" | "bank_transfer" | "branch_cash"
+    > = [];
+    if (isFullOnlineActive) availableMethods.push("full_online");
+    if (isSplitPaymentActive) availableMethods.push("deposit_online");
+    if (isBankTransferActive) availableMethods.push("bank_transfer");
+    if (isBranchPaymentActive) availableMethods.push("branch_cash");
+
+    if (availableMethods.length > 0 && !availableMethods.includes(paymentMethod)) {
+      setPaymentMethod(availableMethods[0]);
+    }
+  }, [
+    loading,
+    isFullOnlineActive,
+    isSplitPaymentActive,
+    isBankTransferActive,
+    isBranchPaymentActive,
+    paymentMethod,
+  ]);
+
   // Live countdown timer for payment hold
   useEffect(() => {
     if (secondsRemaining === null || secondsRemaining <= 0) return;
@@ -161,30 +220,6 @@ function PaymentContent() {
   };
 
   const isHoldExpired = secondsRemaining !== null && secondsRemaining <= 0;
-
-  // Authoritative financial calculations
-  const totalAmount = booking ? Number(booking.total) : 0;
-  const totalPaid = booking ? Number(booking.total_paid || 0) : 0;
-  const outstandingBalance = booking
-    ? Math.max(0, Number(booking.outstanding_balance ?? totalAmount - totalPaid))
-    : 0;
-
-  const depositPercentage = bankDetails
-    ? Number(bankDetails.default_deposit_percentage || 25)
-    : 25;
-  const defaultDepositCalc = Math.round(totalAmount * (depositPercentage / 100));
-  const minDeposit = bankDetails ? Number(bankDetails.min_deposit_amount || 5000) : 5000;
-  const depositAmount = booking
-    ? Number(
-        booking.deposit_amount ||
-          Math.min(outstandingBalance, Math.max(minDeposit, defaultDepositCalc))
-      )
-    : 0;
-
-  const maxOnlineLimit = bankDetails
-    ? Number(bankDetails.max_online_single_payment_limit || 500000)
-    : 500000;
-  const isFullAboveLimit = outstandingBalance > maxOnlineLimit;
 
   const payableNow =
     paymentMethod === "deposit_online"
@@ -288,7 +323,7 @@ function PaymentContent() {
         key: orderData.key_id,
         amount: orderData.amount,
         currency: orderData.currency,
-        name: "KV Tours & Travels",
+        name: displayName || "Travel Agency",
         description: `${targetType === "deposit" ? "Deposit" : "Payment"} for ${booking.package_title} (${orderData.booking_reference})`,
         order_id: orderData.order_id,
         prefill: {
@@ -477,7 +512,7 @@ function PaymentContent() {
         <div className="mb-8 text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D3D8DF] bg-[#ECEFF3] text-[#24292F] text-xs uppercase tracking-widest font-semibold">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>KV Tours & Travels Secure Checkout</span>
+            <span>{displayName} Secure Checkout</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#202124] tracking-tight">
             Complete Your Journey Payment
@@ -646,7 +681,7 @@ function PaymentContent() {
                     <Building className="w-3.5 h-3.5 text-[#24292F]" />
                     {paymentMethod === "bank_transfer"
                       ? "Official Bank Account Details"
-                      : "KV Tours Branch Office Payment"}
+                      : `${shortName || displayName} Branch Office Payment`}
                   </span>
                   <span className="text-[11px] text-[#70757A]">Ref: {booking.booking_reference}</span>
                 </div>
@@ -765,7 +800,7 @@ function PaymentContent() {
                   <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7] space-y-2 text-xs">
                     <div className="flex items-center gap-2 font-bold text-[#202124]">
                       <MapPin className="w-4 h-4 text-[#C5A880]" />
-                      <span>KV Tours & Travels — Coimbatore Concierge Office</span>
+                      <span>{displayName} — {city || "Concierge"} Office</span>
                     </div>
                     <p className="text-[#5F6368] leading-relaxed">
                       Visit our registered concierge office at Cross Cut Road, Gandhipuram, Coimbatore. Quote booking reference <strong>{booking.booking_reference}</strong> to our finance team to complete payment and collect your physical stamped tax invoice.
@@ -1109,9 +1144,8 @@ function PaymentContent() {
                   </div>
 
                   <a
-                    href={getWhatsAppClickToChatUrl(
-                      DEFAULT_WHATSAPP_NUMBER,
-                      `Hello KV Tours & Travels Coimbatore! My booking reference is ${booking.booking_reference} for "${booking.package_title}" (Total: ₹${Number(booking.total).toLocaleString("en-IN")}). Please assist me with payment confirmation.`
+                    href={getWhatsAppUrl(
+                      `Hello ${displayName}! My booking reference is ${booking.booking_reference} for "${booking.package_title}" (Total: ₹${Number(booking.total).toLocaleString("en-IN")}). Please assist me with payment confirmation.`
                     )}
                     target="_blank"
                     rel="noopener noreferrer"

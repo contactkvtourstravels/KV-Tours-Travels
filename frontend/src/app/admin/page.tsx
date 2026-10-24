@@ -24,9 +24,11 @@ import {
   AdminDashboardMetrics,
 } from "@/lib/api";
 import { useAdmin } from "./AdminContext";
+import { useBranding } from "@/context/BrandingContext";
 
 export default function AdminDashboardPage() {
   const { user, hasAnyRole } = useAdmin();
+  const { displayName, city } = useBranding();
   const isManagerOrAdmin = hasAnyRole(["manager", "admin", "super_admin"]);
 
   const [metrics, setMetrics] = useState<AdminDashboardMetrics | null>(null);
@@ -179,11 +181,11 @@ export default function AdminDashboardPage() {
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-[#C5A880]">
-              KV Tours & Travels
+              {displayName}
             </span>
             <span className="text-stone-300">•</span>
             <span className="text-xs text-[#70757A]">
-              Coimbatore Operations Console
+              {city || "Central"} Operations Console
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#202124] tracking-tight">

@@ -18,6 +18,8 @@ import {
   AlertTriangle,
   ArrowRight,
   X,
+  Printer,
+  FileText,
 } from "lucide-react";
 import { adminApi, AdminSiteSettings } from "@/lib/api";
 import { useAdmin } from "../AdminContext";
@@ -26,6 +28,7 @@ import WhatsAppClickToChatSection from "./WhatsAppClickToChatSection";
 import WhatsAppCloudApiSection from "./WhatsAppCloudApiSection";
 import ResendEmailSection from "./ResendEmailSection";
 import PaymentGatewaySection from "./PaymentGatewaySection";
+import PdfVoucherSettingsSection from "./PdfVoucherSettingsSection";
 import DeliveryLogsSection from "./DeliveryLogsSection";
 import ConfigurationHealthSection from "./ConfigurationHealthSection";
 
@@ -34,6 +37,7 @@ export type SettingsTab =
   | "whatsapp_cloud"
   | "email"
   | "payments"
+  | "pdf"
   | "logs"
   | "health";
 
@@ -69,12 +73,15 @@ export default function AdminSettingsPage() {
       }
       if (tabParam === "notification_logs") {
         setActiveTab("logs");
+      } else if (tabParam === "voucher") {
+        setActiveTab("pdf");
       } else if (
         [
           "whatsapp",
           "whatsapp_cloud",
           "email",
           "payments",
+          "pdf",
           "logs",
           "health",
         ].includes(tabParam)
@@ -169,6 +176,7 @@ export default function AdminSettingsPage() {
     { id: "whatsapp_cloud", label: "WhatsApp Cloud API", icon: Shield },
     { id: "email", label: "Resend Email", icon: Mail },
     { id: "payments", label: "Payment Gateway", icon: CreditCard },
+    { id: "pdf", label: "Travel Voucher & PDF", icon: Printer },
     { id: "logs", label: "Delivery Logs", icon: Clock },
     { id: "health", label: "Configuration Health", icon: ShieldCheck },
   ];
@@ -316,6 +324,15 @@ export default function AdminSettingsPage() {
         )}
 
         {activeTab === "payments" && <PaymentGatewaySection />}
+
+        {activeTab === "pdf" && (
+          <PdfVoucherSettingsSection
+            settings={settings}
+            canEdit={canEdit}
+            onSaved={handleSettingsSaved}
+            onDirtyChange={setIsDirty}
+          />
+        )}
 
         {activeTab === "logs" && <DeliveryLogsSection />}
 

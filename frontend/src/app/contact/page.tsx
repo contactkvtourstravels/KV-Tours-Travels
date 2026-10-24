@@ -29,9 +29,10 @@ import {
   DEFAULT_WHATSAPP_NUMBER,
   getWhatsAppClickToChatUrl,
 } from "@/lib/constants";
+import { useBranding } from "@/context/BrandingContext";
 
 function ContactPageContent() {
-
+  const { displayName: brandDisplayName } = useBranding();
   const searchParams = useSearchParams();
   const isPreviewParam = searchParams.get("preview") === "true";
 
@@ -80,8 +81,9 @@ function ContactPageContent() {
     branding.agency_name ||
     settings?.public_display_name ||
     settings?.agency_name ||
-    "KV Tours & Travels";
-  const city = branding.city || settings?.city || "Coimbatore";
+    brandDisplayName ||
+    "The Wild Root";
+  const city = branding.city || settings?.city || "Palakkad";
   const content = pageData?.content;
 
   // Resolve office address & phones with fallbacks
@@ -89,7 +91,7 @@ function ContactPageContent() {
     content?.cards?.office_address ||
     branding.office_address ||
     settings?.office_address ||
-    "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012";
+    "The Wild Root Lounge, Fort Maidan Road, Near Palakkad Fort, Palakkad, Kerala 678001";
 
   const operatingHours =
     content?.cards?.operating_hours ||
@@ -107,7 +109,7 @@ function ContactPageContent() {
     content?.cards?.contact_email ||
     branding.contact_email ||
     settings?.contact_email ||
-    "contact@kvtours.in";
+    "concierge@thewildroot.in";
 
   const whatsappNumber =
     branding.whatsapp_number ||
@@ -123,11 +125,12 @@ function ContactPageContent() {
     content?.form?.topics && content.form.topics.length > 0
       ? content.form.topics
       : [
-          "General Holiday Enquiry",
-          "Group Tour Departure Booking",
-          "Custom Honeymoon Escapes",
-          "Corporate & Family Group Retreat",
-          "Flight & Visa Assistance",
+          "Bespoke Kerala & Western Ghats Expeditions",
+          "Luxury Maldives & Lakshadweep Escapes",
+          "Custom International Honeymoon Itineraries",
+          "Himalayan Treks & Nature Retreats",
+          "Private Family & Corporate Escapes",
+          "Flight Ticketing & Visa Concierge",
         ];
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -192,7 +195,16 @@ function ContactPageContent() {
 
       {/* Header Banner */}
       {(!content || content.hero?.show_section !== false) && (
-        <section className="relative py-20 bg-[#F7F7F5] border-b border-[#E4E5E7]">
+        <section
+          className="relative py-20 bg-[#F7F7F5] border-b border-[#E4E5E7] overflow-hidden"
+          style={{
+            backgroundImage: content?.hero?.background_image_url
+              ? `linear-gradient(rgba(247,247,245,0.92), rgba(247,247,245,0.92)), url(${content.hero.background_image_url})`
+              : undefined,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        >
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#D3D8DF] bg-white text-[#24292F] text-xs uppercase tracking-widest font-semibold mb-4 shadow-2xs">
               <Compass className="w-3.5 h-3.5 text-[#5F6368]" />
@@ -225,7 +237,7 @@ function ContactPageContent() {
                     {content?.cards?.office_card_title || "Visit Our Office"}
                   </span>
                   <h3 className="text-lg font-serif font-bold text-[#202124] mb-2">
-                    {content?.cards?.office_card_heading || `${city}, Tamil Nadu`}
+                    {content?.cards?.office_card_heading || `${city}, Kerala`}
                   </h3>
                   <p className="text-xs sm:text-sm text-[#70757A] leading-relaxed font-light">
                     {officeAddress}

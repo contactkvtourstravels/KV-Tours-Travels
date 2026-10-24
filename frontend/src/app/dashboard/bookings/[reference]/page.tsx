@@ -26,12 +26,14 @@ import {
   PaymentReceiptData,
 } from "@/lib/api";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
+import { useBranding } from "@/context/BrandingContext";
 
 export default function BookingDetailPage({
   params,
 }: {
   params: Promise<{ reference: string }>;
 }) {
+  const { displayName, getWhatsAppUrl } = useBranding();
   const resolvedParams = use(params);
   const reference = resolvedParams.reference;
 
@@ -129,9 +131,8 @@ export default function BookingDetailPage({
     );
   }
 
-  const waHelpUrl = getWhatsAppClickToChatUrl(
-    voucher?.whatsapp_number,
-    `Hi KV Tours & Travels, I need assistance with my booking ${booking.booking_reference}.`
+  const waHelpUrl = getWhatsAppUrl(
+    `Hi ${displayName || "Travel Concierge"}, I need assistance with my booking ${booking.booking_reference}.`
   );
 
   return (
@@ -494,11 +495,13 @@ export default function BookingDetailPage({
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-[#E4E5E7]">
                 <div>
                   <h2 className="text-xl font-serif font-bold text-[#24292F]">
-                    {voucher.agency_name}
+                    {voucher.pdf_header_title || voucher.agency_name}
                   </h2>
-                  <p className="text-xs text-[#70757A] mt-1">{voucher.agency_location}</p>
+                  <p className="text-xs text-[#70757A] mt-1">
+                    {voucher.pdf_header_subtitle || voucher.agency_location}
+                  </p>
                   <p className="text-xs text-[#70757A]">
-                    Phone: {voucher.agency_phone} | Email: {voucher.agency_email}
+                    {voucher.pdf_contact_info || `Phone: ${voucher.agency_phone} | Email: ${voucher.agency_email}`}
                   </p>
                 </div>
                 <div className="text-left sm:text-right">
@@ -686,7 +689,7 @@ export default function BookingDetailPage({
             </div>
 
             <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 text-amber-800 text-xs leading-relaxed">
-              <strong>Notice:</strong> Submitting a cancellation request does not automatically grant a refund. Our team reviews all requests pursuant to KV Tours & Travels cancellation policies.
+              <strong>Notice:</strong> Submitting a cancellation request does not automatically grant a refund. Our team reviews all requests pursuant to {displayName || "our"} cancellation policies.
             </div>
 
             {cancelError && (

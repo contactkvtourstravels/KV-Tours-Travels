@@ -6,40 +6,39 @@ import { ArrowLeft, Clock, Compass, MapPin, MessageCircle, Users } from "lucide-
 import { publicCatalogApi, type PublicDestinationDetail, type PublicPackageListItem } from "@/lib/api";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
+import { TravelImage } from "@/components/public/TravelImage";
+import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 
 interface DestinationPageProps {
   params: Promise<{ slug: string }>;
 }
 
-const DESTINATION_FALLBACKS: Record<string, string> = {
-  maldives: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1600&q=85",
-  lakshadweep: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1600&q=85",
-  kazakhstan: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1600&q=85",
-  manali: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1600&q=85",
-  default: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1600&q=85",
-};
-
 export async function generateMetadata({ params }: DestinationPageProps): Promise<Metadata> {
   const { slug } = await params;
   try {
-    const dest = await publicCatalogApi.getDestination(slug);
-    const title = dest.seo_title || `${dest.name} Tour Packages | KV Tours & Travels Coimbatore`;
+    const [dest, settings] = await Promise.all([
+      publicCatalogApi.getDestination(slug),
+      publicCatalogApi.getSettings().catch(() => null),
+    ]);
+    const agencyName = settings?.public_display_name || settings?.agency_name || "Travel Agency";
+    const siteUrl = settings?.website_url || "https://wildroot.in";
+    const title = dest.seo_title || `${dest.name} Tour Packages | ${agencyName}`;
     const description =
       dest.seo_description ||
       dest.short_description ||
-      `Discover customized luxury tour packages to ${dest.name} curated by KV Tours & Travels Coimbatore.`;
+      `Discover customized luxury tour packages to ${dest.name} curated by ${agencyName}.`;
 
     return {
       title,
       description,
       alternates: {
-        canonical: `https://kvtours.in/destinations/${slug}`,
+        canonical: `${siteUrl}/destinations/${slug}`,
       },
       openGraph: {
         title,
         description,
-        url: `https://kvtours.in/destinations/${slug}`,
-        images: dest.images[0]?.image_url ? [dest.images[0].image_url] : [],
+        url: `${siteUrl}/destinations/${slug}`,
+        images: dest.cover_image_url ? [dest.cover_image_url] : dest.images[0]?.image_url ? [dest.images[0].image_url] : [],
       },
       twitter: {
         card: "summary_large_image",
@@ -49,7 +48,7 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
     };
   } catch {
     return {
-      title: "Destination Not Found | KV Tours & Travels",
+      title: "Destination Not Found",
     };
   }
 }
@@ -58,24 +57,35 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
   const { slug } = await params;
   let destination: PublicDestinationDetail;
   let packages: PublicPackageListItem[] = [];
+  let agencyName = "Travel Agency";
+  let whatsappNumber: string | undefined;
 
   try {
-    destination = await publicCatalogApi.getDestination(slug);
-    packages = await publicCatalogApi.getPackages({ destination_slug: slug });
+    const [destData, packagesData, settingsData] = await Promise.all([
+      publicCatalogApi.getDestination(slug),
+      publicCatalogApi.getPackages({ destination_slug: slug }),
+      publicCatalogApi.getSettings().catch(() => null),
+    ]);
+    destination = destData;
+    packages = packagesData;
+    agencyName = settingsData?.public_display_name || settingsData?.agency_name || "Travel Agency";
+    whatsappNumber = settingsData?.support_whatsapp || settingsData?.whatsapp_number;
   } catch {
     notFound();
   }
 
+  const agencyCity = "Palakkad";
+
   const waUrl = getWhatsAppClickToChatUrl(
-    null,
-    `Hi KV Tours & Travels Coimbatore, I am interested in traveling to ${destination.name}. Please share customized package options.`
+    whatsappNumber,
+    `Hi ${agencyName}, I am interested in traveling to ${destination.name}. Please share customized package options.`
   );
 
-  const heroImg =
-    destination.images[0]?.image_url ||
-    (Object.keys(DESTINATION_FALLBACKS).find((k) => destination.slug.toLowerCase().includes(k))
-      ? DESTINATION_FALLBACKS[Object.keys(DESTINATION_FALLBACKS).find((k) => destination.slug.toLowerCase().includes(k))!]
-      : DESTINATION_FALLBACKS.default);
+  const rawHero =
+    destination.cover_image_url ||
+    destination.images?.[0]?.image_url ||
+    getDestinationFallback(destination.slug || destination.name);
+  const heroImg = getSafeImageUrl(rawHero);
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -94,19 +104,19 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://kvtours.in",
+        item: "https://wildroot.in",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Destinations",
-        item: "https://kvtours.in/destinations",
+        item: "https://wildroot.in/destinations",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: destination.name,
-        item: `https://kvtours.in/destinations/${slug}`,
+        item: `https://wildroot.in/destinations/${slug}`,
       },
     ],
   };
@@ -123,11 +133,12 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
       />
       {/* 1. HERO HEADER */}
       <section className="relative min-h-[60vh] sm:min-h-[70vh] flex items-end overflow-hidden bg-black">
-        <Image
+        <TravelImage
           src={heroImg}
           alt={destination.name}
           fill
           priority
+          fallbackSlug={destination.slug}
           sizes="100vw"
           className="object-cover object-center scale-105"
         />
@@ -233,10 +244,11 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                         <div>
                           {item.image_url && (
                             <div className="relative h-44 rounded-2xl overflow-hidden mb-4 border border-[#E4E5E7]">
-                              <Image
+                              <TravelImage
                                 src={item.image_url}
                                 alt={item.title}
                                 fill
+                                fallbackSlug={destination.slug}
                                 sizes="(max-width: 768px) 100vw, 50vw"
                                 className="object-cover group-hover:scale-105 transition-transform duration-500"
                               />
@@ -443,19 +455,20 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
               )}
 
               {/* Gallery Grid if images exist */}
-              {destination.images && destination.images.length > 1 && (
+              {destination.images && destination.images.length > 0 && (
                 <div className="pt-8 border-t border-[#E4E5E7]">
                   <h3 className="text-xl font-serif font-bold text-[#202124] mb-6">Photo Gallery</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {destination.images.map((img, idx) => (
                       <div
                         key={idx}
-                        className="relative h-48 rounded-2xl overflow-hidden border border-[#E4E5E7] group shadow-sm"
+                        className="relative h-48 rounded-2xl overflow-hidden border border-[#E4E5E7] group shadow-sm bg-[#F7F7F5]"
                       >
-                        <Image
-                          src={img.image_url}
-                          alt={img.alt_text || `${destination.name} gallery image`}
+                        <TravelImage
+                          src={getSafeImageUrl(img.image_url)}
+                          alt={img.alt_text || `${destination.name} gallery image ${idx + 1}`}
                           fill
+                          fallbackSlug={destination.slug}
                           sizes="(max-width: 768px) 100vw, 33vw"
                           className="object-cover group-hover:scale-105 transition-transform duration-500"
                         />
@@ -468,9 +481,9 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
 
             {/* Sticky Sidebar: Fast Assistance */}
             <div className="space-y-6">
-              <div className="p-8 rounded-3xl bg-[#F7F7F5] border border-[#E4E5E7] shadow-sm">
+              <div className="p-5 sm:p-8 rounded-3xl bg-[#F7F7F5] border border-[#E4E5E7] shadow-sm">
                 <span className="text-[#5F6368] text-xs uppercase tracking-widest font-semibold block mb-1">
-                  Coimbatore Travel Concierge
+                  {agencyCity} Travel Concierge
                 </span>
                 <h3 className="text-xl font-serif font-bold text-[#202124] mb-4">
                   Planning {destination.name}?
@@ -540,13 +553,14 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                   className="rounded-3xl overflow-hidden bg-white border border-[#E4E5E7] hover:border-[#24292F]/40 transition-all flex flex-col shadow-sm hover:shadow-xl group"
                 >
                   <div className="relative h-56 overflow-hidden">
-                    <Image
+                    <TravelImage
                       src={
                         pkg.featured_image?.image_url ||
                         heroImg
                       }
                       alt={pkg.name}
                       fill
+                      fallbackSlug={pkg.slug || destination.slug}
                       sizes="(max-width: 768px) 100vw, 33vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />

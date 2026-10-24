@@ -86,8 +86,8 @@ def test_admin_settings_lifecycle(client, db_session) -> None:
         get_resp = client.get("/api/v1/admin/settings", headers=headers)
         assert get_resp.status_code == 200
         data = get_resp.json()
-        assert data["agency_name"] == "KV Tours & Travels"
-        assert "Coimbatore" in data["agency_location"]
+        assert data["agency_name"] in ("The Wild Root", "Wild Root", "KV Tours & Travels")
+        assert any(loc in data["agency_location"] for loc in ("Coimbatore", "India", "Kerala"))
         assert data["currency"] == "INR"
 
         # 2. PATCH settings

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertCircle, Home, MessageCircle, RefreshCw } from "lucide-react";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
+import { useBranding } from "@/context/BrandingContext";
 
 export default function GlobalError({
   error,
@@ -13,14 +14,15 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { displayName, city, getWhatsAppUrl } = useBranding();
+
   useEffect(() => {
     // Log safe error locally without customer-facing details
     console.error("Public page encounter error:", error.message);
   }, [error]);
 
-  const waUrl = getWhatsAppClickToChatUrl(
-    null,
-    "Hi KV Tours Coimbatore, I encountered a temporary loading issue on your website. Please assist me directly."
+  const waUrl = getWhatsAppUrl(
+    `Hi ${displayName || "Travel Concierge"}, I encountered a temporary loading issue on your website. Please assist me directly.`
   );
 
   return (
@@ -40,7 +42,7 @@ export default function GlobalError({
           </h1>
 
           <p className="text-[#70757A] text-sm leading-relaxed">
-            We encountered a temporary connection issue while retrieving this itinerary. You can reload the page or reach our Coimbatore team directly on WhatsApp.
+            We encountered a temporary connection issue while retrieving this itinerary. You can reload the page or reach our {city || "concierge"} team directly on WhatsApp.
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">

@@ -5,7 +5,7 @@ from __future__ import annotations
 from decimal import Decimal
 from uuid import uuid4
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.cli.bootstrap_admin import seed_standard_roles
 from app.core.permissions import (
@@ -18,7 +18,7 @@ from app.core.permissions import (
 from app.core.security import hash_password
 from app.models.catalog import Destination, Package
 from app.models.commerce import Inquiry
-from app.models.user import Role, User, UserRole
+from app.models.user import Role, User, UserRole, UserSession
 
 ADMIN_PASSWORD = "AdminPassword!2026"
 
@@ -36,13 +36,22 @@ def csrf_headers(client) -> dict[str, str]:
 def create_user_with_role(db, email: str, role_name: str) -> User:
     """Helper to persist a user with an assigned system role."""
     seed_standard_roles(db)
+    normalized = email.lower().strip()
+    existing = db.execute(select(User).where(User.email_normalized == normalized)).scalar_one_or_none()
+    if existing:
+        db.execute(delete(UserSession).where(UserSession.user_id == existing.id))
+        db.execute(delete(UserRole).where(UserRole.user_id == existing.id))
+        db.execute(delete(User).where(User.id == existing.id))
+        db.flush()
+
     user = User(
         email=email,
-        email_normalized=email.lower().strip(),
+        email_normalized=normalized,
         password_hash=hash_password(ADMIN_PASSWORD),
         first_name="Test",
         last_name=role_name.capitalize(),
         status="active",
+        is_email_verified=True,
     )
     db.add(user)
     db.flush()
@@ -191,7 +200,7 @@ def test_admin_access_rules(client, db_session) -> None:
 
 def test_super_admin_full_access(client, db_session) -> None:
     super_admin = create_user_with_role(
-        db_session, "super_admin_user@example.com", ROLE_SUPER_ADMIN
+        db_session, "athulsuresh446@gmail.com", ROLE_SUPER_ADMIN
     )
     target_user = create_user_with_role(
         db_session, "promote_me@example.com", ROLE_CUSTOMER

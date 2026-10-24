@@ -30,7 +30,9 @@ from app.schemas.auth import (
     RegisterRequest,
     ResetPasswordRequest,
     SafeUserResponse,
+    SocialLoginRequest,
 )
+from app.services.firebase_auth_service import verify_firebase_id_token
 
 logger = logging.getLogger(__name__)
 
@@ -64,6 +66,7 @@ def to_safe_user_response(user: User) -> SafeUserResponse:
         phone=user.phone,
         status=user.status,
         roles=get_user_roles(user),
+        is_email_verified=getattr(user, "is_email_verified", False),
         created_at=user.created_at,
         updated_at=user.updated_at,
     )
@@ -118,6 +121,7 @@ def register_customer(
         phone=payload.phone.strip() if payload.phone else None,
         status="active",
         is_deleted=False,
+        is_email_verified=False,
     )
     db.add(new_user)
     db.flush()
@@ -345,3 +349,135 @@ def reset_password(
     )
     db.add(audit)
     db.commit()
+
+
+def social_login_user(
+    db: Session,
+    payload: SocialLoginRequest,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
+) -> tuple[User, str]:
+    """Authenticate or register a user via verified Google or Apple social ID token.
+
+    Security & Business Rules:
+    1. Cryptographically verifies RS256 token against official identity provider public certs.
+    2. Safely links to existing user profile if email matches.
+    3. Retains all existing user roles, bookings, and permissions for existing users.
+    4. For new users, strictly assigns ROLE_CUSTOMER (never escalates privileges to admin/staff).
+    5. Accommodates Apple's first-authorization name parameters and private relay emails.
+    6. Creates an authenticated server-side session and records audit event.
+    """
+    token_claims = verify_firebase_id_token(payload.id_token)
+
+    email = token_claims.get("email")
+    if not email or not isinstance(email, str) or "@" not in email:
+        raise ApiError(
+            status_code=400,
+            code="INVALID_SOCIAL_EMAIL",
+            message="Social identity provider did not supply a valid email address.",
+        )
+
+    normalized_email = normalize_email(email)
+
+    # Check for existing user by normalized email
+    stmt = (
+        select(User)
+        .options(joinedload(User.role_assignments).joinedload(UserRole.role))
+        .where(User.email_normalized == normalized_email)
+    )
+    user = db.execute(stmt).unique().scalar_one_or_none()
+
+    if user is not None:
+        if user.is_deleted or user.status != "active":
+            raise ApiError(
+                status_code=403,
+                code="ACCOUNT_INACTIVE",
+                message="Account is inactive or disabled.",
+            )
+        if token_claims.get("email_verified"):
+            user.is_email_verified = True
+    else:
+        # Determine names
+        first_name = (payload.first_name or "").strip()
+        last_name = (payload.last_name or "").strip()
+
+        # If name was not explicitly provided by client (e.g., standard Google sign-in),
+        # parse from token claims or fallback to email local-part
+        if not first_name:
+            token_name = (token_claims.get("name") or "").strip()
+            if token_name:
+                parts = token_name.split()
+                first_name = parts[0]
+                if not last_name and len(parts) > 1:
+                    last_name = " ".join(parts[1:])
+            else:
+                first_name = email.split("@")[0].title()
+
+        if not last_name:
+            last_name = "Traveler"
+
+        # Ensure customer role exists in database
+        customer_role = db.execute(
+            select(Role).where(Role.name == ROLE_CUSTOMER)
+        ).scalar_one_or_none()
+        if customer_role is None:
+            customer_role = Role(
+                name=ROLE_CUSTOMER,
+                description="Standard public customer account",
+            )
+            db.add(customer_role)
+            db.flush()
+
+        # Create new customer account - password_hash is None for pure social sign-up
+        is_verified = bool(token_claims.get("email_verified", True))
+        user = User(
+            email=email.strip(),
+            email_normalized=normalized_email,
+            password_hash=None,
+            first_name=first_name[:100],
+            last_name=last_name[:100],
+            phone=None,
+            status="active",
+            is_deleted=False,
+            is_email_verified=is_verified,
+        )
+        db.add(user)
+        db.flush()
+
+        # Strictly assign CUSTOMER role (security requirement: never grant admin/staff)
+        role_assignment = UserRole(
+            user_id=user.id,
+            role_id=customer_role.id,
+        )
+        db.add(role_assignment)
+        db.flush()
+
+    # Create server-side session
+    _, raw_token = create_user_session(db, user, ip_address, user_agent)
+
+    # Record audit log
+    provider_name = payload.provider or token_claims.get("provider", "social")
+    audit = AuditLog(
+        actor_user_id=user.id,
+        action="auth.social_login",
+        entity_type="user",
+        entity_id=str(user.id),
+        ip_address=ip_address,
+        metadata_json={
+            "provider": provider_name,
+            "user_agent": user_agent[:255] if user_agent else None,
+        },
+    )
+    db.add(audit)
+    db.commit()
+
+    # Eagerly load user and role assignments for safe serialization
+    stmt = (
+        select(User)
+        .options(joinedload(User.role_assignments).joinedload(UserRole.role))
+        .where(User.id == user.id)
+    )
+    user = db.execute(stmt).unique().scalar_one()
+
+    return user, raw_token
+

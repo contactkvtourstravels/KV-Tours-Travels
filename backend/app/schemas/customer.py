@@ -94,7 +94,7 @@ class CustomerProfileResponse(BaseModel):
     created_at: datetime
     email_immutability_notice: str = (
         "Email address is locked to protect customer security. "
-        "To request an email change, please contact KV Tours & Travels concierge support."
+        "To request an email change, please contact concierge support."
     )
 
 
@@ -160,6 +160,11 @@ class TravelVoucherData(BaseModel):
     """Immutable travel voucher data model for display or PDF export."""
 
     agency_name: str
+    public_display_name: str | None = None
+    legal_business_name: str | None = None
+    logo_url: str | None = None
+    tax_id: str | None = None
+    registration_number: str | None = None
     agency_location: str
     agency_phone: str
     agency_email: str
@@ -180,6 +185,17 @@ class TravelVoucherData(BaseModel):
     payment_status: str
     special_notes: str | None = None
     issued_at: datetime
+    # PDF Customizations
+    pdf_header_title: str | None = None
+    pdf_header_subtitle: str | None = None
+    pdf_office_address: str | None = None
+    pdf_contact_info: str | None = None
+    pdf_checkin_instructions: str | None = None
+    pdf_logistics_notice: str | None = None
+    pdf_helpline_info: str | None = None
+    pdf_footer_declaration: str | None = None
+    pdf_badge_label: str | None = None
+    pdf_logo_url: str | None = None
 
 
 class PaymentReceiptData(BaseModel):
@@ -187,6 +203,11 @@ class PaymentReceiptData(BaseModel):
 
     receipt_number: str
     agency_name: str
+    public_display_name: str | None = None
+    legal_business_name: str | None = None
+    logo_url: str | None = None
+    tax_id: str | None = None
+    registration_number: str | None = None
     agency_location: str
     agency_phone: str
     agency_email: str

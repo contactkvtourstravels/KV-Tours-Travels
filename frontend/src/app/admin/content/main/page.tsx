@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   Save,
   Send,
@@ -35,6 +35,7 @@ import {
   Clock,
   MessageCircle,
   Share2,
+  Printer,
 } from "lucide-react";
 import {
   adminApi,
@@ -45,6 +46,7 @@ import {
   PackageItem,
 } from "@/lib/api";
 import { useAdmin } from "../../AdminContext";
+import { useBranding } from "@/context/BrandingContext";
 
 const SECTION_LABELS: Record<string, string> = {
   hero: "Cinematic Hero Showcase",
@@ -119,8 +121,10 @@ const SECONDARY_FONTS = [
 ];
 
 export default function AdminMainContentPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const { hasAnyRole } = useAdmin();
+  const { updateBranding } = useBranding();
   const canEdit = hasAnyRole(["admin", "super_admin"]);
 
   // Core CMS state
@@ -187,11 +191,15 @@ export default function AdminMainContentPage() {
 
   // Read URL query parameter tab
   useEffect(() => {
-    const tabParam = searchParams.get("tab") as MainTab | null;
-    if (tabParam && ["hero", "sections", "featured", "branding", "contact", "seo"].includes(tabParam)) {
-      setActiveTab(tabParam);
+    const tabParam = searchParams.get("tab");
+    if (tabParam === "pdf" || tabParam === "voucher") {
+      router.replace("/admin/settings?tab=pdf");
+      return;
     }
-  }, [searchParams]);
+    if (tabParam && ["hero", "sections", "featured", "branding", "contact", "seo"].includes(tabParam)) {
+      setActiveTab(tabParam as MainTab);
+    }
+  }, [searchParams, router]);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
@@ -216,7 +224,7 @@ export default function AdminMainContentPage() {
       setAgencyName(settingsRes.agency_name || "");
       setPublicDisplayName(settingsRes.public_display_name || settingsRes.agency_name || "");
       setShortName(settingsRes.short_name || "");
-      setTagline(settingsRes.tagline || "");
+      setTagline(settingsRes.tagline || "Luxury & Adventure Journeys");
       setLogoUrl(settingsRes.logo_url || "");
       setSecondaryLogoUrl(settingsRes.secondary_logo_url || "");
       setFaviconUrl(settingsRes.favicon_url || "");
@@ -320,6 +328,7 @@ export default function AdminMainContentPage() {
       setSaving(true);
       const updatedSettings = await adminApi.updateSettings(getAgencyProfilePayload());
       setSettings(updatedSettings);
+      updateBranding(updatedSettings as any);
       showToast("Agency Identity & Branding settings successfully saved and updated globally!", "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save agency profile";
@@ -345,6 +354,7 @@ export default function AdminMainContentPage() {
       setEnvelope(updatedPage);
       setContent(updatedPage.draft);
       setSettings(updatedSettings);
+      updateBranding(updatedSettings as any);
       showToast("Draft saved successfully. Live homepage remains unchanged until published.", "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save draft";
@@ -372,6 +382,7 @@ export default function AdminMainContentPage() {
       setEnvelope(publishedPage);
       setContent(publishedPage.draft);
       setSettings(updatedSettings);
+      updateBranding(updatedSettings as any);
       showToast("Main Website content & Agency Identity published to live homepage! Public visitors now see this version.", "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to publish page";
@@ -1415,6 +1426,28 @@ export default function AdminMainContentPage() {
             </p>
           </div>
 
+          {/* Quick Access to Travel Voucher & PDF Letterhead Settings */}
+          <div className="p-4 rounded-2xl bg-[#FBFBFA] border border-[#C5A880]/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-center text-[#8C6D3B] shrink-0">
+                <Printer className="w-4 h-4" />
+              </div>
+              <div>
+                <strong className="text-[#202124] font-semibold block">Official Travel Voucher &amp; PDF Letterhead</strong>
+                <span className="text-[#5F6368] text-[11px]">
+                  Customize print vouchers, arrival briefing guidelines, emergency concierge helpline, and digital authenticity seal.
+                </span>
+              </div>
+            </div>
+            <Link
+              href="/admin/settings?tab=pdf"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#24292F] hover:bg-[#3D4450] text-white font-semibold text-xs transition-colors shrink-0 shadow-2xs cursor-pointer"
+            >
+              <span>Edit PDF Details</span>
+              <ExternalLink className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs uppercase tracking-wider font-semibold text-[#70757A] mb-1.5">
@@ -1425,7 +1458,7 @@ export default function AdminMainContentPage() {
                 value={agencyName}
                 onChange={(e) => setAgencyName(e.target.value)}
                 disabled={!canEdit}
-                placeholder="KV Tours & Travels"
+                placeholder="e.g. KV Tours & Travels"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>
@@ -1439,7 +1472,7 @@ export default function AdminMainContentPage() {
                 value={publicDisplayName}
                 onChange={(e) => setPublicDisplayName(e.target.value)}
                 disabled={!canEdit}
-                placeholder="KV Tours & Travels Coimbatore"
+                placeholder="e.g. KV Tours & Travels"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>
@@ -1453,7 +1486,7 @@ export default function AdminMainContentPage() {
                 value={legalBusinessName}
                 onChange={(e) => setLegalBusinessName(e.target.value)}
                 disabled={!canEdit}
-                placeholder="KV Tours & Travels Private Limited"
+                placeholder="e.g. KV Tours & Travels Private Limited"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>
@@ -1467,7 +1500,7 @@ export default function AdminMainContentPage() {
                 value={shortName}
                 onChange={(e) => setShortName(e.target.value)}
                 disabled={!canEdit}
-                placeholder="KV Tours"
+                placeholder="e.g. KV Tours"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>
@@ -1481,7 +1514,7 @@ export default function AdminMainContentPage() {
                 value={tagline}
                 onChange={(e) => setTagline(e.target.value)}
                 disabled={!canEdit}
-                placeholder="Coimbatore • Luxury & Adventure Journeys"
+                placeholder="Luxury & Adventure Journeys"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>

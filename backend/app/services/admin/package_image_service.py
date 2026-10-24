@@ -96,6 +96,8 @@ def add_package_image(
         is_featured=payload.is_featured,
     )
     db.add(image)
+    if payload.is_featured or not pkg.cover_image_url:
+        pkg.cover_image_url = image.image_url
     db.flush()
 
     record_audit_log(
@@ -166,6 +168,15 @@ def update_package_image(
                 f.is_featured = False
         image.is_featured = payload.is_featured
         changes["is_featured"] = image.is_featured
+        if payload.is_featured:
+            pkg = db.execute(select(Package).where(Package.id == package_id)).scalar_one_or_none()
+            if pkg:
+                pkg.cover_image_url = image.image_url
+
+    if "image_url" in changes:
+        pkg = db.execute(select(Package).where(Package.id == package_id)).scalar_one_or_none()
+        if pkg and image.is_featured:
+            pkg.cover_image_url = image.image_url
 
     record_audit_log(
         db=db,

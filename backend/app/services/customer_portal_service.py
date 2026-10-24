@@ -124,6 +124,9 @@ class CustomerPortalService:
         # Build WhatsApp concierge prefilled info
         wa_url = self.whatsapp_service.build_general_support_url(db)
         wa_phone = self.whatsapp_service.get_configured_phone(db)
+        pub = get_public_settings(db)
+        agency_display = pub.public_display_name or pub.agency_name or "our concierge"
+        concierge_message = pub.whatsapp_prefilled_message or f"Hi {agency_display}, I would like to inquire about your curated travel experiences."
 
         return CustomerDashboardSummary(
             user_name=f"{user.first_name} {user.last_name}",
@@ -137,7 +140,7 @@ class CustomerPortalService:
             whatsapp_concierge=WhatsAppConciergeAction(
                 action_type="concierge_help",
                 label="Direct Concierge Support",
-                prefilled_message="Hi KV Tours & Travels, I would like to inquire about your curated travel experiences.",
+                prefilled_message=concierge_message,
                 click_to_chat_url=wa_url,
                 display_phone=wa_phone,
             ),
@@ -147,8 +150,16 @@ class CustomerPortalService:
     # Customer Profile
     # -------------------------------------------------------------
 
-    def get_profile(self, user: User) -> CustomerProfileResponse:
-        return CustomerProfileResponse.model_validate(user)
+    def get_profile(self, user: User, db: Session | None = None) -> CustomerProfileResponse:
+        res = CustomerProfileResponse.model_validate(user)
+        if db is not None:
+            pub = get_public_settings(db)
+            agency_name = pub.public_display_name or pub.agency_name or "our concierge"
+            res.email_immutability_notice = (
+                f"Email address is locked to protect customer security. "
+                f"To request an email change, please contact {agency_name} concierge support."
+            )
+        return res
 
     def update_profile(
         self, db: Session, user: User, payload: CustomerProfileUpdate
@@ -163,7 +174,7 @@ class CustomerPortalService:
 
         db.flush()
         db.refresh(user)
-        return CustomerProfileResponse.model_validate(user)
+        return self.get_profile(user=user, db=db)
 
     # -------------------------------------------------------------
     # Saved Travellers Management
@@ -478,6 +489,11 @@ class CustomerPortalService:
         return PaymentReceiptData(
             receipt_number=f"RCP-{booking.booking_reference}",
             agency_name=pub_settings.agency_name,
+            public_display_name=pub_settings.public_display_name or pub_settings.agency_name,
+            legal_business_name=pub_settings.legal_business_name or pub_settings.agency_name,
+            logo_url=pub_settings.logo_url,
+            tax_id=pub_settings.tax_id,
+            registration_number=pub_settings.registration_number,
             agency_location=pub_settings.agency_location,
             agency_phone=pub_settings.contact_phone,
             agency_email=pub_settings.contact_email,
@@ -573,6 +589,11 @@ class CustomerPortalService:
 
         return TravelVoucherData(
             agency_name=pub_settings.agency_name,
+            public_display_name=pub_settings.public_display_name or pub_settings.agency_name,
+            legal_business_name=pub_settings.legal_business_name or pub_settings.agency_name,
+            logo_url=pub_settings.logo_url,
+            tax_id=pub_settings.tax_id,
+            registration_number=pub_settings.registration_number,
             agency_location=pub_settings.agency_location,
             agency_phone=pub_settings.contact_phone,
             agency_email=pub_settings.contact_email,
@@ -595,6 +616,16 @@ class CustomerPortalService:
             payment_status=booking.payment_status,
             special_notes=booking.customer_notes,
             issued_at=datetime.now(timezone.utc),
+            pdf_header_title=pub_settings.pdf_header_title,
+            pdf_header_subtitle=pub_settings.pdf_header_subtitle,
+            pdf_office_address=pub_settings.pdf_office_address,
+            pdf_contact_info=pub_settings.pdf_contact_info,
+            pdf_checkin_instructions=pub_settings.pdf_checkin_instructions,
+            pdf_logistics_notice=pub_settings.pdf_logistics_notice,
+            pdf_helpline_info=pub_settings.pdf_helpline_info,
+            pdf_footer_declaration=pub_settings.pdf_footer_declaration,
+            pdf_badge_label=pub_settings.pdf_badge_label,
+            pdf_logo_url=pub_settings.pdf_logo_url,
         )
 
     # -------------------------------------------------------------

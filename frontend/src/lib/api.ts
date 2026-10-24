@@ -11,6 +11,7 @@ export interface SafeUser {
   phone: string | null;
   status: string;
   roles: string[];
+  is_email_verified?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -110,6 +111,8 @@ export interface AdminSiteSettings {
   agency_name: string;
   public_display_name?: string | null;
   short_name?: string | null;
+  admin_panel_name?: string | null;
+  admin_portal_subtitle?: string | null;
   tagline: string;
   logo_url?: string | null;
   secondary_logo_url?: string | null;
@@ -248,6 +251,18 @@ export interface AdminSiteSettings {
   promo_banner_text?: string | null;
   promo_banner_link?: string | null;
   best_offers_enabled?: boolean;
+
+  // Travel Voucher & PDF Customization
+  pdf_header_title?: string | null;
+  pdf_header_subtitle?: string | null;
+  pdf_office_address?: string | null;
+  pdf_contact_info?: string | null;
+  pdf_checkin_instructions?: string | null;
+  pdf_logistics_notice?: string | null;
+  pdf_helpline_info?: string | null;
+  pdf_footer_declaration?: string | null;
+  pdf_badge_label?: string | null;
+  pdf_logo_url?: string | null;
 
   updated_at?: string;
 }
@@ -739,6 +754,11 @@ export interface PublicDestinationListItem {
   slug: string;
   country: string;
   region: string | null;
+  state_or_city?: string | null;
+  category?: string | null;
+  travel_type?: string | null;
+  cover_image_url?: string | null;
+  display_order?: number;
   short_description: string | null;
   featured_image: PublicImageSummary | null;
   package_count: number;
@@ -771,6 +791,9 @@ export interface PublicPackageListItem {
   slug: string;
   destination_name: string;
   destination_slug: string;
+  category?: string | null;
+  travel_type?: string | null;
+  cover_image_url?: string | null;
   base_price: number;
   currency: string;
   duration_days: number;
@@ -905,6 +928,8 @@ export interface PublicSiteSettings {
   agency_name: string;
   public_display_name?: string | null;
   short_name?: string | null;
+  admin_panel_name?: string | null;
+  admin_portal_subtitle?: string | null;
   tagline: string;
   logo_url?: string | null;
   secondary_logo_url?: string | null;
@@ -994,6 +1019,18 @@ export interface PublicSiteSettings {
   best_offers_enabled?: boolean;
   online_payments_enabled?: boolean;
   online_payments_maintenance_message?: string;
+
+  // Travel Voucher & PDF Customization
+  pdf_header_title?: string | null;
+  pdf_header_subtitle?: string | null;
+  pdf_office_address?: string | null;
+  pdf_contact_info?: string | null;
+  pdf_checkin_instructions?: string | null;
+  pdf_logistics_notice?: string | null;
+  pdf_helpline_info?: string | null;
+  pdf_footer_declaration?: string | null;
+  pdf_badge_label?: string | null;
+  pdf_logo_url?: string | null;
 }
 
 // ==============================================================================
@@ -1126,6 +1163,7 @@ export interface ContactHeroSection {
   eyebrow: string;
   heading: string;
   description: string;
+  background_image_url?: string | null;
 }
 
 export interface ContactCardsSection {
@@ -1561,6 +1599,20 @@ export const authApi = {
     password: string;
   }): Promise<AuthResponse> => {
     const res = await apiRequest<AuthResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    clearCachedCsrfToken();
+    return res;
+  },
+
+  socialLogin: async (payload: {
+    id_token: string;
+    provider: string;
+    first_name?: string;
+    last_name?: string;
+  }): Promise<AuthResponse> => {
+    const res = await apiRequest<AuthResponse>("/auth/social-login", {
       method: "POST",
       body: JSON.stringify(payload),
     });
@@ -2560,11 +2612,17 @@ export const adminBankAccountApi = {
 export const publicCatalogApi = {
   getDestinations: async (params?: {
     country?: string;
+    travel_type?: string;
     is_featured?: boolean;
+    limit?: number;
+    offset?: number;
   }): Promise<PublicDestinationListItem[]> => {
     const query = new URLSearchParams();
     if (params?.country) query.set("country", params.country);
+    if (params?.travel_type) query.set("travel_type", params.travel_type);
     if (params?.is_featured !== undefined) query.set("is_featured", String(params.is_featured));
+    if (params?.limit !== undefined) query.set("limit", String(params.limit));
+    if (params?.offset !== undefined) query.set("offset", String(params.offset));
     const qs = query.toString();
     return await apiRequest<PublicDestinationListItem[]>(`/destinations${qs ? `?${qs}` : ""}`);
   },
@@ -2575,11 +2633,19 @@ export const publicCatalogApi = {
 
   getPackages: async (params?: {
     destination_slug?: string;
+    travel_type?: string;
+    category?: string;
     is_featured?: boolean;
+    limit?: number;
+    offset?: number;
   }): Promise<PublicPackageListItem[]> => {
     const query = new URLSearchParams();
     if (params?.destination_slug) query.set("destination_slug", params.destination_slug);
+    if (params?.travel_type) query.set("travel_type", params.travel_type);
+    if (params?.category) query.set("category", params.category);
     if (params?.is_featured !== undefined) query.set("is_featured", String(params.is_featured));
+    if (params?.limit !== undefined) query.set("limit", String(params.limit));
+    if (params?.offset !== undefined) query.set("offset", String(params.offset));
     const qs = query.toString();
     return await apiRequest<PublicPackageListItem[]>(`/packages${qs ? `?${qs}` : ""}`);
   },
@@ -3580,6 +3646,17 @@ export interface TravelVoucherData {
   payment_status: string;
   special_notes: string | null;
   issued_at: string;
+  // PDF Customizations
+  pdf_header_title?: string | null;
+  pdf_header_subtitle?: string | null;
+  pdf_office_address?: string | null;
+  pdf_contact_info?: string | null;
+  pdf_checkin_instructions?: string | null;
+  pdf_logistics_notice?: string | null;
+  pdf_helpline_info?: string | null;
+  pdf_footer_declaration?: string | null;
+  pdf_badge_label?: string | null;
+  pdf_logo_url?: string | null;
 }
 
 export interface PaymentReceiptData {

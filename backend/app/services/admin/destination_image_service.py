@@ -102,6 +102,8 @@ def add_destination_image(
         is_featured=payload.is_featured,
     )
     db.add(image)
+    if payload.is_featured or not dest.cover_image_url:
+        dest.cover_image_url = image.image_url
     db.flush()
 
     record_audit_log(
@@ -173,6 +175,15 @@ def update_destination_image(
                 f.is_featured = False
         image.is_featured = payload.is_featured
         changes["is_featured"] = image.is_featured
+        if payload.is_featured:
+            dest = db.execute(select(Destination).where(Destination.id == destination_id)).scalar_one_or_none()
+            if dest:
+                dest.cover_image_url = image.image_url
+
+    if "image_url" in changes:
+        dest = db.execute(select(Destination).where(Destination.id == destination_id)).scalar_one_or_none()
+        if dest and image.is_featured:
+            dest.cover_image_url = image.image_url
 
     record_audit_log(
         db=db,

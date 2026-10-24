@@ -55,16 +55,20 @@ class Settings(BaseSettings):
     login_rate_limit_max_attempts: int = 5
     login_rate_limit_window_seconds: int = 900  # 15 minutes
 
+    # Google & Firebase Social Authentication Settings
+    google_client_id: str = "786587181693-9m54fg2tp89kafu39f5qpki0p63ovm5q.apps.googleusercontent.com"
+    firebase_project_id: str = "travel-agency-31216"
+
     # Cloudinary Media Settings
-    cloudinary_cloud_name: str = "kvtours-travels"
-    cloudinary_api_key: str = "kvtours_api_key_dev"
-    cloudinary_api_secret: str = "kvtours_api_secret_dev"
+    cloudinary_cloud_name: str = "wildroot"
+    cloudinary_api_key: str = "wildroot_api_key_dev"
+    cloudinary_api_secret: str = "wildroot_api_secret_dev"
 
     # Public Agency & WhatsApp Configuration
-    agency_name: str = "KV Tours & Travels"
-    agency_location: str = "Coimbatore, Tamil Nadu, India"
+    agency_name: str = "The Wild Root"
+    agency_location: str = "Palakkad, Kerala, India"
     whatsapp_number: str = "+919442000000"
-    contact_email: str = "contact@kvtours.in"
+    contact_email: str = "contact@wildroot.in"
     contact_phone: str = "+91 94420 00000"
 
     # Razorpay Payment Gateway Settings (Test / Sandbox defaults)
@@ -86,8 +90,8 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_username: str = ""
     smtp_password: SecretStr = SecretStr("")
-    email_from: str = "KV Tours & Travels <bookings@kvtours.in>"
-    email_reply_to: str = "concierge@kvtours.in"
+    email_from: str = "Wild Root <bookings@wildroot.in>"
+    email_reply_to: str = "concierge@wildroot.in"
 
     # WhatsApp Communication Settings
     whatsapp_provider: str = "direct"  # 'direct', 'cloud_api', 'mock'

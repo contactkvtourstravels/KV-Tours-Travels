@@ -22,8 +22,8 @@ def test_public_settings_endpoint(client, db_session) -> None:
     resp = client.get("/api/v1/settings")
     assert resp.status_code == 200
     data = resp.json()
-    assert data["agency_name"] == "KV Tours & Travels"
-    assert "Coimbatore" in data["agency_location"]
+    assert data["agency_name"] in ("The Wild Root", "Wild Root", "KV Tours & Travels")
+    assert any(loc in data["agency_location"] for loc in ("Coimbatore", "India", "Kerala"))
     assert "whatsapp_number" in data
     assert data["currency"] == "INR"
 

@@ -22,8 +22,8 @@ import {
   type PublicInquiryCreate,
   type CustomTripPageContent,
 } from "@/lib/api";
-import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
+import { useBranding } from "@/context/BrandingContext";
 
 const TRIP_TYPES = [
   { id: "honeymoon", label: "Honeymoon & Romance", icon: Heart },
@@ -34,6 +34,7 @@ const TRIP_TYPES = [
 ];
 
 function CustomTripPlanner() {
+  const { displayName, city, getWhatsAppUrl } = useBranding();
   const searchParams = useSearchParams();
   const prefilledDest = searchParams?.get("destination") || "";
   const isPreview = searchParams?.get("preview") === "true";
@@ -106,16 +107,15 @@ Special Preferences: ${preferences || "None specified"}
     });
   };
 
-  const waUrl = getWhatsAppClickToChatUrl(
-    null,
-    `Hi KV Tours & Travels Coimbatore! I would like to design a custom trip to ${destination || "a holiday destination"}. Please assist me.`
+  const waUrl = getWhatsAppUrl(
+    `Hi ${displayName}! I would like to design a custom trip to ${destination || "a holiday destination"}. Please assist me.`
   );
 
-  const heroEyebrow = pageContent?.hero?.eyebrow || "Coimbatore Concierge Service";
+  const heroEyebrow = pageContent?.hero?.eyebrow || `${city || "Private"} Concierge Service`;
   const heroHeading = pageContent?.hero?.heading || "Design Your Bespoke Journey";
   const heroDescription =
     pageContent?.hero?.description ||
-    "Every vacation should be as unique as you are. Share your travel wishes below and let our Coimbatore specialists curate an extraordinary, personalized itinerary.";
+    `Every vacation should be as unique as you are. Share your travel wishes below and let our ${city || displayName} specialists curate an extraordinary, personalized itinerary.`;
   const bannerImg = pageContent?.hero?.banner_image_url;
 
   const submitButtonLabel = pageContent?.cta_labels?.submit_button_label || "Request Custom Itinerary";

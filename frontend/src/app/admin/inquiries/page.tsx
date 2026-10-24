@@ -23,8 +23,10 @@ import {
   InquiryDetailResponse,
   PaginatedResponse,
 } from "@/lib/api";
+import { useBranding } from "@/context/BrandingContext";
 
 export default function InquiriesAdminPage() {
+  const { displayName } = useBranding();
   const [inquiries, setInquiries] = useState<PaginatedResponse<InquiryListItem> | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -176,7 +178,7 @@ export default function InquiriesAdminPage() {
     if (!inquiry.phone) return "#";
     const clean = inquiry.phone.replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
-      `Hello ${inquiry.name}, this is KV Tours & Travels regarding your recent travel inquiry. How can we assist you today?`
+      `Hello ${inquiry.name}, this is ${displayName || "our concierge team"} regarding your recent travel inquiry. How can we assist you today?`
     );
     return `https://wa.me/${clean}?text=${msg}`;
   };

@@ -29,6 +29,7 @@ from app.cli.bootstrap_admin import seed_standard_roles
 from app.core.permissions import ROLE_ADMIN, ROLE_CUSTOMER
 from app.core.security import hash_password
 from app.models.catalog import Destination, Package, PackageDeparture
+from app.models.content import SiteSetting
 from app.models.user import Role, User, UserRole
 from app.services.razorpay_client import get_razorpay_client
 
@@ -501,6 +502,25 @@ def test_split_payment_and_outstanding_balance_reconciliation(client, db_session
 # =========================================================================
 
 
+def enable_bank_transfers_in_db(db_session, enabled: bool = True) -> None:
+    """Helper to configure bank transfer availability in SiteSetting for tests."""
+    setting = db_session.execute(
+        select(SiteSetting).where(SiteSetting.key == "bank_transfer_settings")
+    ).scalar_one_or_none()
+    if not setting:
+        setting = SiteSetting(
+            key="bank_transfer_settings",
+            value={"bank_transfer_enabled": enabled, "branch_payment_enabled": enabled},
+        )
+        db_session.add(setting)
+    else:
+        new_val = dict(setting.value or {})
+        new_val["bank_transfer_enabled"] = enabled
+        new_val["branch_payment_enabled"] = enabled
+        setting.value = new_val
+    db_session.commit()
+
+
 def test_bank_transfer_submission_and_duplicate_prevention(client, db_session):
     customer = create_user(db_session, "bank_transfer_cust@test.com", ROLE_CUSTOMER)
     headers = login(client, customer.email)
@@ -520,7 +540,23 @@ def test_bank_transfer_submission_and_duplicate_prevention(client, db_session):
     )
     booking_id = b_res.json()["id"]
 
-    # Customer submits transfer UTR
+    # 1. When bank transfers are disabled by administrator -> 400 Bad Request
+    enable_bank_transfers_in_db(db_session, enabled=False)
+    disabled_utr = f"UTR{uuid4().hex[:12].upper()}"
+    dis_res = client.post(
+        "/api/v1/payments/bank-transfer",
+        json={
+            "booking_id": booking_id,
+            "transfer_reference": disabled_utr,
+            "amount": 75000.00,
+        },
+        headers=headers,
+    )
+    assert dis_res.status_code == 400
+    assert "direct bank transfers are currently disabled" in get_error_message(dis_res).lower()
+
+    # 2. When bank transfers are enabled by administrator -> 201 Created
+    enable_bank_transfers_in_db(db_session, enabled=True)
     utr = f"UTR{uuid4().hex[:12].upper()}"
     sub_res = client.post(
         "/api/v1/payments/bank-transfer",
@@ -555,6 +591,9 @@ def test_bank_transfer_submission_and_duplicate_prevention(client, db_session):
 def test_bank_transfer_staff_verification_and_rejection(client, db_session):
     admin = create_user(db_session, "admin_verifier@test.com", ROLE_ADMIN)
     customer = create_user(db_session, "customer_payer@test.com", ROLE_CUSTOMER)
+
+    # Enable bank transfers for verification test
+    enable_bank_transfers_in_db(db_session, enabled=True)
 
     pkg, departure = setup_package_and_departure(
         db_session, base_price=Decimal("50000.00"), total_capacity=10, max_travellers=10

@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { CustomerProvider, useCustomer } from "./CustomerContext";
+import { useBranding } from "@/context/BrandingContext";
 
 interface NavItem {
   name: string;
@@ -33,6 +34,7 @@ const CUSTOMER_NAV: NavItem[] = [
 
 function CustomerPortalShell({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useCustomer();
+  const { displayName, shortName, logoUrl, initials: agencyInitials, city, state, getWhatsAppUrl } = useBranding();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -41,7 +43,7 @@ function CustomerPortalShell({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-[#F3F4F4] flex flex-col items-center justify-center text-[#70757A]">
         <div className="w-10 h-10 border-2 border-[#E4E5E7] border-t-[#24292F] rounded-full animate-spin mb-4" />
         <p className="text-xs uppercase tracking-widest text-[#24292F] font-semibold">
-          Loading KV Tours Customer Portal...
+          Loading {shortName || displayName} Customer Portal...
         </p>
       </div>
     );
@@ -51,7 +53,7 @@ function CustomerPortalShell({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  const initials = `${user.first_name?.[0] || ""}${user.last_name?.[0] || ""}`.toUpperCase() || "KV";
+  const initials = `${user.first_name?.[0] || ""}${user.last_name?.[0] || ""}`.toUpperCase() || (agencyInitials || "U");
 
   return (
     <div className="min-h-screen bg-[#F3F4F4] text-[#202124] flex flex-col">
@@ -61,13 +63,22 @@ function CustomerPortalShell({ children }: { children: React.ReactNode }) {
           {/* Brand Logo */}
           <div className="flex items-center gap-6">
             <Link href="/dashboard" className="group flex items-center gap-3">
-              <div className="h-9 px-3 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 border border-[#3D4450] shadow-sm group-hover:bg-[#1B1E23] transition-all">
-                <Compass className="w-3.5 h-3.5 text-white/90" />
-                <span className="font-serif font-black text-xs tracking-wider">KV</span>
-              </div>
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoUrl}
+                  alt={displayName}
+                  className="h-9 w-auto max-w-[100px] object-contain rounded-lg"
+                />
+              ) : (
+                <div className="h-9 px-3 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 border border-[#3D4450] shadow-sm group-hover:bg-[#1B1E23] transition-all">
+                  <Compass className="w-3.5 h-3.5 text-white/90" />
+                  <span className="font-serif font-black text-xs tracking-wider">{shortName || agencyInitials}</span>
+                </div>
+              )}
               <div className="flex flex-col justify-center">
                 <span className="text-[#202124] font-serif tracking-widest text-sm sm:text-base uppercase font-bold group-hover:text-[#3D4450] transition-colors leading-none">
-                  KV Tours & Travels
+                  {displayName}
                 </span>
                 <span className="text-[10px] uppercase tracking-[0.2em] text-[#5F6368] font-semibold mt-1">
                   Customer Portal
@@ -102,7 +113,7 @@ function CustomerPortalShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-3">
             {/* Direct WhatsApp Concierge Link */}
             <a
-              href={getWhatsAppClickToChatUrl(null, "Hi KV Tours & Travels, I need assistance with my account.")}
+              href={getWhatsAppUrl(`Hi ${displayName}, I need assistance with my customer account.`)}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs font-semibold hover:bg-[#DCF3EA] transition-all"
@@ -190,7 +201,7 @@ function CustomerPortalShell({ children }: { children: React.ReactNode }) {
                 <span>Explore Packages</span>
               </Link>
               <a
-                href={getWhatsAppClickToChatUrl(null, "Hi KV Tours & Travels, I need concierge assistance with my account.")}
+                href={getWhatsAppUrl(`Hi ${displayName}, I need concierge assistance with my account.`)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 px-3 py-2 text-xs text-[#0D7A53] font-medium"
@@ -212,7 +223,7 @@ function CustomerPortalShell({ children }: { children: React.ReactNode }) {
       {/* Footer Note */}
       <footer className="border-t border-[#E4E5E7] bg-white py-6 text-center text-xs text-[#70757A]">
         <p className="tracking-wider uppercase">
-          KV Tours & Travels &bull; Coimbatore, Tamil Nadu &bull; Official Customer Portal
+          {displayName} &bull; {city ? `${city}, ${state}` : "India"} &bull; Official Customer Portal
         </p>
       </footer>
     </div>

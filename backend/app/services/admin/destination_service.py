@@ -18,6 +18,7 @@ from app.schemas.admin import (
 )
 from app.services.admin.audit_service import record_audit_log
 from app.services.admin.utils import generate_unique_slug, paginate, slugify
+from app.core.cache import catalog_cache
 
 
 def serialize_destination(
@@ -213,6 +214,7 @@ def create_destination(
         },
     )
     db.commit()
+    catalog_cache.invalidate(["destinations"])
     return serialize_destination(destination, 0)
 
 
@@ -338,6 +340,7 @@ def update_destination(
         metadata={"changes": changes},
     )
     db.commit()
+    catalog_cache.invalidate(["destinations"])
 
     package_count = db.execute(
         select(func.count(Package.id)).where(
@@ -380,6 +383,7 @@ def delete_destination(
         metadata={"slug": destination.slug, "name": destination.name},
     )
     db.commit()
+    catalog_cache.invalidate(["destinations"])
 
     package_count = db.execute(
         select(func.count(Package.id)).where(

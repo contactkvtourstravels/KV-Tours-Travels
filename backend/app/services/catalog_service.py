@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.cache import catalog_cache
 from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.models.catalog import (
@@ -42,8 +43,16 @@ from app.schemas.catalog import (
 def get_public_destinations(
     db: Session,
     country: str | None = None,
+    travel_type: str | None = None,
     is_featured: bool | None = None,
+    limit: int | None = None,
+    offset: int = 0,
 ) -> list[PublicDestinationListItem]:
+    cache_key = f"destinations:{country or ''}:{travel_type or ''}:{is_featured}:{limit}:{offset}"
+    cached = catalog_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     query = (
         select(Destination)
         .options(joinedload(Destination.images))
@@ -55,10 +64,18 @@ def get_public_destinations(
 
     if country:
         query = query.where(func.lower(Destination.country) == country.strip().lower())
+    if travel_type:
+        query = query.where(Destination.travel_type == travel_type.strip())
     if is_featured is not None:
         query = query.where(Destination.is_featured == is_featured)
 
-    destinations = db.execute(query.order_by(Destination.name)).unique().scalars().all()
+    query = query.order_by(Destination.name)
+    if offset > 0:
+        query = query.offset(offset)
+    if limit is not None:
+        query = query.limit(limit)
+
+    destinations = db.execute(query).unique().scalars().all()
 
     dest_ids = [d.id for d in destinations]
     package_counts: dict[UUID, int] = {}
@@ -77,16 +94,21 @@ def get_public_destinations(
     results: list[PublicDestinationListItem] = []
     for d in destinations:
         featured_img: PublicImageItem | None = None
-        if d.images:
+        # Check if an admin uploaded/marked an image as featured in destination_images
+        admin_featured = next((img for img in d.images if img.is_featured), None)
+        effective_cover = admin_featured.image_url if admin_featured else d.cover_image_url
+        if not effective_cover and d.images:
             sorted_imgs = sorted(
                 d.images, key=lambda i: (not i.is_featured, i.sort_order)
             )
-            top = sorted_imgs[0]
+            effective_cover = sorted_imgs[0].image_url
+
+        if effective_cover:
             featured_img = PublicImageItem(
-                image_url=top.image_url,
-                alt_text=top.alt_text,
-                is_featured=top.is_featured,
-                sort_order=top.sort_order,
+                image_url=effective_cover,
+                alt_text=f"{d.name} scenic landscape",
+                is_featured=True,
+                sort_order=0,
             )
 
         results.append(
@@ -99,23 +121,30 @@ def get_public_destinations(
                 state_or_city=d.state_or_city,
                 category=d.category,
                 travel_type=d.travel_type,
-                cover_image_url=d.cover_image_url,
+                cover_image_url=effective_cover,
                 display_order=d.display_order or 0,
                 short_description=d.short_description,
                 featured_image=featured_img,
                 package_count=package_counts.get(d.id, 0),
             )
         )
+    catalog_cache.set(cache_key, results, ttl_seconds=60, tags=["destinations"])
     return results
 
 
 def get_public_destination_by_slug(db: Session, slug: str) -> PublicDestinationDetail:
+    clean_slug = slug.strip().lower()
+    cache_key = f"destination_detail:{clean_slug}"
+    cached = catalog_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     dest = (
         db.execute(
             select(Destination)
             .options(joinedload(Destination.images))
             .where(
-                Destination.slug == slug.strip().lower(),
+                Destination.slug == clean_slug,
                 Destination.is_published.is_(True),
                 Destination.deleted_at.is_(None),
             )
@@ -131,17 +160,34 @@ def get_public_destination_by_slug(db: Session, slug: str) -> PublicDestinationD
             message=f"Destination '{slug}' not found.",
         )
 
-    images = [
-        PublicImageItem(
-            image_url=img.image_url,
-            alt_text=img.alt_text,
-            is_featured=img.is_featured,
-            sort_order=img.sort_order,
-        )
-        for img in sorted(dest.images, key=lambda i: i.sort_order)
-    ]
+    admin_featured = next((img for img in dest.images if img.is_featured), None)
+    effective_cover = admin_featured.image_url if admin_featured else dest.cover_image_url
+    if not effective_cover and dest.images:
+        sorted_imgs = sorted(dest.images, key=lambda i: (not i.is_featured, i.sort_order))
+        effective_cover = sorted_imgs[0].image_url
 
-    return PublicDestinationDetail(
+    images: list[PublicImageItem] = []
+    if effective_cover:
+        images.append(
+            PublicImageItem(
+                image_url=effective_cover,
+                alt_text=f"{dest.name} scenic landscape",
+                is_featured=True,
+                sort_order=0,
+            )
+        )
+    for img in sorted(dest.images, key=lambda i: i.sort_order):
+        if img.image_url != effective_cover:
+            images.append(
+                PublicImageItem(
+                    image_url=img.image_url,
+                    alt_text=img.alt_text,
+                    is_featured=False,
+                    sort_order=img.sort_order + 1,
+                )
+            )
+
+    res = PublicDestinationDetail(
         id=dest.id,
         name=dest.name,
         slug=dest.slug,
@@ -150,7 +196,7 @@ def get_public_destination_by_slug(db: Session, slug: str) -> PublicDestinationD
         state_or_city=dest.state_or_city,
         category=dest.category,
         travel_type=dest.travel_type,
-        cover_image_url=dest.cover_image_url,
+        cover_image_url=effective_cover,
         display_order=dest.display_order or 0,
         short_description=dest.short_description,
         description=dest.description,
@@ -162,13 +208,24 @@ def get_public_destination_by_slug(db: Session, slug: str) -> PublicDestinationD
         seo_title=dest.seo_title,
         seo_description=dest.seo_description,
     )
+    catalog_cache.set(cache_key, res, ttl_seconds=60, tags=["destinations"])
+    return res
 
 
 def get_public_packages(
     db: Session,
     destination_slug: str | None = None,
+    travel_type: str | None = None,
+    category: str | None = None,
     is_featured: bool | None = None,
+    limit: int | None = None,
+    offset: int = 0,
 ) -> list[PublicPackageListItem]:
+    cache_key = f"packages:{destination_slug or ''}:{travel_type or ''}:{category or ''}:{is_featured}:{limit}:{offset}"
+    cached = catalog_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     query = (
         select(Package)
         .options(joinedload(Package.destination), joinedload(Package.images))
@@ -183,11 +240,21 @@ def get_public_packages(
 
     if destination_slug:
         query = query.where(Destination.slug == destination_slug.strip().lower())
+    if travel_type:
+        query = query.where(Package.travel_type == travel_type.strip())
+    if category:
+        query = query.where(Package.category == category.strip())
     if is_featured is not None:
         query = query.where(Package.is_featured == is_featured)
 
+    query = query.order_by(desc(Package.is_featured), Package.name)
+    if offset > 0:
+        query = query.offset(offset)
+    if limit is not None:
+        query = query.limit(limit)
+
     packages = (
-        db.execute(query.order_by(desc(Package.is_featured), Package.name))
+        db.execute(query)
         .unique()
         .scalars()
         .all()
@@ -196,16 +263,20 @@ def get_public_packages(
     results: list[PublicPackageListItem] = []
     for p in packages:
         featured_img: PublicImageItem | None = None
-        if p.images:
+        admin_featured = next((img for img in p.images if img.is_featured), None)
+        effective_cover = admin_featured.image_url if admin_featured else p.cover_image_url
+        if not effective_cover and p.images:
             sorted_imgs = sorted(
                 p.images, key=lambda i: (not i.is_featured, i.sort_order)
             )
-            top = sorted_imgs[0]
+            effective_cover = sorted_imgs[0].image_url
+
+        if effective_cover:
             featured_img = PublicImageItem(
-                image_url=top.image_url,
-                alt_text=top.alt_text,
-                is_featured=top.is_featured,
-                sort_order=top.sort_order,
+                image_url=effective_cover,
+                alt_text=f"{p.name} tour package",
+                is_featured=True,
+                sort_order=0,
             )
 
         results.append(
@@ -217,7 +288,7 @@ def get_public_packages(
                 destination_slug=p.destination.slug,
                 category=p.category,
                 travel_type=p.travel_type,
-                cover_image_url=p.cover_image_url,
+                cover_image_url=effective_cover,
                 base_price=p.base_price,
                 currency=p.currency,
                 duration_days=p.duration_days,
@@ -228,10 +299,17 @@ def get_public_packages(
                 is_featured=p.is_featured,
             )
         )
+    catalog_cache.set(cache_key, results, ttl_seconds=60, tags=["packages"])
     return results
 
 
 def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
+    clean_slug = slug.strip().lower()
+    cache_key = f"package_detail:{clean_slug}"
+    cached = catalog_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     pkg = (
         db.execute(
             select(Package)
@@ -247,7 +325,7 @@ def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
             )
             .join(Destination, Package.destination_id == Destination.id)
             .where(
-                Package.slug == slug.strip().lower(),
+                Package.slug == clean_slug,
                 Package.is_published.is_(True),
                 Package.deleted_at.is_(None),
                 Destination.is_published.is_(True),
@@ -265,15 +343,32 @@ def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
             message=f"Package '{slug}' not found.",
         )
 
-    images = [
-        PublicImageItem(
-            image_url=img.image_url,
-            alt_text=img.alt_text,
-            is_featured=img.is_featured,
-            sort_order=img.sort_order,
+    admin_featured = next((img for img in pkg.images if img.is_featured), None)
+    effective_cover = admin_featured.image_url if admin_featured else pkg.cover_image_url
+    if not effective_cover and pkg.images:
+        sorted_imgs = sorted(pkg.images, key=lambda i: (not i.is_featured, i.sort_order))
+        effective_cover = sorted_imgs[0].image_url
+
+    images: list[PublicImageItem] = []
+    if effective_cover:
+        images.append(
+            PublicImageItem(
+                image_url=effective_cover,
+                alt_text=f"{pkg.name} tour package",
+                is_featured=True,
+                sort_order=0,
+            )
         )
-        for img in sorted(pkg.images, key=lambda i: i.sort_order)
-    ]
+    for img in sorted(pkg.images, key=lambda i: i.sort_order):
+        if img.image_url != effective_cover:
+            images.append(
+                PublicImageItem(
+                    image_url=img.image_url,
+                    alt_text=img.alt_text,
+                    is_featured=False,
+                    sort_order=img.sort_order + 1,
+                )
+            )
 
     hotels = [
         PublicHotelSummary(
@@ -358,7 +453,7 @@ def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
         for a in active_addons
     ]
 
-    return PublicPackageDetail(
+    res = PublicPackageDetail(
         id=pkg.id,
         name=pkg.name,
         slug=pkg.slug,
@@ -370,7 +465,7 @@ def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
         travel_type=pkg.travel_type,
         difficulty_level=pkg.difficulty_level,
         departure_location=pkg.departure_location,
-        cover_image_url=pkg.cover_image_url,
+        cover_image_url=effective_cover,
         inclusions=pkg.inclusions_json or [],
         exclusions=pkg.exclusions_json or [],
         child_price=pkg.child_price,
@@ -393,6 +488,8 @@ def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
         upcoming_departures=departures,
         add_ons=add_ons,
     )
+    catalog_cache.set(cache_key, res, ttl_seconds=60, tags=["packages"])
+    return res
 
 
 def get_eligible_add_ons_for_package(
@@ -428,6 +525,12 @@ def get_eligible_add_ons_for_package(
 def get_public_package_itinerary(
     db: Session, slug: str
 ) -> list[PublicItineraryDaySummary]:
+    clean_slug = slug.strip().lower()
+    cache_key = f"package_itinerary:{clean_slug}"
+    cached = catalog_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     pkg = (
         db.execute(
             select(Package)
@@ -438,7 +541,7 @@ def get_public_package_itinerary(
             )
             .join(Destination, Package.destination_id == Destination.id)
             .where(
-                Package.slug == slug.strip().lower(),
+                Package.slug == clean_slug,
                 Package.is_published.is_(True),
                 Package.deleted_at.is_(None),
                 Destination.is_published.is_(True),
@@ -481,19 +584,26 @@ def get_public_package_itinerary(
                 activities=day_acts,
             )
         )
+    catalog_cache.set(cache_key, itinerary, ttl_seconds=60, tags=["packages"])
     return itinerary
 
 
 def get_public_package_departures(
     db: Session, slug: str
 ) -> list[PublicDepartureSummary]:
+    clean_slug = slug.strip().lower()
+    cache_key = f"package_departures:{clean_slug}"
+    cached = catalog_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     pkg = (
         db.execute(
             select(Package)
             .options(joinedload(Package.departures))
             .join(Destination, Package.destination_id == Destination.id)
             .where(
-                Package.slug == slug.strip().lower(),
+                Package.slug == clean_slug,
                 Package.is_published.is_(True),
                 Package.deleted_at.is_(None),
                 Destination.is_published.is_(True),
@@ -511,7 +621,7 @@ def get_public_package_departures(
             message=f"Package '{slug}' not found.",
         )
 
-    return [
+    results = [
         PublicDepartureSummary(
             id=d.id,
             departure_date=d.departure_date,
@@ -525,10 +635,17 @@ def get_public_package_departures(
         for d in sorted(pkg.departures, key=lambda dep: dep.departure_date)
         if d.status in ("open", "sold_out") and d.departure_date >= datetime.now(timezone.utc).date()
     ]
+    catalog_cache.set(cache_key, results, ttl_seconds=60, tags=["departures", "packages"])
+    return results
 
 
 def get_public_all_departures(db: Session) -> list[PublicDepartureListItem]:
     """Retrieve all open upcoming departures across all published packages."""
+    cache_key = "departures:all"
+    cached = catalog_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     now_date = datetime.now(timezone.utc).date()
     departures = (
         db.execute(
@@ -558,16 +675,19 @@ def get_public_all_departures(db: Session) -> list[PublicDepartureListItem]:
     for dep in departures:
         pkg = dep.package
         featured_img: PublicImageItem | None = None
-        if pkg.images:
+        admin_featured = next((img for img in pkg.images if img.is_featured), None)
+        effective_cover = admin_featured.image_url if admin_featured else pkg.cover_image_url
+        if not effective_cover and pkg.images:
             sorted_imgs = sorted(
                 pkg.images, key=lambda i: (not i.is_featured, i.sort_order)
             )
-            top = sorted_imgs[0]
+            effective_cover = sorted_imgs[0].image_url
+        if effective_cover:
             featured_img = PublicImageItem(
-                image_url=top.image_url,
-                alt_text=top.alt_text,
-                is_featured=top.is_featured,
-                sort_order=top.sort_order,
+                image_url=effective_cover,
+                alt_text=f"{pkg.name} tour package",
+                is_featured=True,
+                sort_order=0,
             )
 
         results.append(
@@ -591,6 +711,7 @@ def get_public_all_departures(db: Session) -> list[PublicDepartureListItem]:
                 featured_image=featured_img,
             )
         )
+    catalog_cache.set(cache_key, results, ttl_seconds=60, tags=["departures"])
     return results
 
 
@@ -701,15 +822,24 @@ def create_public_inquiry(
     db.commit()
     db.refresh(inquiry)
 
+    pub = get_public_settings(db)
+    agency_display = pub.public_display_name or pub.agency_name or "our agency"
+    city_display = f" {pub.city}" if pub.city else ""
+
     return PublicInquiryResponse(
         id=inquiry.id,
         status="new",
-        message="Thank you for contacting KV Tours & Travels. Our Coimbatore travel concierge will connect with you shortly.",
+        message=f"Thank you for contacting {agency_display}. Our{city_display} travel concierge will connect with you shortly.",
     )
 
 
 def get_public_settings(db: Session) -> PublicSiteSettings:
     """Retrieve public agency settings and WhatsApp configuration."""
+    cache_key = "settings:public"
+    cached = catalog_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     settings = get_settings()
     site_settings_rows = (
         db.execute(select(SiteSetting).where(SiteSetting.is_public.is_(True)))
@@ -732,13 +862,18 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
     feat_pkgs = overrides.get("featured_package_ids")
     featured_package_ids = [str(x) for x in feat_pkgs] if isinstance(feat_pkgs, list) else []
 
-    return PublicSiteSettings(
-        legal_business_name=str(overrides.get("legal_business_name")) if overrides.get("legal_business_name") else None,
-        agency_name=str(overrides.get("agency_name", settings.agency_name)),
-        public_display_name=str(overrides.get("public_display_name")) if overrides.get("public_display_name") else str(overrides.get("agency_name", settings.agency_name)),
-        tagline=str(overrides.get("tagline", "Your Journey. Our Expertise.")),
-        logo_url=str(overrides.get("logo_url")) if overrides.get("logo_url") else None,
-        favicon_url=str(overrides.get("favicon_url")) if overrides.get("favicon_url") else None,
+    agency_name_val = str(overrides.get("agency_name") or overrides.get("public_display_name") or settings.agency_name)
+    public_display_name_val = str(overrides.get("public_display_name") or overrides.get("agency_name") or settings.agency_name)
+
+    res = PublicSiteSettings(
+        legal_business_name=str(overrides["legal_business_name"]) if "legal_business_name" in overrides and overrides["legal_business_name"] is not None else None,
+        agency_name=agency_name_val,
+        public_display_name=public_display_name_val,
+        admin_panel_name=str(overrides.get("admin_panel_name")) if overrides.get("admin_panel_name") else None,
+        admin_portal_subtitle=str(overrides.get("admin_portal_subtitle")) if overrides.get("admin_portal_subtitle") else None,
+        tagline=str(overrides["tagline"]) if "tagline" in overrides and overrides["tagline"] is not None else "Your Journey. Our Expertise.",
+        logo_url=str(overrides["logo_url"]) if "logo_url" in overrides and overrides["logo_url"] is not None else None,
+        favicon_url=str(overrides["favicon_url"]) if "favicon_url" in overrides and overrides["favicon_url"] is not None else None,
         business_description=str(overrides.get("business_description")) if overrides.get("business_description") else None,
         registered_office_address=str(overrides.get("registered_office_address")) if overrides.get("registered_office_address") else None,
         office_address=str(
@@ -760,12 +895,12 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
         emergency_phone=str(overrides.get("emergency_phone")) if overrides.get("emergency_phone") else None,
         contact_email=str(overrides.get("contact_email", settings.contact_email)),
         customer_support_email=str(overrides.get("customer_support_email")) if overrides.get("customer_support_email") else str(overrides.get("contact_email", settings.contact_email)),
-        booking_email=str(overrides.get("booking_email")) if overrides.get("booking_email") else "bookings@kvtours.in",
+        booking_email=str(overrides.get("booking_email")) if overrides.get("booking_email") else f"bookings@{agency_name_val.lower().replace(' ', '')}.in",
         general_inquiry_email=str(overrides.get("general_inquiry_email")) if overrides.get("general_inquiry_email") else str(overrides.get("contact_email", settings.contact_email)),
-        instagram_handle=str(overrides.get("instagram_handle", "@kvtours_travels")),
-        instagram_url=str(overrides.get("instagram_url")) if overrides.get("instagram_url") else "https://instagram.com/kvtours_travels",
+        instagram_handle=str(overrides.get("instagram_handle", f"@{agency_name_val.lower().replace(' ', '')}")),
+        instagram_url=str(overrides.get("instagram_url")) if overrides.get("instagram_url") else f"https://instagram.com/{agency_name_val.lower().replace(' ', '')}",
         facebook_url=str(overrides.get("facebook_url")) if overrides.get("facebook_url") else None,
-        website_url=str(overrides.get("website_url")) if overrides.get("website_url") else "https://kvtours.in",
+        website_url=str(overrides.get("website_url")) if overrides.get("website_url") else None,
         google_maps_url=str(overrides.get("google_maps_url")) if overrides.get("google_maps_url") else None,
         operating_hours=str(overrides.get("operating_hours", overrides.get("business_hours", "Mon - Sat: 9:00 AM - 7:00 PM"))),
         business_hours=str(overrides.get("business_hours", overrides.get("operating_hours", "Mon - Sat: 9:00 AM - 7:00 PM"))),
@@ -776,13 +911,13 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
         whatsapp_prefilled_message=str(
             overrides.get(
                 "whatsapp_prefilled_message",
-                "Hi KV Tours, I am interested in planning a trip.",
+                f"Hi {public_display_name_val}, I am interested in planning a trip.",
             )
         ),
-        whatsapp_package_message=str(overrides.get("whatsapp_package_message", "Hi KV Tours, I am interested in this package.")),
-        whatsapp_destination_message=str(overrides.get("whatsapp_destination_message", "Hi KV Tours, I would like to know more about this destination.")),
-        whatsapp_custom_trip_message=str(overrides.get("whatsapp_custom_trip_message", "Hi KV Tours, I would like to plan a custom holiday.")),
-        whatsapp_booking_support_message=str(overrides.get("whatsapp_booking_support_message", "Hi KV Tours, I need assistance with my booking.")),
+        whatsapp_package_message=str(overrides.get("whatsapp_package_message", f"Hi {public_display_name_val}, I am interested in this package.")),
+        whatsapp_destination_message=str(overrides.get("whatsapp_destination_message", f"Hi {public_display_name_val}, I would like to know more about this destination.")),
+        whatsapp_custom_trip_message=str(overrides.get("whatsapp_custom_trip_message", f"Hi {public_display_name_val}, I would like to plan a custom holiday.")),
+        whatsapp_booking_support_message=str(overrides.get("whatsapp_booking_support_message", f"Hi {public_display_name_val}, I need assistance with my booking.")),
         whatsapp_enabled=_bool(overrides.get("whatsapp_enabled"), True),
         whatsapp_show_floating_concierge=_bool(overrides.get("whatsapp_show_floating_concierge"), True),
         whatsapp_show_header_button=_bool(overrides.get("whatsapp_show_header_button"), True),
@@ -797,7 +932,7 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
             overrides.get("whatsapp_show_on_contact_page"), True
         ),
         hero_headline=str(overrides.get("hero_headline", "Handcrafted Journeys Beyond the Ordinary")),
-        hero_subtitle=str(overrides.get("hero_subtitle", "Coimbatore's premier luxury travel curator crafting extraordinary journeys across India and the globe.")),
+        hero_subtitle=str(overrides.get("hero_subtitle", "Curating bespoke international escapes, breathtaking domestic expeditions, and signature group departures.")),
         hero_image_url=str(overrides.get("hero_image_url")) if overrides.get("hero_image_url") else None,
         contact_cta_text=str(overrides.get("contact_cta_text", "Speak With Concierge")),
         whatsapp_cta_text=str(overrides.get("whatsapp_cta_text", "Chat on WhatsApp")),
@@ -823,8 +958,8 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
         ),
 
         # Rebranding, Typography & Identity
-        short_name=str(overrides.get("short_name")) if overrides.get("short_name") else None,
-        secondary_logo_url=str(overrides.get("secondary_logo_url")) if overrides.get("secondary_logo_url") else None,
+        short_name=str(overrides["short_name"]) if "short_name" in overrides and overrides["short_name"] is not None else None,
+        secondary_logo_url=str(overrides["secondary_logo_url"]) if "secondary_logo_url" in overrides and overrides["secondary_logo_url"] is not None else None,
         brand_primary_color=str(overrides.get("brand_primary_color", "#24292F")),
         brand_secondary_color=str(overrides.get("brand_secondary_color", "#C5A880")),
         brand_accent_color=str(overrides.get("brand_accent_color", "#D4AF37")),
@@ -855,4 +990,18 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
         seo_social_title=str(overrides.get("seo_social_title")) if overrides.get("seo_social_title") else None,
         seo_social_description=str(overrides.get("seo_social_description")) if overrides.get("seo_social_description") else None,
         organization_structured_data=overrides.get("organization_structured_data") if isinstance(overrides.get("organization_structured_data"), dict) else None,
+
+        # Travel Voucher & PDF Settings
+        pdf_header_title=str(overrides["pdf_header_title"]) if overrides.get("pdf_header_title") else None,
+        pdf_header_subtitle=str(overrides["pdf_header_subtitle"]) if overrides.get("pdf_header_subtitle") else None,
+        pdf_office_address=str(overrides["pdf_office_address"]) if overrides.get("pdf_office_address") else None,
+        pdf_contact_info=str(overrides["pdf_contact_info"]) if overrides.get("pdf_contact_info") else None,
+        pdf_checkin_instructions=str(overrides["pdf_checkin_instructions"]) if overrides.get("pdf_checkin_instructions") else None,
+        pdf_logistics_notice=str(overrides["pdf_logistics_notice"]) if overrides.get("pdf_logistics_notice") else None,
+        pdf_helpline_info=str(overrides["pdf_helpline_info"]) if overrides.get("pdf_helpline_info") else None,
+        pdf_footer_declaration=str(overrides["pdf_footer_declaration"]) if overrides.get("pdf_footer_declaration") else None,
+        pdf_badge_label=str(overrides["pdf_badge_label"]) if overrides.get("pdf_badge_label") else None,
+        pdf_logo_url=str(overrides["pdf_logo_url"]) if overrides.get("pdf_logo_url") else None,
     )
+    catalog_cache.set(cache_key, res, ttl_seconds=60, tags=["settings"])
+    return res

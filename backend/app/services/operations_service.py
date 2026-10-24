@@ -1364,6 +1364,11 @@ class OperationsService:
                 message="Recipient email could not be resolved from provided booking or inquiry.",
             )
 
+        from app.services.catalog_service import get_public_settings
+
+        pub = get_public_settings(db)
+        agency_name = pub.public_display_name or pub.agency_name or "Travel Agency"
+
         # Dispatch via configured EmailService
         email_service = EmailService()
         html_body = _render_base_email(
@@ -1372,8 +1377,9 @@ class OperationsService:
                 f"<div style='font-size: 15px; line-height: 1.6; color: #333333;'>"
                 f"<p>Dear {recipient_name or 'Valued Customer'},</p>"
                 f"<p>{body.replace(chr(10), '<br>')}</p>"
-                f"<p>Warm regards,<br>KV Tours & Travels Operations Team</p></div>"
+                f"<p>Warm regards,<br>{agency_name} Operations Team</p></div>"
             ),
+            db=db,
         )
         email_service.dispatch(
             db=db,
@@ -1409,6 +1415,11 @@ class OperationsService:
         inquiry_id: UUID | None = None,
     ) -> ContactCustomerWhatsAppResponse:
         """Build contextual Click-to-Chat WhatsApp URL for staff to contact customer."""
+        from app.services.catalog_service import get_public_settings
+
+        pub = get_public_settings(db)
+        agency_name = pub.public_display_name or pub.agency_name or "Travel Concierge"
+
         target_phone: str | None = None
         target_name: str | None = None
         ref_text = ""
@@ -1438,7 +1449,7 @@ class OperationsService:
                 raise ApiError(status_code=404, message="Inquiry not found.")
             target_phone = inquiry.phone
             target_name = inquiry.name
-            ref_text = "regarding your recent travel inquiry with KV Tours & Travels"
+            ref_text = f"regarding your recent travel inquiry with {agency_name}"
 
         if not target_phone:
             raise ApiError(
@@ -1447,7 +1458,7 @@ class OperationsService:
             )
 
         clean_phone = _sanitize_phone(target_phone)
-        message = f"Hi {target_name}, this is KV Tours & Travels {ref_text}. How can we assist you today?"
+        message = f"Hi {target_name}, this is {agency_name} {ref_text}. How can we assist you today?"
         encoded_msg = urllib.parse.quote(message)
         click_to_chat_url = f"https://wa.me/{clean_phone}?text={encoded_msg}"
 

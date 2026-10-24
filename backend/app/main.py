@@ -40,10 +40,14 @@ if settings.sentry_dsn:
         logger.warning("sentry-sdk not installed; monitoring is disabled.")
 
 
+from app.core.cache import attach_cache_invalidation_listeners
+
+
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     """Application lifespan; database connections remain lazy until used."""
     logger.info("FastAPI service initializing under %s mode", settings.app_env)
+    attach_cache_invalidation_listeners()
     yield
     logger.info("FastAPI service shutting down gracefully.")
 

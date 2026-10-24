@@ -51,6 +51,17 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=128)
 
 
+class SocialLoginRequest(BaseModel):
+    """Payload for Google and Apple social sign-in verification."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    id_token: str = Field(..., min_length=10, description="Firebase / Identity Provider ID token")
+    provider: str = Field(default="google.com", description="Provider ID (google.com or apple.com)")
+    first_name: str | None = Field(default=None, max_length=100, description="Optional user first name")
+    last_name: str | None = Field(default=None, max_length=100, description="Optional user last name")
+
+
 class SafeUserResponse(BaseModel):
     """Safe, sanitized user representation for public and authenticated API consumption."""
 
@@ -63,6 +74,7 @@ class SafeUserResponse(BaseModel):
     phone: str | None
     status: str
     roles: list[str]
+    is_email_verified: bool = False
     created_at: datetime
     updated_at: datetime
 

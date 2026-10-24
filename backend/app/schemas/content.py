@@ -187,6 +187,7 @@ class ContactHeroSection(BaseModel):
     eyebrow: str = "Concierge Desk"
     heading: str = "Connect With Our Travel Experts"
     description: str = "Have questions regarding upcoming departures, custom itineraries, or visa requirements? We are here to guide you every step of the way."
+    background_image_url: str | None = None
 
 
 class ContactCardsSection(BaseModel):

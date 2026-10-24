@@ -12,18 +12,8 @@ import {
   TrendingDown,
 } from "lucide-react";
 import { publicOffersApi, PublicOfferListItem } from "@/lib/api";
-
-const DESTINATION_FALLBACKS: Record<string, string> = {
-  maldives: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1200&q=80",
-  lakshadweep: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
-  bali: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=1200&q=80",
-  manali: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80",
-  kazakhstan: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
-  japan: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&w=1200&q=80",
-  andaman: "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=1200&q=80",
-  varanasi: "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80",
-  default: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=80",
-};
+import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
+import { TravelImage } from "@/components/public/TravelImage";
 
 export function BestOffersSection() {
   const [offers, setOffers] = useState<PublicOfferListItem[]>([]);
@@ -55,12 +45,12 @@ export function BestOffersSection() {
 
   // Safe image helper
   const getOfferImg = (offer: PublicOfferListItem) => {
-    if (offer.cover_image_url) return offer.cover_image_url;
-    const key = Object.keys(DESTINATION_FALLBACKS).find((k) =>
-      offer.destination_slug.toLowerCase().includes(k) ||
-      offer.package_slug.toLowerCase().includes(k)
-    );
-    return key ? DESTINATION_FALLBACKS[key] : DESTINATION_FALLBACKS.default;
+    let raw = "";
+    if (offer.cover_image_url) raw = offer.cover_image_url;
+    else {
+      raw = getDestinationFallback(offer.destination_slug || offer.package_slug || offer.package_name);
+    }
+    return getSafeImageUrl(raw);
   };
 
   // If section is master disabled, or not loading and zero offers, cleanly hide section
@@ -125,10 +115,11 @@ export function BestOffersSection() {
                 >
                   {/* Card Cover Image */}
                   <div className="relative h-64 overflow-hidden bg-neutral-200">
-                    <Image
+                    <TravelImage
                       src={getOfferImg(offer)}
                       alt={offer.package_name}
                       fill
+                      fallbackSlug={offer.destination_slug || offer.package_slug}
                       sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       className="object-cover group-hover:scale-105 transition-transform duration-700"
                     />

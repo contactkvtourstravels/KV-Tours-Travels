@@ -465,20 +465,39 @@ export default function UsersAdminPage() {
 
             <form onSubmit={handleRoleSubmit} className="space-y-4 text-xs">
               <div className="space-y-2">
-                {ALL_ROLES.map((role) => (
-                  <label
-                    key={role}
-                    className="flex items-center justify-between p-2.5 rounded-lg bg-slate-850 hover:bg-slate-800/80 cursor-pointer border border-slate-800"
-                  >
-                    <span className="capitalize text-slate-200">{role.replace("_", " ")}</span>
-                    <input
-                      type="checkbox"
-                      checked={selectedRoles.includes(role)}
-                      onChange={() => toggleRoleSelection(role)}
-                      className="w-4 h-4 text-indigo-600 rounded focus:ring-0"
-                    />
-                  </label>
-                ))}
+                {ALL_ROLES.map((role) => {
+                  const isRoleSuperAdmin = role === "super_admin";
+                  const isEligibleForSuperAdmin =
+                    roleModalUser.email.toLowerCase().trim() === "athulsuresh446@gmail.com";
+                  const isDisabled = isRoleSuperAdmin && !isEligibleForSuperAdmin;
+
+                  return (
+                    <label
+                      key={role}
+                      className={`flex items-center justify-between p-2.5 rounded-lg border border-slate-800 transition-colors ${
+                        isDisabled
+                          ? "bg-slate-900/40 text-slate-500 cursor-not-allowed opacity-60"
+                          : "bg-slate-850 hover:bg-slate-800/80 cursor-pointer"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="capitalize text-slate-200">{role.replace("_", " ")}</span>
+                        {isDisabled && (
+                          <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
+                            Locked to athulsuresh446@gmail.com
+                          </span>
+                        )}
+                      </div>
+                      <input
+                        type="checkbox"
+                        disabled={isDisabled}
+                        checked={selectedRoles.includes(role)}
+                        onChange={() => !isDisabled && toggleRoleSelection(role)}
+                        className="w-4 h-4 text-indigo-600 rounded focus:ring-0 disabled:opacity-30 disabled:cursor-not-allowed"
+                      />
+                    </label>
+                  );
+                })}
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">

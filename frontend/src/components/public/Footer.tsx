@@ -10,43 +10,18 @@ import {
   getWhatsAppClickToChatUrl,
 } from "@/lib/constants";
 
+import { useBranding } from "@/context/BrandingContext";
+
 export function Footer() {
-  const [settings, setSettings] = useState<PublicSiteSettings | null>(null);
+  const { settings, displayName, shortName, logoUrl, city, phone, email, address, getWhatsAppUrl } =
+    useBranding();
 
-  useEffect(() => {
-    publicCatalogApi
-      .getSettings()
-      .then(setSettings)
-      .catch(() => {
-        // Fallback default
-        setSettings({
-          agency_name: "KV Tours & Travels",
-          tagline: "Coimbatore • Luxury & Adventure Journeys",
-          agency_location: "Coimbatore, Tamil Nadu, India",
-          office_address: "124 Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
-          whatsapp_number: DEFAULT_WHATSAPP_NUMBER,
-          contact_email: "contact@kvtours.in",
-          contact_phone: DEFAULT_BUSINESS_PHONE,
-          instagram_handle: "@kvtours_travels",
-          currency: "INR",
-        });
-      });
-  }, []);
-
-  const whatsappNumber = settings?.whatsapp_number || DEFAULT_WHATSAPP_NUMBER;
-  const waUrl = getWhatsAppClickToChatUrl(
-    whatsappNumber,
-    settings?.whatsapp_prefilled_message ||
-      "Hi KV Tours & Travels, I would like to enquire about your upcoming tours."
-  );
-
-  const agencyName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
-  const city = settings?.city || "Coimbatore";
-  const address = settings?.office_address || settings?.public_office_address || "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012";
-  const phone = settings?.contact_phone || DEFAULT_BUSINESS_PHONE;
-  const email = settings?.contact_email || "contact@kvtours.in";
-  const instagramHandle = settings?.instagram_handle || "@kv_tours_travels";
-  const instagramUrl = settings?.instagram_url || `https://www.instagram.com/${instagramHandle.replace("@", "")}`;
+  const waUrl = getWhatsAppUrl();
+  const agencyName = displayName;
+  const instagramHandle = settings?.instagram_handle || "";
+  const instagramUrl =
+    settings?.instagram_url ||
+    (instagramHandle ? `https://www.instagram.com/${instagramHandle.replace("@", "")}` : "#");
 
   return (
     <footer className="bg-[#F7F7F5] border-t border-[#E4E5E7] text-[#70757A] text-sm">
@@ -100,7 +75,7 @@ export function Footer() {
               ) : (
                 <div className="h-9 px-3.5 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 border border-[#3D4450] shadow-2xs font-serif font-bold text-xs tracking-wider">
                   <Compass className="w-3.5 h-3.5 text-[#ECEFF3]" />
-                  <span>{settings?.short_name || "KV"}</span>
+                  <span>{settings?.short_name || agencyName}</span>
                 </div>
               )}
               <div>
@@ -145,11 +120,7 @@ export function Footer() {
                   Curated Packages
                 </Link>
               </li>
-              <li>
-                <Link href="/cabs" className="hover:text-[#202124] transition-colors">
-                  Cabs & Fleet Rentals
-                </Link>
-              </li>
+
               <li>
                 <Link href="/group-trips" className="hover:text-[#202124] transition-colors">
                   Group Departures

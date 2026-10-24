@@ -35,6 +35,7 @@ from app.schemas.auth import (
     RegisterRequest,
     ResetPasswordRequest,
     SafeUserResponse,
+    SocialLoginRequest,
 )
 from app.services.auth_service import (
     login_user,
@@ -42,6 +43,7 @@ from app.services.auth_service import (
     register_customer,
     request_password_reset,
     reset_password,
+    social_login_user,
     to_safe_user_response,
 )
 
@@ -145,6 +147,40 @@ def login(
     return AuthResponse(
         user=to_safe_user_response(user),
         message="Login successful.",
+    )
+
+
+@router.post("/social-login", response_model=AuthResponse)
+def social_login(
+    payload: SocialLoginRequest,
+    request: Request,
+    response: Response,
+    db: DbSession,
+) -> AuthResponse:
+    """Authenticate or register a user via Google or Apple Sign-In.
+
+    Validates identity provider ID token cryptographically, sets secure HttpOnly
+    session cookie and client CSRF cookie on success.
+    """
+    verify_csrf_token(request)
+    ip_address = _extract_client_ip(request)
+    user_agent = request.headers.get("User-Agent")
+
+    user, raw_token = social_login_user(
+        db=db,
+        payload=payload,
+        ip_address=ip_address,
+        user_agent=user_agent,
+    )
+
+    set_auth_cookie(response, raw_token)
+    new_csrf_token = generate_csrf_token()
+    set_csrf_cookie(response, new_csrf_token)
+
+    provider_label = "Apple" if "apple" in (payload.provider or "").lower() else "Google"
+    return AuthResponse(
+        user=to_safe_user_response(user),
+        message=f"Signed in successfully with {provider_label}.",
     )
 
 

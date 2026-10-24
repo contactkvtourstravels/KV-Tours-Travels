@@ -1728,6 +1728,20 @@ class PaymentService:
                 detail=f"A bank transfer or branch payment with reference '{ref}' has already been submitted.",
             )
 
+        bank_cfg = cls._get_raw_bank_settings(db)
+        if payload.payment_method == "branch_cash":
+            if not bank_cfg.get("branch_payment_enabled", False):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Branch cash payments are currently disabled by administrator.",
+                )
+        else:
+            if not bank_cfg.get("bank_transfer_enabled", False):
+                raise HTTPException(
+                    status_code=400,
+                    detail="Direct bank transfers are currently disabled by administrator.",
+                )
+
         provider_name = (
             "bank_transfer" if payload.payment_method != "branch_cash" else "branch"
         )

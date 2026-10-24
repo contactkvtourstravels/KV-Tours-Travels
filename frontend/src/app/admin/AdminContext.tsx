@@ -6,10 +6,13 @@ import { authApi, SafeUser } from "@/lib/api";
 
 export type AdminRole = "customer" | "staff" | "manager" | "admin" | "super_admin";
 
+export const AUTHORIZED_SUPER_ADMIN_EMAIL = "athulsuresh446@gmail.com";
+
 interface AdminContextType {
   user: SafeUser | null;
   loading: boolean;
   highestRole: AdminRole;
+  isSuperAdmin: boolean;
   hasRole: (role: AdminRole) => boolean;
   hasAnyRole: (roles: AdminRole[]) => boolean;
   refreshUser: () => Promise<void>;
@@ -49,11 +52,22 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     fetchUser();
   }, [fetchUser]);
 
+  const isSuperAdmin = Boolean(
+    user &&
+    user.email &&
+    user.email.toLowerCase().trim() === AUTHORIZED_SUPER_ADMIN_EMAIL &&
+    user.roles.includes("super_admin") &&
+    Boolean(user.is_email_verified)
+  );
+
   const highestRole: AdminRole = (() => {
     if (!user || !user.roles.length) return "customer";
     let highest: AdminRole = "customer";
     let maxRank = 0;
     for (const r of user.roles as AdminRole[]) {
+      if (r === "super_admin" && !isSuperAdmin) {
+        continue;
+      }
       const rank = ROLE_RANKS[r] || 0;
       if (rank > maxRank) {
         maxRank = rank;
@@ -65,14 +79,18 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   const hasRole = (role: AdminRole): boolean => {
     if (!user) return false;
-    if (user.roles.includes("super_admin")) return true;
+    if (role === "super_admin") return isSuperAdmin;
+    if (isSuperAdmin) return true;
     return user.roles.includes(role);
   };
 
   const hasAnyRole = (roles: AdminRole[]): boolean => {
     if (!user) return false;
-    if (user.roles.includes("super_admin")) return true;
-    return roles.some((r) => user.roles.includes(r));
+    if (isSuperAdmin) return true;
+    const sanitizedRoles = user.roles.filter((r) =>
+      r === "super_admin" ? isSuperAdmin : true
+    );
+    return roles.some((r) => sanitizedRoles.includes(r));
   };
 
   const logout = async () => {
@@ -92,6 +110,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         user,
         loading,
         highestRole,
+        isSuperAdmin,
         hasRole,
         hasAnyRole,
         refreshUser: fetchUser,

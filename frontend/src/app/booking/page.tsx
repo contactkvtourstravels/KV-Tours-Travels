@@ -33,8 +33,10 @@ import {
   DEFAULT_WHATSAPP_NUMBER,
   getWhatsAppClickToChatUrl,
 } from "@/lib/constants";
+import { useBranding } from "@/context/BrandingContext";
 
 function BookingFlow() {
+  const { displayName, shortName, city, getWhatsAppUrl } = useBranding();
   const searchParams = useSearchParams();
   const router = useRouter();
   const packageSlug = searchParams.get("package") || "";
@@ -353,9 +355,8 @@ function BookingFlow() {
 
   // Confirmation Success View
   if (completedBooking) {
-    const waUrl = getWhatsAppClickToChatUrl(
-      DEFAULT_WHATSAPP_NUMBER,
-      `Hello KV Tours & Travels Coimbatore! I have created booking reference ${completedBooking.booking_reference} for ${completedBooking.package_title} (${completedBooking.number_of_travellers} travellers, Total: ₹${Number(completedBooking.total).toLocaleString("en-IN")}). Please guide me on payment and confirmation details.`
+    const waUrl = getWhatsAppUrl(
+      `Hello ${displayName}! I have created booking reference ${completedBooking.booking_reference} for ${completedBooking.package_title} (${completedBooking.number_of_travellers} travellers, Total: ₹${Number(completedBooking.total).toLocaleString("en-IN")}). Please guide me on payment and confirmation details.`
     );
 
     return (
@@ -448,7 +449,7 @@ function BookingFlow() {
       <div className="mb-10 text-center sm:text-left">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D3D8DF] bg-[#ECEFF3] text-[#24292F] text-xs uppercase tracking-widest font-semibold mb-3">
           <ShieldCheck className="w-3.5 h-3.5 text-[#5F6368]" />
-          <span>Official KV Tours & Travels Checkout</span>
+          <span>Official {displayName} Checkout</span>
         </div>
         <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#202124] tracking-tight">
           Reserve Your Journey

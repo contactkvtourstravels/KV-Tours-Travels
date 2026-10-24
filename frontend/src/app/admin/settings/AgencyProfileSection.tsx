@@ -28,6 +28,7 @@ import {
   Compass,
 } from "lucide-react";
 import { adminApi, AdminSiteSettings } from "@/lib/api";
+import { useBranding } from "@/context/BrandingContext";
 
 interface AgencyProfileSectionProps {
   settings: AdminSiteSettings;
@@ -104,6 +105,7 @@ export default function AgencyProfileSection({
   onSaved,
   onDirtyChange,
 }: AgencyProfileSectionProps) {
+  const { updateBranding } = useBranding();
   const [activeSubTab, setActiveSubTab] = useState<ProfileSubTab>("identity");
 
   // 1. Business Identity
@@ -611,6 +613,7 @@ export default function AgencyProfileSection({
 
       const updated = await adminApi.updateSettings(payload);
       onSaved(updated);
+      updateBranding(updated as any);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: unknown) {

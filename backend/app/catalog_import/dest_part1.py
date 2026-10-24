@@ -83,7 +83,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Kerala",
         "category": "Hill Stations",
         "travel_type": "Nature & Leisure",
-        "cover_image_url": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=1200&q=80",
         "short_description": "Sprawling tea gardens, mist-clad peaks, and rare Nilgiri Tahr wildlife at the confluence of three mountain rivers.",
         "description": "Rising 1,600 meters above sea level in God's Own Country, Munnar features sculpted hills of manicured tea bushes rolling as far as the eye can see, punctuated by waterfalls and mist-draped shola forests.",
         "highlights": [
@@ -188,7 +188,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Kerala",
         "category": "Wildlife & Nature",
         "travel_type": "Jungle Safari & Spice",
-        "cover_image_url": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=1200&q=80",
         "short_description": "Periyar Tiger Reserve boat safaris, wild elephant herds, and organic spice plantation walkthroughs in the Cardamom Hills.",
         "description": "Located on the Kerala-Tamil Nadu border, Thekkady is centered around the artificial lake formed by Mullaperiyar Dam. A boat safari on Periyar Lake offers rare opportunities to observe wild elephant herds, sambar deer, and gaurs grazing at the water's edge.",
         "highlights": [
@@ -223,7 +223,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Kerala",
         "category": "Beaches & Islands",
         "travel_type": "Beach & Wellness",
-        "cover_image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=1200&q=80",
         "short_description": "Dramatic red laterite cliffs bordering the Arabian Sea with bohemian seaside cafes, Ayurvedic spas, and Papanasam sacred beach.",
         "description": "Varkala is renowned for its unique geological formation where red sandstone cliffs directly overlook the Arabian Sea. The North Cliff is lined with bamboo-roofed seafood restaurants, yoga shalas, and handicraft boutiques, while Papanasam Beach is believed to cleanse sins in its sacred waters.",
         "highlights": [
@@ -258,7 +258,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Karnataka",
         "category": "Hill Stations",
         "travel_type": "Heritage & Nature",
-        "cover_image_url": "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1592635196078-9fdc757f27f4?auto=format&fit=crop&w=1200&q=80",
         "short_description": "The Scotland of India renowned for aromatic Arabica coffee plantations, Kodava warrior culture, and cascading waterfalls.",
         "description": "Perched on the slopes of the Western Ghats in southwest Karnataka, Kodagu is a lush highland world of mist-shrouded coffee hills, spice estates, and unique cultural heritage.",
         "highlights": [
@@ -293,7 +293,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Karnataka",
         "category": "Hill Stations",
         "travel_type": "Trekking & Coffee",
-        "cover_image_url": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80",
         "short_description": "The birthplace of Indian coffee featuring Mullayanagiri, Karnataka's highest peak, and historic Baba Budangiri hills.",
         "description": "Where coffee was first brought to India in the 17th century by Sufi saint Baba Budan, Chikmagalur remains the nation's premier coffee sanctuary. High mountain ridges, shola grasslands, and waterfalls like Hebbe make it an outdoor and trekking paradise.",
         "highlights": [
@@ -328,7 +328,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Karnataka",
         "category": "Cultural Heritage",
         "travel_type": "Heritage & History",
-        "cover_image_url": "https://images.unsplash.com/photo-1605649487212-47bdab064df8?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1200&q=80",
         "short_description": "The surreal open-air museum of the Vijayanagara Empire with boulder-strewn landscapes and monumental stone temples.",
         "description": "Rising on the banks of the Tungabhadra River, Hampi was the capital of the 14th-century Vijayanagara Empire. Admire the iconic stone chariot at Vijaya Vittala temple and marvel at musical pillars.",
         "highlights": [
@@ -363,7 +363,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Karnataka",
         "category": "Beaches & Islands",
         "travel_type": "Coastal & Spiritual",
-        "cover_image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=80",
         "short_description": "Laidback pristine crescent beaches and ancient Mahabaleshwar Shiva temple along Karnataka's rugged shoreline.",
         "description": "Gokarna is the tranquil alternative to crowded coastal destinations. Shaped naturally like the sacred 'Om' symbol, Om Beach, Kudle Beach, and Half Moon Beach are tucked between rocky cliffs where jungle meets the sea.",
         "highlights": [
@@ -398,7 +398,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Karnataka",
         "category": "Cultural Heritage",
         "travel_type": "Heritage & Royalty",
-        "cover_image_url": "https://images.unsplash.com/photo-1605649487212-47bdab064df8?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1580974852861-c381510bc98a?auto=format&fit=crop&w=1200&q=80",
         "short_description": "The City of Palaces celebrated for Mysore Palace, Chamundi Hills, silk weaving, and grand royal traditions.",
         "description": "Mysuru (Mysore) was the imperial capital of the Wadiyar dynasty. Dominated by the grand Mysore Palace illuminated by nearly 100,000 light bulbs on weekends, Mysore is famous for sandalwood craftsmanship, pure mulberry silk sarees, and aromatic Mysore Pak sweets.",
         "highlights": [
@@ -433,7 +433,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Karnataka",
         "category": "Wildlife & Nature",
         "travel_type": "Luxury Safari",
-        "cover_image_url": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1564760055775-d63b17a55c44?auto=format&fit=crop&w=1200&q=80",
         "short_description": "Premier safari territory on the banks of the Kabini River famed for black panthers, Bengal tigers, and Asian elephants.",
         "description": "Part of the Nilgiri Biosphere Reserve on the edge of Nagarhole National Park, Kabini is one of Asia's finest wildlife reserves. River boat safaris reveal hundreds of Asian elephants congregating on reservoir banks during dry months, alongside leopards and the rare black panther.",
         "highlights": [
@@ -468,7 +468,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Puducherry",
         "category": "Cultural Heritage",
         "travel_type": "Heritage & Coastal",
-        "cover_image_url": "https://images.unsplash.com/photo-1589308078059-be1415eab4c3?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1582510003544-4d00b7f74220?auto=format&fit=crop&w=1200&q=80",
         "short_description": "A picturesque coastal enclave blending French colonial architecture, bohemian boulevards, and spiritual serenity.",
         "description": "Known affectionately as 'Pondi', this seaside union territory carries a distinctive Franco-Tamil personality. Divided into the French Quarter (White Town) with mustard-yellow colonial villas, bougainvillea-framed arched gates, and chic cafes.",
         "highlights": [
@@ -503,7 +503,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Tamil Nadu",
         "category": "Cultural Heritage",
         "travel_type": "Pilgrimage & Heritage",
-        "cover_image_url": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=1200&q=80",
         "short_description": "The sacred southern tip where the Bay of Bengal meets the Indian Ocean, linked by the engineering marvel of Pamban Bridge.",
         "description": "Situated on Pamban Island off the southeastern tip of the Indian peninsula, Rameswaram is one of the holiest Char Dham pilgrimage sites with the longest sculpted stone corridors in the world and the ghost town of Dhanushkodi.",
         "highlights": [
@@ -538,7 +538,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Tamil Nadu",
         "category": "Cultural Heritage",
         "travel_type": "Heritage & History",
-        "cover_image_url": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=1200&q=80",
         "short_description": "The Athens of the East centered around the towering multi-colored gopurams of Meenakshi Amman Temple.",
         "description": "One of the oldest continuously inhabited cities in the world, Madurai is built in concentric squares around the monumental Meenakshi Sundareswarar Temple with vibrant night bazaars and renowned culinary heritage.",
         "highlights": [
@@ -573,7 +573,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Tamil Nadu",
         "category": "Cultural Heritage",
         "travel_type": "Heritage & Culinary",
-        "cover_image_url": "https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
         "short_description": "Palatial 19th-century merchant mansions, handmade Athangudi tiles, and world-renowned fiery Chettinad cuisine.",
         "description": "Chettinad is the ancestral homeland of the Nattukottai Chettiars, a wealthy mercantile community whose lavish 100-room mansions showcase Burmese teak pillars, Italian marble floors, Belgian crystal chandeliers, and handcrafted Athangudi floor tiles. Savor the authentic peppery flavors of traditional banana leaf meals.",
         "highlights": [
@@ -608,7 +608,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Tamil Nadu",
         "category": "Beaches & Islands",
         "travel_type": "Coastal & Spiritual",
-        "cover_image_url": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=1200&q=80",
         "short_description": "The southern tip of mainland India where the Arabian Sea, Bay of Bengal, and Indian Ocean converge under the gaze of Thiruvalluvar Statue.",
         "description": "Kanyakumari (Cape Comorin) is India's geographical terminus, where three immense bodies of water merge. Watch sunrise and sunset over the open ocean from the same shore, take a ferry to the rocky Vivekananda Memorial, and admire the soaring 133-foot stone statue of Tamil sage poet Thiruvalluvar.",
         "highlights": [
@@ -643,7 +643,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Andhra Pradesh",
         "category": "Hill Stations",
         "travel_type": "Nature & Tribal Culture",
-        "cover_image_url": "https://images.unsplash.com/photo-1544735716-392fe2489ffa?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1589182373726-e4f658ab50f0?auto=format&fit=crop&w=1200&q=80",
         "short_description": "Serene Eastern Ghats hill valley famed for million-year-old stalactite caves, tribal coffee plantations, and scenic rail journeys.",
         "description": "Located in the Eastern Ghats 115 km from Visakhapatnam, Araku Valley is home to indigenous tribal communities producing world-acclaimed organic GI-tagged Araku coffee. Descend into the subterranean wonder of Borra Caves with naturally illuminated speleothems and stalactites.",
         "highlights": [
@@ -678,7 +678,7 @@ DESTINATIONS_PART1 = [
         "state_or_city": "Andhra Pradesh",
         "category": "Cultural Heritage",
         "travel_type": "Sacred Pilgrimage",
-        "cover_image_url": "https://images.unsplash.com/photo-1561361513-2d000a50f0dc?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "https://images.unsplash.com/photo-1609766857041-ed402ea8069a?auto=format&fit=crop&w=1200&q=80",
         "short_description": "The sacred abode of Lord Sri Venkateswara atop the seven peaks of Seshachalam Hills, India's most visited shrine.",
         "description": "Tirumala Venkateswara Temple, situated on the seventh peak (Venkatadri) of the Seshachalam mountain range, is one of the richest and most revered spiritual landmarks in the world. KV Tours provides seamless VIP Special Entry Darshan arrangements, chauffeured transfers, and luxury accommodation.",
         "highlights": [

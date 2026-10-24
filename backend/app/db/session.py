@@ -3,7 +3,8 @@
 from collections.abc import Generator
 from functools import lru_cache
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
+from sqlalchemy.pool import QueuePool
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import get_settings
@@ -16,10 +17,27 @@ def get_engine():
     is_sqlite = "sqlite" in settings.database_url.lower()
 
     if is_sqlite:
-        return create_engine(
+        engine = create_engine(
             settings.database_url,
-            connect_args={"check_same_thread": False},
+            poolclass=QueuePool,
+            pool_size=settings.db_pool_size or 20,
+            max_overflow=settings.db_max_overflow or 30,
+            pool_timeout=30,
+            pool_pre_ping=True,
+            connect_args={"check_same_thread": False, "timeout": 30.0},
         )
+
+        @event.listens_for(engine, "connect")
+        def configure_sqlite_connection(dbapi_connection, connection_record):
+            cursor = dbapi_connection.cursor()
+            cursor.execute("PRAGMA journal_mode=WAL;")
+            cursor.execute("PRAGMA synchronous=NORMAL;")
+            cursor.execute("PRAGMA busy_timeout=30000;")
+            cursor.execute("PRAGMA cache_size=-64000;")
+            cursor.execute("PRAGMA temp_store=MEMORY;")
+            cursor.close()
+
+        return engine
 
     # Production-grade PostgreSQL pooling configuration
     return create_engine(

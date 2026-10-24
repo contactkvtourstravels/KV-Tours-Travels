@@ -17,8 +17,10 @@ import {
 } from "lucide-react";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { bookingApi, BookingDetailResponse } from "@/lib/api";
+import { useBranding } from "@/context/BrandingContext";
 
 function ConfirmationContent() {
+  const branding = useBranding();
   const params = useParams();
   const reference = params?.reference as string;
 
@@ -84,9 +86,11 @@ function ConfirmationContent() {
   const isPaid = booking.payment_status === "paid";
 
   const waMessage = encodeURIComponent(
-    `Hello KV Tours & Travels! I have confirmed my booking reference ${booking.booking_reference} for ${booking.package_title}. Please share my trip briefing and travel documents.`
+    `Hello ${branding.displayName}! I have confirmed my booking reference ${booking.booking_reference} for ${booking.package_title}. Please share my trip briefing and travel documents.`
   );
-  const waUrl = `https://wa.me/919842212345?text=${waMessage}`;
+  const waUrl = branding.getWhatsAppUrl(
+    `Hello ${branding.displayName}! I have confirmed my booking reference ${booking.booking_reference} for ${booking.package_title}. Please share my trip briefing and travel documents.`
+  );
 
   return (
     <div className="py-8 sm:py-12 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 print:p-0 print:m-0 print:max-w-none">
@@ -96,21 +100,28 @@ function ConfirmationContent() {
       <div className="hidden print:block pb-5 mb-5 border-b-2 border-[#C5A880]">
         <div className="flex justify-between items-start gap-4">
           <div>
+            {branding.pdfLogoUrl && (
+              <img
+                src={branding.pdfLogoUrl}
+                alt={branding.pdfHeaderTitle}
+                className="h-10 max-w-[180px] object-contain mb-1.5"
+              />
+            )}
             <div className="text-2xl font-serif font-black tracking-tight text-[#111827]">
-              KV TOURS & TRAVELS
+              {branding.pdfHeaderTitle}
             </div>
             <div className="text-[10px] uppercase tracking-[0.25em] text-[#8C6D3B] font-bold mt-0.5">
-              Bespoke Luxury & Adventure Journeys • Coimbatore Operations Hub
+              {branding.pdfHeaderSubtitle}
             </div>
             <div className="text-[10px] text-[#4B5563] mt-2 space-y-0.5 leading-tight">
-              <div>Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012, India</div>
-              <div>Concierge Desk: +91 98422 12345 | bookings@kvtours.in | www.kvtours.in</div>
+              <div>{branding.pdfOfficeAddress}</div>
+              <div>{branding.pdfContactInfo}</div>
             </div>
           </div>
 
           <div className="text-right">
             <div className="inline-block px-3 py-1 bg-[#F9FAFB] border border-[#C5A880] rounded text-[10px] uppercase tracking-widest font-bold text-[#8C6D3B]">
-              Official Travel Voucher & Receipt
+              {branding.pdfBadgeLabel}
             </div>
             <div className="mt-2 font-mono text-base font-extrabold tracking-wider text-[#111827]">
               {booking.booking_reference}
@@ -136,7 +147,7 @@ function ConfirmationContent() {
 
         <div className="space-y-1">
           <span className="text-xs uppercase tracking-widest text-[#24292F] font-bold block">
-            KV TOURS & TRAVELS • COIMBATORE
+            {branding.displayName.toUpperCase()} • {branding.city.toUpperCase() || "PORTAL"}
           </span>
           <h1 className="text-3xl sm:text-4xl font-serif font-bold text-[#202124]">
             Booking Confirmed & Verified
@@ -364,13 +375,13 @@ function ConfirmationContent() {
           </div>
           <ul className="list-disc list-inside space-y-1 text-[#374151]">
             <li>
-              <strong>Check-in Requirement:</strong> Please present this official electronic voucher along with original government photo identification (or passport for international travel) during hotel check-in and departure assembly.
+              <strong>Check-in Requirement:</strong> {branding.pdfCheckinInstructions}
             </li>
             <li>
-              <strong>Private Logistics:</strong> Scheduled chauffeured transfers and curated excursions are confirmed as per the booked itinerary. Your travel host details will be notified 24 hours prior to departure.
+              <strong>Private Logistics:</strong> {branding.pdfLogisticsNotice}
             </li>
             <li>
-              <strong>24/7 Dedicated Concierge Helpline:</strong> Coimbatore Operations Desk: +91 98422 12345 | Priority WhatsApp Desk: +91 94420 00000 | concierge@kvtours.in
+              <strong>24/7 Dedicated Concierge Helpline:</strong> {branding.pdfHelplineInfo}
             </li>
           </ul>
         </div>
@@ -378,10 +389,9 @@ function ConfirmationContent() {
         {/* Section 5: Official Authenticity Stamp (Print Only) */}
         <div className="hidden print:flex items-center justify-between pt-3 border-t border-[#E5E7EB] text-[9.5px] text-[#6B7280] no-break">
           <div>
-            <div className="font-bold text-[#111827] uppercase tracking-wider">
-              KV Tours & Travels Operations • Coimbatore Portal
+            <div className="font-bold text-[#111827] uppercase tracking-wider whitespace-pre-line leading-relaxed">
+              {branding.pdfFooterDeclaration}
             </div>
-            <div>Computer-generated authoritative travel document • Valid without physical signature</div>
           </div>
           <div className="text-right font-mono">
             <div>AUTH-VERIFIED-{booking.booking_reference}</div>
@@ -398,14 +408,14 @@ function ConfirmationContent() {
             className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#0D7A53] hover:bg-[#0A6242] text-white text-xs uppercase tracking-widest font-semibold shadow-md shadow-emerald-700/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
           >
             <MessageCircle className="w-4 h-4" />
-            <span>Connect with Coimbatore Concierge</span>
+            <span>Connect with {branding.city || branding.shortName} Concierge</span>
           </a>
 
           <Link
             href="/"
             className="w-full sm:w-auto px-6 py-3.5 rounded-full border border-[#E4E5E7] bg-white text-[#202124] text-xs uppercase tracking-widest font-semibold hover:bg-[#F3F4F4] transition-all text-center"
           >
-            Return to KV Tours Home
+            Return to {branding.shortName || branding.displayName} Home
           </Link>
         </div>
       </div>

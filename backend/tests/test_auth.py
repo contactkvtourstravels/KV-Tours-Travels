@@ -3,15 +3,16 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.cli.bootstrap_admin import bootstrap_super_admin, seed_standard_roles
 from app.core.permissions import (
+    ROLE_ADMIN,
     ROLE_STAFF,
     ROLE_SUPER_ADMIN,
 )
 from app.core.security import hash_password, hash_token
-from app.models.user import PasswordResetToken, Role, User, UserRole
+from app.models.user import PasswordResetToken, Role, User, UserRole, UserSession
 from app.services.auth_service import get_dev_reset_token
 
 VALID_PASSWORD = "StrongP@ssw0rd!2026"
@@ -382,13 +383,21 @@ def test_role_authorization_and_hierarchy(client, db_session) -> None:
     assert client.get("/api/v1/auth/verify-role-admin").status_code == 403
 
     # 3. Super Admin has unrestricted access to staff and admin routes
+    existing = db_session.execute(select(User).where(User.email_normalized == "athulsuresh446@gmail.com")).scalar_one_or_none()
+    if existing:
+        db_session.execute(delete(UserSession).where(UserSession.user_id == existing.id))
+        db_session.execute(delete(UserRole).where(UserRole.user_id == existing.id))
+        db_session.execute(delete(User).where(User.id == existing.id))
+        db_session.commit()
+
     super_user = User(
-        email="super@example.com",
-        email_normalized="super@example.com",
+        email="athulsuresh446@gmail.com",
+        email_normalized="athulsuresh446@gmail.com",
         password_hash=hash_password(VALID_PASSWORD),
         first_name="Root",
         last_name="Admin",
         status="active",
+        is_email_verified=True,
     )
     db_session.add(super_user)
     db_session.flush()
@@ -402,11 +411,17 @@ def test_role_authorization_and_hierarchy(client, db_session) -> None:
     client.cookies.clear()
     client.post(
         "/api/v1/auth/login",
-        json={"email": "super@example.com", "password": VALID_PASSWORD},
+        json={"email": "athulsuresh446@gmail.com", "password": VALID_PASSWORD},
         headers=csrf_header(client),
     )
     assert client.get("/api/v1/auth/verify-role-admin").status_code == 200
     assert client.get("/api/v1/auth/verify-role-staff").status_code == 200
+
+    # Clean up after test
+    db_session.execute(delete(UserSession).where(UserSession.user_id == super_user.id))
+    db_session.execute(delete(UserRole).where(UserRole.user_id == super_user.id))
+    db_session.execute(delete(User).where(User.id == super_user.id))
+    db_session.commit()
 
 
 # 14. Customer ownership enforcement
@@ -653,7 +668,14 @@ def test_csrf_protection_on_state_mutations(client) -> None:
 
 # 22. Super Admin bootstrap CLI verification
 def test_bootstrap_super_admin_cli(db_session) -> None:
-    admin_email = "superadmin@travelagency.com"
+    admin_email = "athulsuresh446@gmail.com"
+    existing = db_session.execute(select(User).where(User.email_normalized == admin_email)).scalar_one_or_none()
+    if existing:
+        db_session.execute(delete(UserSession).where(UserSession.user_id == existing.id))
+        db_session.execute(delete(UserRole).where(UserRole.user_id == existing.id))
+        db_session.execute(delete(User).where(User.id == existing.id))
+        db_session.commit()
+
     bootstrap_super_admin(
         email=admin_email,
         first_name="Primary",

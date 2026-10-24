@@ -62,13 +62,13 @@ function AboutPageContent() {
     branding.agency_name ||
     settings?.public_display_name ||
     settings?.agency_name ||
-    "KV Tours & Travels";
-  const city = branding.city || settings?.city || "Coimbatore";
+    "The Wild Root";
+  const city = branding.city || settings?.city || "Palakkad";
   const address =
     branding.office_address ||
     settings?.office_address ||
     settings?.public_office_address ||
-    "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012";
+    "The Wild Root Lounge, Fort Maidan Road, Near Palakkad Fort, Palakkad, Kerala 678001";
   const whatsappNumber =
     branding.whatsapp_number || settings?.whatsapp_number || DEFAULT_WHATSAPP_NUMBER;
 
@@ -95,12 +95,12 @@ function AboutPageContent() {
     `Hi ${agencyName} ${city}, I would like to learn more about your bespoke travel planning.`
   );
 
-  // Agency initials for avatar badge (e.g. "ABC" or "KV")
+  // Agency initials for avatar badge (e.g. "WR")
   const agencyInitials = agencyName
     .split(/\s+/)
     .slice(0, 2)
     .map((w: string) => w[0]?.toUpperCase() || "")
-    .join("") || "KV";
+    .join("") || "WR";
 
   return (
     <PublicLayout>
@@ -160,10 +160,10 @@ function AboutPageContent() {
                   ) : (
                     <>
                       <p>
-                        {agencyName} was established in {city} to offer discerning travelers a refreshing alternative to impersonal booking portals and rigid group tours.
+                        {agencyName} was established in {city} at the foothills of the Western Ghats to offer discerning travelers a refreshing alternative to impersonal booking portals and rigid group tours.
                       </p>
                       <p>
-                        We believe that travel is deeply personal. Whether it is stepping onto the pristine atolls of the Maldives, discovering the lagoons of Lakshadweep, traversing the snowy landscapes of Kazakhstan, or breathing the pine air of Manali, every journey should feel effortless and memorable.
+                        We believe that travel is deeply personal. Whether it is stepping onto the pristine atolls of the Maldives, discovering the lagoons of Lakshadweep, traversing the snowy landscapes of Kazakhstan, or trekking through the mist of Silent Valley and Manali, every journey should feel effortless, soulful, and unforgettable.
                       </p>
                     </>
                   )}

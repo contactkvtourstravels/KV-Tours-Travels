@@ -17,9 +17,11 @@ import {
 } from "lucide-react";
 import { customerApi, CustomerDashboardSummary } from "@/lib/api";
 import { useCustomer } from "./CustomerContext";
+import { useBranding } from "@/context/BrandingContext";
 
 export default function CustomerDashboardPage() {
   const { user } = useCustomer();
+  const { displayName, shortName } = useBranding();
   const [data, setData] = useState<CustomerDashboardSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

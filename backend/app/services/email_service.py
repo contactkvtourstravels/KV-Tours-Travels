@@ -42,35 +42,40 @@ def _render_base_email(
     action_label: str | None = None,
     db: Session | None = None,
 ) -> str:
-    """Render branded HTML email wrapper matching KV Tours & Travels visual identity."""
+    """Render branded HTML email wrapper matching authoritative agency visual identity."""
     settings = get_settings()
     agency_name = settings.agency_name
     agency_location = settings.agency_location
     whatsapp_number = settings.whatsapp_number
+    logo_url = None
+    brand_accent_color = "#D4AF37"
     if db is not None:
         try:
-            r_name = db.get(SiteSetting, "agency_name")
-            if r_name and r_name.value:
-                agency_name = str(r_name.value)
-            r_loc = db.get(SiteSetting, "agency_location")
-            if r_loc and r_loc.value:
-                agency_location = str(r_loc.value)
-            r_wa = db.get(SiteSetting, "whatsapp_number")
-            if r_wa and r_wa.value:
-                whatsapp_number = str(r_wa.value)
+            from app.services.catalog_service import get_public_settings
+            pub = get_public_settings(db)
+            agency_name = pub.public_display_name or pub.agency_name or agency_name
+            agency_location = pub.agency_location or agency_location
+            whatsapp_number = pub.support_whatsapp or pub.whatsapp_number or whatsapp_number
+            logo_url = pub.logo_url
+            brand_accent_color = pub.brand_accent_color or brand_accent_color
         except Exception as exc:  # noqa: BLE001
             logger.debug("Could not read dynamic agency profile in email template: %s", exc)
+
+    logo_html = ""
+    if logo_url:
+        logo_html = f'<div style="margin-bottom: 12px;"><img src="{logo_url}" alt="{agency_name}" style="max-height: 48px; max-width: 180px; object-fit: contain;" /></div>'
 
     button_html = ""
     if action_url and action_label:
         button_html = f"""
         <div style="margin: 28px 0; text-align: center;">
-            <a href="{action_url}" style="background: #D4AF37; color: #0A0A0A; padding: 12px 28px; text-decoration: none; font-weight: 700; border-radius: 4px; display: inline-block; letter-spacing: 0.05em; font-size: 14px; text-transform: uppercase;">
+            <a href="{action_url}" style="background: {brand_accent_color}; color: #0A0A0A; padding: 12px 28px; text-decoration: none; font-weight: 700; border-radius: 4px; display: inline-block; letter-spacing: 0.05em; font-size: 14px; text-transform: uppercase;">
                 {action_label}
             </a>
         </div>
         """
 
+    current_year = datetime.now(timezone.utc).year
     return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -86,7 +91,8 @@ def _render_base_email(
                     <!-- Brand Header -->
                     <tr>
                         <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid #262626; background: #0A0A0A;">
-                            <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.15em; color: #D4AF37; text-transform: uppercase;">
+                            {logo_html}
+                            <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.15em; color: {brand_accent_color}; text-transform: uppercase;">
                                 {agency_name}
                             </h1>
                             <p style="margin: 6px 0 0; font-size: 12px; color: #737373; letter-spacing: 0.08em; text-transform: uppercase;">
@@ -97,7 +103,7 @@ def _render_base_email(
                     <!-- Main Body -->
                     <tr>
                         <td style="padding: 36px 32px;">
-                            <h2 style="margin: 0 0 20px; font-size: 18px; font-weight: 700; color: #FFFFFF; border-left: 3px solid #D4AF37; padding-left: 12px;">
+                            <h2 style="margin: 0 0 20px; font-size: 18px; font-weight: 700; color: #FFFFFF; border-left: 3px solid {brand_accent_color}; padding-left: 12px;">
                                 {title}
                             </h2>
                             <div style="font-size: 14px; color: #D4D4D4; line-height: 1.7;">
@@ -110,10 +116,10 @@ def _render_base_email(
                     <tr>
                         <td style="padding: 24px 32px; background: #0A0A0A; border-top: 1px solid #262626; font-size: 12px; color: #737373; text-align: center;">
                             <p style="margin: 0 0 8px;">
-                                Need immediate assistance? Contact our concierge on WhatsApp at <strong style="color: #D4AF37;">{whatsapp_number}</strong>
+                                Need immediate assistance? Contact our concierge on WhatsApp at <strong style="color: {brand_accent_color};">{whatsapp_number}</strong>
                             </p>
                             <p style="margin: 0;">
-                                &copy; 2026 {agency_name}. All rights reserved.
+                                &copy; {current_year} {agency_name}. All rights reserved.
                             </p>
                         </td>
                     </tr>
@@ -130,6 +136,26 @@ class EmailService:
 
     def __init__(self) -> None:
         self.settings = get_settings()
+
+    def _get_agency_name(self, db: Session | None = None) -> str:
+        if db is not None:
+            try:
+                from app.services.catalog_service import get_public_settings
+                pub = get_public_settings(db)
+                return pub.public_display_name or pub.agency_name
+            except Exception:
+                pass
+        return self.settings.agency_name
+
+    def _get_fallback_concierge_email(self, db: Session | None = None) -> str:
+        if db is not None:
+            try:
+                from app.services.catalog_service import get_public_settings
+                pub = get_public_settings(db)
+                return pub.customer_support_email or pub.contact_email
+            except Exception:
+                pass
+        return self.settings.contact_email
 
     def _send_via_mock(self, to_email: str, subject: str, _html_body: str) -> str:
         """Simulate email dispatch in test or development environments."""
@@ -162,10 +188,12 @@ class EmailService:
             s_name = db.get(SiteSetting, "email_sender_name")
             s_email = db.get(SiteSetting, "email_sender_email")
             s_reply = db.get(SiteSetting, "email_reply_to")
-            if s_name and s_email and s_name.value and s_email.value:
-                email_from = f"{s_name.value} <{s_email.value}>"
-            elif s_email and s_email.value:
-                email_from = str(s_email.value)
+            agency_name = self._get_agency_name(db)
+            sender_name_val = s_name.value if s_name and s_name.value else agency_name
+            if s_email and s_email.value:
+                email_from = f"{sender_name_val} <{s_email.value}>"
+            elif s_name and s_name.value:
+                email_from = f"{s_name.value} <{self.settings.contact_email}>"
             if s_reply and s_reply.value:
                 email_reply_to = str(s_reply.value)
 
@@ -363,9 +391,10 @@ class EmailService:
             f"Booking Reserved: {booking.booking_reference} — {booking.package.title}"
         )
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
+        agency_name = self._get_agency_name(db)
         content = f"""
         <p>Dear {user.first_name},</p>
-        <p>Thank you for choosing KV Tours & Travels. Your booking reservation has been created successfully.</p>
+        <p>Thank you for choosing {agency_name}. Your booking reservation has been created successfully.</p>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
             <tr style="border-bottom: 1px solid #262626;">
                 <td style="padding: 8px 0; color: #A3A3A3;">Booking Reference</td>
@@ -391,7 +420,7 @@ class EmailService:
         <p>Please complete payment to secure your group departure seats.</p>
         """
         html = _render_base_email(
-            "Booking Reservation Created", content, action_url, "View Booking"
+            "Booking Reservation Created", content, action_url, "View Booking", db=db
         )
         idempotency_key = f"email:booking_created:{booking.id}"
         return self.dispatch(
@@ -434,7 +463,7 @@ class EmailService:
         <p>Your payment receipt is now accessible in your customer dashboard.</p>
         """
         html = _render_base_email(
-            "Payment Successful", content, action_url, "Download Receipt"
+            "Payment Successful", content, action_url, "Download Receipt", db=db
         )
         idempotency_key = f"email:payment_successful:{payment.id}"
         return self.dispatch(
@@ -491,7 +520,7 @@ class EmailService:
         </table>
         <p>Your seats are securely reserved. You can pay the remaining balance before the departure date via your customer portal or direct bank transfer.</p>
         """
-        html = _render_base_email("Deposit Confirmed", content, action_url, "View Booking")
+        html = _render_base_email("Deposit Confirmed", content, action_url, "View Booking", db=db)
         idempotency_key = f"email:deposit_received:{payment.id}"
         return self.dispatch(
             db,
@@ -543,7 +572,7 @@ class EmailService:
         </table>
         <p>Our accounts team in Coimbatore will reconcile your transfer within 2–4 business hours and update your booking status.</p>
         """
-        html = _render_base_email("Transfer Submitted", content, action_url, "Track Status")
+        html = _render_base_email("Transfer Submitted", content, action_url, "Track Status", db=db)
         idempotency_key = f"email:bank_transfer_submitted:{payment.id}"
         return self.dispatch(
             db,
@@ -603,7 +632,7 @@ class EmailService:
         </table>
         <p>Your official tax invoice and payment receipt are now available in your portal.</p>
         """
-        html = _render_base_email("Payment Verified", content, action_url, "Download Receipt")
+        html = _render_base_email("Payment Verified", content, action_url, "Download Receipt", db=db)
         idempotency_key = f"email:bank_transfer_verified:{payment.id}"
         return self.dispatch(
             db,
@@ -641,7 +670,7 @@ class EmailService:
         </p>
         <p>Please double-check your bank transfer UTR and re-submit the correct reference, or contact our accounts desk directly.</p>
         """
-        html = _render_base_email("Transfer Rejected", content, action_url, "Update Transfer Details")
+        html = _render_base_email("Transfer Rejected", content, action_url, "Update Transfer Details", db=db)
         idempotency_key = f"email:bank_transfer_rejected:{payment.id}"
         return self.dispatch(
             db,
@@ -677,7 +706,7 @@ class EmailService:
         {deadline_str}
         <p>Please complete your payment online or via bank transfer to confirm final vouchers and travel documents.</p>
         """
-        html = _render_base_email("Balance Due", content, action_url, "Pay Balance Now")
+        html = _render_base_email("Balance Due", content, action_url, "Pay Balance Now", db=db)
         idempotency_key = f"email:balance_due:{booking.id}:{datetime.now(timezone.utc).strftime('%Y%m%d')}"
         return self.dispatch(
             db,
@@ -721,7 +750,7 @@ class EmailService:
         </table>
         <p>Our concierge team is finalizing your hotel vouchers, itinerary guide, and driver allocation.</p>
         """
-        html = _render_base_email("Journey Paid in Full", content, action_url, "Download Vouchers")
+        html = _render_base_email("Journey Paid in Full", content, action_url, "Download Vouchers", db=db)
         idempotency_key = f"email:balance_paid_in_full:{payment.id}"
         return self.dispatch(
             db,
@@ -754,7 +783,7 @@ class EmailService:
         <p>No funds were deducted from your account. You can retry checkout or reach out to our concierge on WhatsApp.</p>
         """
         html = _render_base_email(
-            "Payment Failed", content, action_url, "Retry Payment"
+            "Payment Failed", content, action_url, "Retry Payment", db=db
         )
         idempotency_key = f"email:payment_failed:{payment.id}:{payment.updated_at.isoformat() if payment.updated_at else 'init'}"
         return self.dispatch(
@@ -776,9 +805,10 @@ class EmailService:
             f"Booking Confirmed: {booking.booking_reference} — {booking.package.title}"
         )
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
+        agency_name = self._get_agency_name(db)
         content = f"""
         <p>Dear {user.first_name},</p>
-        <p>Pack your bags! Your journey with KV Tours & Travels is officially confirmed.</p>
+        <p>Pack your bags! Your journey with {agency_name} is officially confirmed.</p>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
             <tr style="border-bottom: 1px solid #262626;">
                 <td style="padding: 8px 0; color: #A3A3A3;">Booking Reference</td>
@@ -812,7 +842,7 @@ class EmailService:
         <p>Your official <strong>Travel Voucher</strong> is ready for download in your customer dashboard.</p>
         """
         html = _render_base_email(
-            "Booking Confirmed!", content, action_url, "Download Voucher"
+            "Booking Confirmed!", content, action_url, "Download Voucher", db=db
         )
         idempotency_key = f"email:booking_confirmed:{booking.id}:{payment.id}"
         return self.dispatch(
@@ -841,7 +871,7 @@ class EmailService:
         <p><strong>Next Steps:</strong> Our team will review your request against the booking terms and hotel/airline fare rules. Submitting a cancellation request does not automatically grant a refund. You will be updated once reviewed.</p>
         """
         html = _render_base_email(
-            "Cancellation Request Received", content, action_url, "Check Status"
+            "Cancellation Request Received", content, action_url, "Check Status", db=db
         )
         idempotency_key = f"email:cancellation_received:{req.id}"
         return self.dispatch(
@@ -868,7 +898,7 @@ class EmailService:
         <p>If applicable under our refund policy, our finance desk will process the refund to your original payment method.</p>
         """
         html = _render_base_email(
-            "Cancellation Request Approved", content, action_url, "View Booking"
+            "Cancellation Request Approved", content, action_url, "View Booking", db=db
         )
         idempotency_key = f"email:cancellation_approved:{req.id}"
         return self.dispatch(
@@ -895,7 +925,7 @@ class EmailService:
         <p>Your booking remains confirmed. If you have questions, please reach out to our concierge team directly.</p>
         """
         html = _render_base_email(
-            "Cancellation Request Update", content, action_url, "View Booking"
+            "Cancellation Request Update", content, action_url, "View Booking", db=db
         )
         idempotency_key = f"email:cancellation_rejected:{req.id}"
         return self.dispatch(
@@ -959,9 +989,10 @@ class EmailService:
             f"Your Adventure Begins in {days_left} Days! — {booking.package.title}"
         )
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
+        agency_name = self._get_agency_name(db)
         content = f"""
         <p>Dear {user.first_name},</p>
-        <p>Your journey with KV Tours & Travels to <strong>{booking.package.title}</strong> is just <strong>{days_left} days away</strong>!</p>
+        <p>Your journey with {agency_name} to <strong>{booking.package.title}</strong> is just <strong>{days_left} days away</strong>!</p>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
             <tr style="border-bottom: 1px solid #262626;">
                 <td style="padding: 8px 0; color: #A3A3A3;">Departure Date</td>
@@ -983,6 +1014,7 @@ class EmailService:
             content,
             action_url,
             "View Itinerary & Voucher",
+            db=db,
         )
         idempotency_key = f"email:trip_reminder_{days_left}d:{booking.id}:{booking.departure.departure_date}"
         return self.dispatch(

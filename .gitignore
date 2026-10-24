@@ -29,7 +29,44 @@ htmlcov/
 # Local databases and logs
 *.sqlite3
 *.db
+*.db-shm
+*.db-wal
+*.db.bak*
+*.bak
 *.log
+
+# Scratch scripts, temporary benchmarking data, and test uploads
+backend/scratch/
+backend/static/uploads/pixel_*.png
+backend/static/uploads/malicious_*
+backend/app/catalog_import/*.json
+backend/app/catalog_import/audit_*.py
+backend/app/catalog_import/build_*.py
+backend/app/catalog_import/load_test_*.py
+backend/app/catalog_import/test_*.py
+backend/app/catalog_import/verify_*.py
+backend/app/catalog_import/execute_*.py
+backend/app/catalog_import/image_*.py
+backend/app/catalog_import/migrate_*.py
+backend/app/catalog_import/sync_*.py
+backend/app/catalog_import/count_*.py
+backend/app/catalog_import/fill_*.py
+backend/app/catalog_import/find_*.py
+backend/app/catalog_import/extra_*.py
+backend/app/catalog_import/new_*.py
+backend/app/catalog_import/specs_*.py
+backend/app/catalog_import/india_specs_*.py
+backend/app/catalog_import/intl_specs_*.py
+backend/app/catalog_import/photo_pool.py
+backend/app/catalog_import/catalog_builder_all.py
+backend/app/catalog_import/catalog_generator.py
+backend/app/catalog_import/generator_full.py
+backend/app/catalog_import/create_catalog_data.py
+backend/app/catalog_import/generate_all_*.py
+backend/app/catalog_import/assemble_catalog.py
+backend/app/catalog_import/baseline_benchmark.py
+backend/app/catalog_import/import_pipeline.py
+backend/app/catalog_import/inspect_db.py
 
 # IDE and OS files
 .idea/

@@ -5,8 +5,10 @@ import React, { useState } from "react";
 import { ArrowLeft, CheckCircle2, Mail } from "lucide-react";
 import { authApi } from "@/lib/api";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
+import { useBranding } from "@/context/BrandingContext";
 
 export default function ForgotPasswordPage() {
+  const { displayName } = useBranding();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,7 @@ export default function ForgotPasswordPage() {
               Forgot Password
             </h1>
             <p className="text-sm text-[#70757A] mt-1.5">
-              Enter the email address registered with your KV Tours account to receive reset instructions.
+              Enter the email address registered with your {displayName || "account"} to receive reset instructions.
             </p>
           </div>
 

@@ -2,11 +2,16 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react";
 import { authApi, SafeUser } from "@/lib/api";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
+import { useBranding } from "@/context/BrandingContext";
 
 export default function RegisterPage() {
+  const router = useRouter();
+  const { displayName, shortName, city } = useBranding();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -16,6 +21,22 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [registeredUser, setRegisteredUser] = useState<SafeUser | null>(null);
+
+  const handleSocialSuccess = (user: SafeUser) => {
+    setRegisteredUser(user);
+    const isStaffOrAdmin = user.roles.some((r) =>
+      ["staff", "manager", "admin", "super_admin"].includes(r)
+    );
+    if (isStaffOrAdmin) {
+      router.push("/admin");
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
+  const handleSocialError = (errorMessage: string) => {
+    setError(errorMessage);
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +68,7 @@ export default function RegisterPage() {
       {/* Left 38% Branding Panel */}
       <AuthBrandingPanel
         title="Begin your bespoke journey."
-        tagline="Create your KV Tours profile to reserve luxury packages, coordinate custom itineraries, and stay connected with our Coimbatore team."
+        tagline={`Create your ${shortName || displayName} profile to reserve luxury packages, coordinate custom itineraries, and stay connected with our ${city || "travel"} team.`}
       />
 
       {/* Right Content Panel */}
@@ -83,7 +104,7 @@ export default function RegisterPage() {
               Create Your Account
             </h1>
             <p className="text-sm text-[#70757A] mt-1.5">
-              Join KV Tours & Travels to explore luxury getaways and manage your travel bookings.
+              Join {displayName} to explore luxury getaways and manage your travel bookings.
             </p>
           </div>
 
@@ -121,7 +142,14 @@ export default function RegisterPage() {
               </Link>
             </div>
           ) : (
-            <form onSubmit={handleRegister} className="space-y-4">
+            <div className="space-y-5">
+              <SocialAuthButtons
+                onSuccess={handleSocialSuccess}
+                onError={handleSocialError}
+                disabled={loading}
+              />
+
+              <form onSubmit={handleRegister} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
                   <label
@@ -265,6 +293,7 @@ export default function RegisterPage() {
                 {loading ? "Creating Account..." : "Create Account"}
               </button>
             </form>
+          </div>
           )}
 
           {/* Footer link to sign in */}

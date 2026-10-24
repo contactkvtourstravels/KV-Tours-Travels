@@ -6,11 +6,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, CheckCircle2, Eye, EyeOff, Lock, Mail, ShieldAlert } from "lucide-react";
 import { authApi, SafeUser } from "@/lib/api";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
+import { SocialAuthButtons } from "@/components/auth/SocialAuthButtons";
+import { useBranding } from "@/context/BrandingContext";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTarget = searchParams.get("redirect");
+  const { displayName } = useBranding();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -48,6 +51,25 @@ function LoginForm() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSocialSuccess = (user: SafeUser) => {
+    setCurrentUser(user);
+    const isStaffOrAdmin = user.roles.some((r) =>
+      ["staff", "manager", "admin", "super_admin"].includes(r)
+    );
+
+    if (redirectTarget) {
+      router.push(redirectTarget);
+    } else if (isStaffOrAdmin) {
+      router.push("/admin");
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
+  const handleSocialError = (errorMessage: string) => {
+    setError(errorMessage);
   };
 
   const handleCheckMe = async () => {
@@ -186,7 +208,14 @@ function LoginForm() {
           </div>
         </div>
       ) : (
-        <form onSubmit={handleLogin} className="space-y-4">
+        <div className="space-y-5">
+          <SocialAuthButtons
+            onSuccess={handleSocialSuccess}
+            onError={handleSocialError}
+            disabled={loading}
+          />
+
+          <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label
               htmlFor="login-email"
@@ -262,11 +291,12 @@ function LoginForm() {
             {loading ? "Authenticating..." : "Sign In to Account"}
           </button>
         </form>
+      </div>
       )}
 
       {/* Footer link to register */}
       <div className="mt-8 pt-6 border-t border-[#E4E5E7] text-center text-xs text-[#70757A]">
-        <span>New to KV Tours & Travels? </span>
+        <span>New to {displayName || "our platform"}? </span>
         <Link
           href="/register"
           className="font-semibold text-[#202124] hover:text-[#3D4450] transition-colors"
@@ -279,12 +309,13 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+  const { city } = useBranding();
   return (
     <div className="min-h-screen bg-[#F3F4F4] flex flex-col lg:flex-row items-stretch">
       {/* Left 38% Branding Panel */}
       <AuthBrandingPanel
         title="Every journey, thoughtfully designed."
-        tagline="Sign in to manage your bookings, download luxury travel itineraries, and contact your dedicated Coimbatore concierge."
+        tagline={`Sign in to manage your bookings, download luxury travel itineraries, and contact your dedicated ${city || "travel"} concierge.`}
       />
 
       {/* Right Content Panel */}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Compass, Menu, MessageCircle, Phone, X, User } from "lucide-react";
@@ -11,10 +11,11 @@ import {
   getWhatsAppClickToChatUrl,
 } from "@/lib/constants";
 
+import { useBranding } from "@/context/BrandingContext";
+
 const NAV_LINKS = [
   { href: "/destinations", label: "Destinations" },
   { href: "/packages", label: "Packages" },
-  { href: "/cabs", label: "Cabs & Fleet" },
   { href: "/group-trips", label: "Group Trips" },
   { href: "/custom-trip", label: "Custom Trip" },
   { href: "/about", label: "About" },
@@ -25,7 +26,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [settings, setSettings] = useState<PublicSiteSettings | null>(null);
+  const { displayName, shortName, logoUrl, city, phone, getWhatsAppUrl } = useBranding();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,33 +36,38 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  useEffect(() => {
-    publicCatalogApi
-      .getSettings()
-      .then(setSettings)
-      .catch(() => {
-        setSettings({
-          agency_name: "KV Tours & Travels",
-          tagline: "Your Journey. Our Expertise.",
-          agency_location: "Coimbatore, Tamil Nadu, India",
-          office_address: "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
-          whatsapp_number: DEFAULT_WHATSAPP_NUMBER,
-          contact_email: "contact@kvtours.in",
-          contact_phone: DEFAULT_BUSINESS_PHONE,
-          instagram_handle: "@kvtours_travels",
-          currency: "INR",
-        });
-      });
-  }, []);
-
+  // Close drawer on path navigation
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [pathname]);
 
-  const waUrl = getWhatsAppClickToChatUrl(
-    settings?.whatsapp_number,
-    "Hi KV Tours & Travels, I would like to plan a travel trip with you."
+  // Prevent background scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [mobileMenuOpen]);
+
+  // Handle Escape key to close mobile drawer
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    },
+    [mobileMenuOpen]
   );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
+
+  const waUrl = getWhatsAppUrl();
 
   return (
     <>
@@ -69,35 +75,37 @@ export function Navbar() {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled
             ? "bg-white/95 backdrop-blur-md border-b border-[#E2E4E8] py-2.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]"
-            : "bg-white/90 backdrop-blur-md border-b border-[#E2E4E8]/80 py-3.5"
+            : "bg-white/90 backdrop-blur-md border-b border-[#E2E4E8]/80 py-3 sm:py-3.5"
         }`}
       >
-        <div className="w-full max-w-7xl 2xl:max-w-[1400px] mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between gap-3 lg:gap-4">
+        <div className="w-full max-w-7xl 2xl:max-w-[1400px] mx-auto px-3.5 sm:px-6">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
             {/* Brand Logo with Small Oval Box */}
-            <Link href="/" className="group flex items-center gap-2.5 shrink-0">
-              {settings?.logo_url ? (
+            <Link href="/" className="group flex items-center gap-2 sm:gap-2.5 shrink-0">
+              {logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={settings.logo_url}
-                  alt={settings?.public_display_name || settings?.agency_name || "Logo"}
-                  className="h-9 w-auto max-w-[120px] object-contain rounded-lg"
+                  src={logoUrl}
+                  alt={displayName}
+                  className="h-8 sm:h-9 w-auto max-w-[100px] sm:max-w-[120px] object-contain rounded-lg shrink-0"
                 />
               ) : (
-                <div className="h-9 px-3 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 shadow-xs shrink-0 group-hover:bg-[#3D4450] transition-colors border border-[#3D4450]">
+                <div className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 shadow-xs shrink-0 group-hover:bg-[#3D4450] transition-colors border border-[#3D4450]">
                   <Compass className="w-3.5 h-3.5 text-[#ECEFF3]" />
-                  <span className="font-serif font-bold text-xs tracking-wider">
-                    {settings?.short_name || "KV"}
+                  <span className="font-serif font-bold text-xs tracking-wider whitespace-nowrap">
+                    {shortName || displayName}
                   </span>
                 </div>
               )}
               <div className="flex flex-col justify-center">
-                <span className="text-[#202124] font-serif tracking-[0.14em] text-sm sm:text-base uppercase font-bold leading-none group-hover:text-[#3D4450] transition-colors whitespace-nowrap">
-                  {settings?.public_display_name || settings?.agency_name || "KV Tours & Travels"}
+                <span className="text-[#202124] font-serif tracking-[0.04em] sm:tracking-[0.10em] text-xs sm:text-base uppercase font-bold leading-tight group-hover:text-[#3D4450] transition-colors whitespace-nowrap">
+                  {displayName}
                 </span>
-                <span className="text-[9px] uppercase tracking-[0.26em] text-[#6B7280] font-semibold mt-0.5 leading-none whitespace-nowrap">
-                  {settings?.city || "Coimbatore"}
-                </span>
+                {city ? (
+                  <span className="text-[9px] uppercase tracking-[0.16em] sm:tracking-[0.22em] text-[#6B7280] font-semibold leading-none whitespace-nowrap">
+                    {city}
+                  </span>
+                ) : null}
               </div>
             </Link>
 
@@ -152,36 +160,40 @@ export function Navbar() {
               </Link>
             </div>
 
-            {/* Mobile & Tablet Actions & Menu Toggle */}
-            <div className="flex items-center gap-2 xl:hidden shrink-0">
+            {/* Mobile & Tablet Actions & Three-Bar Menu Toggle */}
+            <div className="flex items-center gap-1.5 sm:gap-2 xl:hidden shrink-0">
               <a
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="h-9 px-3 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] hover:bg-[#D5F0E5] inline-flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap shrink-0 shadow-2xs"
-                aria-label="WhatsApp"
+                className="h-9 px-2.5 sm:px-3 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] hover:bg-[#D5F0E5] inline-flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap shrink-0 shadow-2xs"
+                aria-label="WhatsApp Concierge"
                 title="Chat on WhatsApp"
               >
-                <MessageCircle className="w-3.5 h-3.5 shrink-0" />
+                <MessageCircle className="w-4 h-4 text-[#0D7A53] shrink-0" />
                 <span className="hidden sm:inline">WhatsApp</span>
               </a>
 
               <Link
                 href="/custom-trip"
-                className="h-9 px-3.5 sm:px-4 rounded-full bg-[#24292F] hover:bg-[#3D4450] text-white text-xs uppercase tracking-wider font-bold inline-flex items-center justify-center gap-1.5 shadow-xs hover:scale-[1.01] active:scale-[0.98] transition-all whitespace-nowrap shrink-0"
+                className="hidden sm:inline-flex h-9 px-3.5 rounded-full bg-[#24292F] hover:bg-[#3D4450] text-white text-xs uppercase tracking-wider font-bold items-center justify-center gap-1.5 shadow-xs hover:scale-[1.01] active:scale-[0.98] transition-all whitespace-nowrap shrink-0"
               >
                 <Compass className="w-3.5 h-3.5 shrink-0" />
-                <span className="hidden sm:inline">Plan Your Trip</span>
-                <span className="sm:hidden">Plan</span>
+                <span>Plan</span>
               </Link>
 
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="h-9 w-9 flex items-center justify-center rounded-full border border-[#E2E4E8] bg-[#F0F2F5] text-[#202124] hover:bg-[#E4E7EB] focus:outline-none transition-colors shrink-0"
-                aria-label="Toggle Navigation Menu"
+                className="h-9 w-9 sm:h-9 sm:w-9 flex items-center justify-center rounded-full border border-[#D3D8DF] bg-[#F0F2F5] text-[#202124] hover:bg-[#E4E7EB] active:scale-95 focus:outline-none focus:ring-2 focus:ring-[#24292F]/20 transition-all shrink-0 shadow-2xs"
+                aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-expanded={mobileMenuOpen}
               >
-                {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5 text-[#24292F]" />}
+                {mobileMenuOpen ? (
+                  <X className="w-5 h-5 text-[#202124]" />
+                ) : (
+                  <Menu className="w-5 h-5 text-[#202124]" />
+                )}
               </button>
             </div>
           </div>
@@ -190,54 +202,66 @@ export function Navbar() {
 
       {/* Mobile & Tablet Slide-over Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 xl:hidden">
+        <div
+          className="fixed inset-0 z-50 xl:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile Navigation"
+        >
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
           />
 
           {/* Drawer content */}
-          <div className="fixed top-0 right-0 bottom-0 w-4/5 max-w-sm bg-white border-l border-[#E2E4E8] p-6 flex flex-col justify-between shadow-2xl overflow-y-auto">
+          <div className="fixed top-0 right-0 bottom-0 w-[85vw] max-w-sm bg-white border-l border-[#E2E4E8] p-5 sm:p-6 flex flex-col justify-between shadow-2xl overflow-y-auto z-10">
             <div>
-              <div className="flex items-center justify-between pb-5 border-b border-[#E2E4E8]">
-                <div className="flex items-center gap-2.5">
-                  {settings?.logo_url ? (
+              <div className="flex items-center justify-between pb-4 sm:pb-5 border-b border-[#E2E4E8]">
+                <Link
+                  href="/"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-2.5 min-w-0"
+                >
+                  {logoUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={settings.logo_url}
-                      alt={settings?.public_display_name || settings?.agency_name || "Logo"}
+                      src={logoUrl}
+                      alt={displayName}
                       className="h-8 w-auto max-w-[100px] object-contain rounded-lg"
                     />
                   ) : (
-                    <div className="h-8 px-3 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 shadow-xs border border-[#3D4450]">
+                    <div className="h-8 px-2.5 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 shadow-xs border border-[#3D4450] shrink-0">
                       <Compass className="w-3 h-3 text-[#ECEFF3]" />
                       <span className="font-serif font-bold text-xs tracking-wider">
-                        {settings?.short_name || "KV"}
+                        {shortName || displayName}
                       </span>
                     </div>
                   )}
-                  <div>
-                    <div className="text-[#202124] font-serif font-bold text-sm tracking-wider uppercase">
-                      {settings?.public_display_name || settings?.agency_name || "KV Tours"}
+                  <div className="min-w-0">
+                    <div className="text-[#202124] font-serif font-bold text-sm tracking-wider uppercase truncate">
+                      {displayName}
                     </div>
-                    <div className="text-[9px] uppercase tracking-widest text-[#6B7280] font-semibold">
-                      {settings?.city || "Coimbatore"}
-                    </div>
+                    {city ? (
+                      <div className="text-[9px] uppercase tracking-widest text-[#6B7280] font-semibold truncate">
+                        {city}
+                      </div>
+                    ) : null}
                   </div>
-                </div>
+                </Link>
                 <button
                   type="button"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="p-2 text-[#5F6368] hover:text-[#202124]"
-                  aria-label="Close Menu"
+                  className="h-9 w-9 flex items-center justify-center rounded-full text-[#5F6368] hover:text-[#202124] hover:bg-[#F0F2F5] transition-colors shrink-0"
+                  aria-label="Close navigation menu"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {/* Navigation Links */}
-              <div className="flex flex-col gap-1.5 py-5">
+              <nav className="flex flex-col gap-1 py-4 sm:py-5" aria-label="Mobile Navigation Links">
                 {NAV_LINKS.map((link) => {
                   const isActive = pathname === link.href;
                   return (
@@ -255,15 +279,15 @@ export function Navbar() {
                     </Link>
                   );
                 })}
-              </div>
+              </nav>
             </div>
 
             {/* Bottom Actions */}
-            <div className="pt-5 border-t border-[#E2E4E8] flex flex-col gap-2.5">
+            <div className="pt-4 sm:pt-5 border-t border-[#E2E4E8] flex flex-col gap-2.5">
               <Link
                 href="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full h-11 flex items-center justify-center gap-2 rounded-full border border-[#D3D8DF] bg-[#F0F2F5] text-[#202124] text-xs uppercase tracking-wider font-semibold hover:bg-[#E4E7EB]"
+                className="w-full h-11 flex items-center justify-center gap-2 rounded-full border border-[#D3D8DF] bg-[#F0F2F5] text-[#202124] text-xs uppercase tracking-wider font-semibold hover:bg-[#E4E7EB] transition-colors"
               >
                 <User className="w-3.5 h-3.5 text-[#5F6368]" />
                 <span>Customer Portal & My Trips</span>
@@ -272,7 +296,7 @@ export function Navbar() {
               <Link
                 href="/custom-trip"
                 onClick={() => setMobileMenuOpen(false)}
-                className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-[#24292F] hover:bg-[#3D4450] text-white text-xs uppercase tracking-widest font-bold shadow-sm"
+                className="w-full h-11 flex items-center justify-center gap-2 rounded-full bg-[#24292F] hover:bg-[#3D4450] text-white text-xs uppercase tracking-widest font-bold shadow-sm transition-colors"
               >
                 <Compass className="w-4 h-4" />
                 <span>Plan Your Trip</span>
@@ -282,16 +306,16 @@ export function Navbar() {
                 href={waUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full h-11 flex items-center justify-center gap-2 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-wider font-semibold"
+                className="w-full h-11 flex items-center justify-center gap-2 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] hover:bg-[#D5F0E5] text-xs uppercase tracking-wider font-semibold transition-colors"
               >
-                <MessageCircle className="w-4 h-4" />
+                <MessageCircle className="w-4 h-4 text-[#0D7A53]" />
                 <span>WhatsApp Concierge</span>
               </a>
 
-              {settings?.contact_phone && (
+              {phone && (
                 <div className="flex items-center justify-center gap-1.5 text-xs text-[#5F6368] pt-1">
                   <Phone className="w-3 h-3 text-[#24292F]" />
-                  <span>{settings.contact_phone}</span>
+                  <span>{phone}</span>
                 </div>
               )}
             </div>

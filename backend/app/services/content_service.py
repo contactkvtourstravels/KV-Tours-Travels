@@ -310,7 +310,7 @@ def get_default_group_trips_content(agency_name: str, city: str) -> dict[str, An
     """Generate default initial content for the Group Trips & Departures page."""
     return {
         "hero": {
-            "eyebrow": "KV Signature Departures",
+            "eyebrow": f"{agency_name} Signature Departures",
             "heading": "Upcoming Group Journeys",
             "description": f"Travel together with fellow adventurers from {city} and across India. Fixed departure dates with guaranteed small-group dynamics and transparent inclusions.",
             "banner_image_url": None,
@@ -376,20 +376,23 @@ def _canonical_slug(slug: str) -> str:
 def _get_agency_context(db: Session) -> dict[str, Any]:
     """Retrieve active agency profile variables for dynamic page templating."""
     pub = get_public_settings(db)
+    agency_display = pub.public_display_name or pub.agency_name or "Wild Root"
     return {
-        "agency_name": pub.agency_name or "KV Tours & Travels",
-        "short_name": pub.short_name or "KV Tours",
-        "tagline": pub.tagline or "Luxury & Adventure Journeys",
-        "city": pub.city or "Coimbatore",
-        "state": pub.state or "Tamil Nadu",
-        "office_address": pub.office_address or "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
-        "contact_phone": pub.contact_phone or "+91 94420 00000",
+        "agency_name": pub.agency_name or agency_display,
+        "public_display_name": pub.public_display_name or agency_display,
+        "legal_business_name": pub.legal_business_name or agency_display,
+        "short_name": pub.short_name or agency_display,
+        "tagline": pub.tagline,
+        "city": pub.city or "Palakkad",
+        "state": pub.state or "Kerala",
+        "office_address": pub.office_address,
+        "contact_phone": pub.contact_phone,
         "secondary_phone": pub.secondary_phone,
         "emergency_phone": pub.emergency_phone,
-        "contact_email": pub.contact_email or "contact@kvtours.in",
-        "support_whatsapp": pub.support_whatsapp or pub.whatsapp_number or "+919442000000",
-        "whatsapp_number": pub.whatsapp_number or "+919442000000",
-        "operating_hours": pub.operating_hours or "Mon - Sat: 9:00 AM - 7:00 PM",
+        "contact_email": pub.contact_email,
+        "support_whatsapp": pub.support_whatsapp or pub.whatsapp_number,
+        "whatsapp_number": pub.whatsapp_number,
+        "operating_hours": pub.operating_hours,
         "brand_primary_color": pub.brand_primary_color or "#24292F",
         "brand_secondary_color": pub.brand_secondary_color or "#C5A880",
         "brand_accent_color": pub.brand_accent_color or "#D4AF37",
@@ -402,6 +405,7 @@ def _get_agency_context(db: Session) -> dict[str, Any]:
         "google_maps_display_enabled": pub.google_maps_display_enabled,
         "office_location_label": pub.office_location_label,
         "logo_url": pub.logo_url,
+        "favicon_url": pub.favicon_url,
     }
 
 

@@ -9,6 +9,7 @@ import {
   adminCancellationApi,
   CancellationRequestDetail,
 } from "@/lib/api";
+import { useBranding } from "@/context/BrandingContext";
 
 const STATUS_FILTERS = [
   { label: "All Requests", value: "" },
@@ -18,6 +19,7 @@ const STATUS_FILTERS = [
 ];
 
 export default function AdminCancellationsPage() {
+  const { displayName } = useBranding();
   const [requests, setRequests] = useState<CancellationRequestDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export default function AdminCancellationsPage() {
             Booking Cancellation Requests
           </h1>
           <p className="text-xs text-slate-400 mt-1">
-            Review and govern customer cancellation claims according to KV Tours & Travels refund policy.
+            Review and govern customer cancellation claims according to {displayName || "agency"} refund policy.
           </p>
         </div>
 

@@ -33,6 +33,20 @@ ManagerOrAbove = Annotated[
 ]
 
 
+import re
+from app.services.catalog_service import get_public_settings
+
+
+def _agency_export_prefix(db: Session) -> str:
+    try:
+        pub = get_public_settings(db)
+        name = (pub.short_name or pub.public_display_name or pub.agency_name or "agency").lower()
+        slug = re.sub(r"[^a-z0-9]+", "_", name).strip("_")
+        return slug or "agency"
+    except Exception:
+        return "agency"
+
+
 def _csv_response(csv_buffer, filename: str) -> Response:
     content = csv_buffer.getvalue()
     return Response(
@@ -46,28 +60,32 @@ def _csv_response(csv_buffer, filename: str) -> Response:
 def export_bookings(_admin: StaffOrAbove, db: DbSession) -> Response:
     """Export operational bookings report as CSV."""
     buf = OperationsService.export_csv_bookings(db=db)
-    return _csv_response(buf, "kv_tours_bookings.csv")
+    prefix = _agency_export_prefix(db)
+    return _csv_response(buf, f"{prefix}_bookings.csv")
 
 
 @router.get("/customers")
 def export_customers(_admin: StaffOrAbove, db: DbSession) -> Response:
     """Export customer directory as CSV (strictly omits secrets and password hashes)."""
     buf = OperationsService.export_csv_customers(db=db)
-    return _csv_response(buf, "kv_tours_customers.csv")
+    prefix = _agency_export_prefix(db)
+    return _csv_response(buf, f"{prefix}_customers.csv")
 
 
 @router.get("/departures")
 def export_departures(_admin: StaffOrAbove, db: DbSession) -> Response:
     """Export scheduled group departures report as CSV."""
     buf = OperationsService.export_csv_departures(db=db)
-    return _csv_response(buf, "kv_tours_departures.csv")
+    prefix = _agency_export_prefix(db)
+    return _csv_response(buf, f"{prefix}_departures.csv")
 
 
 @router.get("/inquiries")
 def export_inquiries(_admin: StaffOrAbove, db: DbSession) -> Response:
     """Export customer inquiries and leads as CSV."""
     buf = OperationsService.export_csv_inquiries(db=db)
-    return _csv_response(buf, "kv_tours_inquiries.csv")
+    prefix = _agency_export_prefix(db)
+    return _csv_response(buf, f"{prefix}_inquiries.csv")
 
 
 @router.get("/manifest/{departure_id}")
@@ -85,14 +103,16 @@ def export_manifest(
         departure_id=departure_id,
         is_manager_or_admin=is_mgr_or_admin,
     )
-    return _csv_response(buf, f"manifest_{departure_id}.csv")
+    prefix = _agency_export_prefix(db)
+    return _csv_response(buf, f"{prefix}_manifest_{departure_id}.csv")
 
 
 @router.get("/payments")
 def export_payments(_admin: ManagerOrAbove, db: DbSession) -> Response:
     """Export financial payment transaction records as CSV (Manager+)."""
     buf = OperationsService.export_csv_payments(db=db)
-    return _csv_response(buf, "kv_tours_payments.csv")
+    prefix = _agency_export_prefix(db)
+    return _csv_response(buf, f"{prefix}_payments.csv")
 
 
 @router.get("/revenue")
@@ -113,4 +133,5 @@ def export_revenue(
         custom_start=custom_start,
         custom_end=custom_end,
     )
-    return _csv_response(buf, f"kv_tours_revenue_{period}.csv")
+    prefix = _agency_export_prefix(db)
+    return _csv_response(buf, f"{prefix}_revenue_{period}.csv")

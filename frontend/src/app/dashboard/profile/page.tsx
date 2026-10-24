@@ -14,9 +14,11 @@ import {
 } from "lucide-react";
 import { customerApi, CustomerProfile } from "@/lib/api";
 import { useCustomer } from "../CustomerContext";
+import { useBranding } from "@/context/BrandingContext";
 
 export default function CustomerProfilePage() {
   const { user, refreshUser } = useCustomer();
+  const { displayName } = useBranding();
   const [profile, setProfile] = useState<CustomerProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -197,7 +199,7 @@ export default function CustomerProfilePage() {
               </div>
               <p className="text-[11px] text-[#70757A] mt-2 bg-[#F7F7F5] p-3 rounded-xl border border-[#E4E5E7] leading-relaxed">
                 {profile.email_immutability_notice ||
-                  "Direct email modification is disabled to protect your account against hijacking. Contact KV Tours & Travels to request a verified email migration."}
+                  `Direct email modification is disabled to protect your account against hijacking. Contact ${displayName} to request a verified email migration.`}
               </p>
             </div>
 

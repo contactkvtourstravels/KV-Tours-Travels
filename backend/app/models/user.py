@@ -54,6 +54,9 @@ class User(TimestampMixin, Base):
     is_deleted: Mapped[bool] = mapped_column(
         Boolean, nullable=False, server_default=text("false")
     )
+    is_email_verified: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, server_default=text("false")
+    )
 
     role_assignments: Mapped[list[UserRole]] = relationship(
         back_populates="user", foreign_keys="UserRole.user_id", passive_deletes=True

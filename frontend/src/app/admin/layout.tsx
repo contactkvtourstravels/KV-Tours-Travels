@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -19,6 +19,7 @@ import {
   LogOut,
   ExternalLink,
   Menu,
+  X,
   CreditCard,
   TrendingUp,
   Download,
@@ -31,8 +32,10 @@ import {
   Landmark,
   Info,
   PhoneCall,
+  Printer,
 } from "lucide-react";
 import { AdminProvider, useAdmin, AdminRole } from "./AdminContext";
+import { useBranding } from "@/context/BrandingContext";
 
 interface NavItem {
   name: string;
@@ -233,6 +236,12 @@ const NAVIGATION_SECTIONS: NavSection[] = [
         roles: ["admin", "super_admin"],
       },
       {
+        name: "Travel Voucher & PDF",
+        href: "/admin/settings?tab=pdf",
+        icon: Printer,
+        roles: ["admin", "super_admin"],
+      },
+      {
         name: "Activity Logs",
         href: "/admin/audit-logs",
         icon: ShieldAlert,
@@ -244,15 +253,47 @@ const NAVIGATION_SECTIONS: NavSection[] = [
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const { user, loading, highestRole, hasAnyRole, logout } = useAdmin();
+  const { settings, displayName, shortName, logoUrl, initials } = useBranding();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Close drawer on path change
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  // Prevent background scrolling when mobile drawer is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [mobileMenuOpen]);
+
+  // Handle Escape key to close mobile drawer
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape" && mobileMenuOpen) {
+        setMobileMenuOpen(false);
+      }
+    },
+    [mobileMenuOpen]
+  );
+
+  useEffect(() => {
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [handleKeyDown]);
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F7F7F5] flex flex-col items-center justify-center text-[#202124]">
         <div className="w-10 h-10 border-4 border-[#24292F] border-t-transparent rounded-full animate-spin mb-4" />
         <p className="text-xs font-semibold uppercase tracking-widest text-[#70757A]">
-          Loading KV Tours Admin Portal...
+          Loading {shortName || displayName} Admin Portal...
         </p>
       </div>
     );
@@ -299,25 +340,42 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const navContent = (
     <div className="flex flex-col h-full bg-white border-r border-[#E4E5E7] text-[#202124]">
       {/* Brand Header */}
-      <div className="h-20 px-6 border-b border-[#E4E5E7] flex items-center justify-between bg-white">
-        <Link href="/admin" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[#24292F] flex items-center justify-center text-white font-serif font-bold text-base shadow-xs">
-            KV
-          </div>
-          <div>
+      <div className="h-20 px-5 sm:px-6 border-b border-[#E4E5E7] flex items-center justify-between bg-white shrink-0">
+        <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="flex items-center gap-3 min-w-0">
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt={displayName}
+              className="h-9 w-auto max-w-[90px] object-contain rounded-lg shrink-0"
+            />
+          ) : (
+            <div className="w-9 h-9 rounded-xl bg-[#24292F] flex items-center justify-center text-white font-serif font-bold text-base shadow-xs shrink-0">
+              {initials}
+            </div>
+          )}
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-serif font-bold text-base tracking-tight text-[#202124]">
-                KV TOURS
+              <span className="font-serif font-bold text-base tracking-tight text-[#202124] uppercase truncate">
+                {shortName || displayName}
               </span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider bg-[#ECEFF3] text-[#24292F] border border-[#D3D8DF]">
+              <span className="px-2 py-0.5 rounded-full text-[10px] uppercase font-bold tracking-wider bg-[#ECEFF3] text-[#24292F] border border-[#D3D8DF] shrink-0">
                 Admin
               </span>
             </div>
-            <p className="text-[10px] text-[#70757A] font-medium tracking-wide">
-              Coimbatore Operations Portal
+            <p className="text-[10px] text-[#70757A] font-medium tracking-wide truncate">
+              {settings?.admin_portal_subtitle || "Operations Portal"}
             </p>
           </div>
         </Link>
+        <button
+          type="button"
+          onClick={() => setMobileMenuOpen(false)}
+          className="lg:hidden p-2 rounded-xl text-[#5F6368] hover:text-[#202124] hover:bg-[#F3F4F4] transition-colors shrink-0"
+          aria-label="Close Navigation Menu"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Navigation Sections */}
@@ -412,12 +470,18 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden flex">
+        <div
+          className="fixed inset-0 z-50 lg:hidden flex"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Admin Navigation Menu"
+        >
           <div
-            className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileMenuOpen(false)}
+            aria-hidden="true"
           />
-          <div className="relative w-72 max-w-[80vw] h-full shadow-2xl z-10">
+          <div className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10 bg-white">
             {navContent}
           </div>
         </div>
@@ -426,19 +490,21 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navbar */}
-        <header className="h-16 bg-white border-b border-[#E4E5E7] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
-          <div className="flex items-center gap-3">
+        <header className="h-16 bg-white border-b border-[#E4E5E7] px-3.5 sm:px-8 flex items-center justify-between sticky top-0 z-20 shadow-2xs">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <button
+              type="button"
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-xl text-[#3D4450] hover:bg-[#F3F4F4]"
-              aria-label="Open Navigation"
+              className="lg:hidden p-2 rounded-xl text-[#202124] bg-[#F7F7F5] border border-[#E4E5E7] hover:bg-[#ECEFF3] active:scale-95 transition-all shadow-2xs flex items-center justify-center shrink-0"
+              aria-label="Open Navigation Menu"
+              aria-expanded={mobileMenuOpen}
             >
-              <Menu className="w-5 h-5" />
+              <Menu className="w-5 h-5 text-[#202124]" />
             </button>
-            <div className="flex items-center gap-2 text-xs font-semibold text-[#70757A]">
-              <span className="hidden sm:inline">KV Tours & Travels Operations</span>
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#70757A] min-w-0">
+              <span className="hidden sm:inline">{shortName || displayName} Operations</span>
               <span className="hidden sm:inline text-[#D3D8DF]">/</span>
-              <span className="text-[#202124] font-bold capitalize">
+              <span className="text-[#202124] font-bold capitalize truncate">
                 {pathname.split("/").pop()?.replace("-", " ") || "Dashboard"}
               </span>
             </div>

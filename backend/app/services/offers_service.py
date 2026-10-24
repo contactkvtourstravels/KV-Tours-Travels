@@ -11,6 +11,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.cache import catalog_cache
 from app.models.catalog import BestOffer, Package
 from app.models.content import AuditLog, SiteSetting
 from app.schemas.offers import (
@@ -173,6 +174,7 @@ class OffersService:
         )
         db.add(audit)
         db.commit()
+        catalog_cache.invalidate(["offers", "settings"])
         logger.info(
             "Best Offers master toggle updated to %s by user %s", enabled, actor_id
         )
@@ -181,9 +183,16 @@ class OffersService:
     @classmethod
     def get_public_offers(cls, db: Session) -> PublicOffersResponse:
         """Retrieve eligible, published best offers for the public homepage."""
+        cache_key = "offers:public"
+        cached = catalog_cache.get(cache_key)
+        if cached is not None:
+            return cached
+
         is_enabled = cls.is_master_toggle_enabled(db)
         if not is_enabled:
-            return PublicOffersResponse(section_enabled=False, offers=[])
+            empty_resp = PublicOffersResponse(section_enabled=False, offers=[])
+            catalog_cache.set(cache_key, empty_resp, ttl_seconds=60, tags=["offers"])
+            return empty_resp
 
         now = datetime.now(timezone.utc)
 
@@ -237,7 +246,8 @@ class OffersService:
                 badge_text=offer.badge_text,
             )
 
-            cover_img = pkg.cover_image_url
+            admin_featured = next((img for img in pkg.images if img.is_featured), None)
+            cover_img = admin_featured.image_url if admin_featured else pkg.cover_image_url
             if not cover_img and pkg.images:
                 cover_img = pkg.images[0].image_url
             if not cover_img and pkg.destination:
@@ -276,7 +286,9 @@ class OffersService:
                 )
             )
 
-        return PublicOffersResponse(section_enabled=True, offers=items)
+        resp = PublicOffersResponse(section_enabled=True, offers=items)
+        catalog_cache.set(cache_key, resp, ttl_seconds=60, tags=["offers"])
+        return resp
 
     @classmethod
     def get_admin_offers(

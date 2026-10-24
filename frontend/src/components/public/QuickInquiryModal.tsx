@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CheckCircle2, Compass, Loader2, MessageCircle, Send, X } from "lucide-react";
 import { publicCatalogApi, type PublicInquiryCreate } from "@/lib/api";
-import { getWhatsAppClickToChatUrl } from "@/lib/constants";
+import { useBranding } from "@/context/BrandingContext";
 
 interface QuickInquiryModalProps {
   isOpen: boolean;
@@ -24,16 +24,17 @@ export function QuickInquiryModal({
   destinationName,
   initialMessage,
 }: QuickInquiryModalProps) {
+  const { displayName, shortName, city, getWhatsAppUrl } = useBranding();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState(
     initialMessage ||
       (packageName
-        ? `Hello KV Tours & Travels, I am interested in the "${packageName}" tour package. Please share detailed itinerary and pricing options.`
+        ? `Hello ${displayName}, I am interested in the "${packageName}" tour package. Please share detailed itinerary and pricing options.`
         : destinationName
-        ? `Hello KV Tours & Travels, I am planning a holiday to ${destinationName}. Please suggest custom itinerary options.`
-        : "Hello KV Tours & Travels, I would like to plan a travel trip with you.")
+        ? `Hello ${displayName}, I am planning a holiday to ${destinationName}. Please suggest custom itinerary options.`
+        : `Hello ${displayName}, I would like to plan a travel trip with you.`)
   );
   const [submitting, setSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -68,11 +69,10 @@ export function QuickInquiryModal({
     }
   };
 
-  const waUrl = getWhatsAppClickToChatUrl(
-    null,
+  const waUrl = getWhatsAppUrl(
     packageName
-      ? `Hi KV Tours Coimbatore, I am interested in the ${packageName} package. Please share details.`
-      : "Hi KV Tours Coimbatore, I would like to plan a trip with you."
+      ? `Hi ${displayName}, I am interested in the ${packageName} package. Please share details.`
+      : `Hi ${displayName}, I would like to plan a trip with you.`
   );
 
   return (
@@ -123,14 +123,14 @@ export function QuickInquiryModal({
           <div>
             <div className="flex items-center gap-2 text-[#3D4450] text-xs uppercase tracking-widest font-semibold mb-2">
               <Compass className="w-4 h-4" />
-              <span>KV Tours Travel Concierge</span>
+              <span>{shortName || displayName} Travel Concierge</span>
             </div>
 
             <h3 className="text-2xl font-serif font-bold text-[#202124]">
               {packageName ? `Enquire for ${packageName}` : "Plan Your Travel Journey"}
             </h3>
             <p className="text-[#70757A] text-xs sm:text-sm mt-1 mb-6">
-              Share your trip ideas below. Our travel experts in Coimbatore will curate a bespoke proposal.
+              Share your trip ideas below. Our travel experts in {city || "our concierge office"} will curate a bespoke proposal.
             </p>
 
             {errorMessage && (

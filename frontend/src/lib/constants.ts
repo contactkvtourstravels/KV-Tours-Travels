@@ -1,13 +1,14 @@
 /**
- * Centralized business contact and branding constants for KV Tours & Travels.
+ * Centralized business contact and branding constants for Wild Root.
  * Supports environment variable overrides for multi-environment deployments.
  */
 
-export const AGENCY_NAME = "KV Tours & Travels";
-export const AGENCY_LOCATION = "Coimbatore, Tamil Nadu, India";
-export const AGENCY_OFFICE_ADDRESS = "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012";
+export const AGENCY_NAME = process.env.NEXT_PUBLIC_AGENCY_NAME || "Travel Agency";
+export const AGENCY_LOCATION = process.env.NEXT_PUBLIC_AGENCY_LOCATION || "India";
+export const AGENCY_OFFICE_ADDRESS = process.env.NEXT_PUBLIC_AGENCY_OFFICE_ADDRESS || "Headquarters";
 
-export const DEFAULT_CONTACT_EMAIL = "contact@kvtours.in";
+export const DEFAULT_CONTACT_EMAIL =
+  process.env.NEXT_PUBLIC_CONTACT_EMAIL || "contact@travelagency.com";
 export const DEFAULT_BUSINESS_PHONE =
   process.env.NEXT_PUBLIC_BUSINESS_PHONE || "+91 94420 00000";
 export const DEFAULT_WHATSAPP_NUMBER =

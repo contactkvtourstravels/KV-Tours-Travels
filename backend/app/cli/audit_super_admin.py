@@ -61,7 +61,7 @@ def run_super_admin_audit(db: Session) -> dict:
 
             # Revoke all active sessions for the demoted user
             db.execute(
-                text("UPDATE user_sessions SET is_revoked = 1 WHERE user_id = :uid"),
+                text("UPDATE user_sessions SET is_revoked = TRUE WHERE user_id = :uid"),
                 {"uid": user.id},
             )
 

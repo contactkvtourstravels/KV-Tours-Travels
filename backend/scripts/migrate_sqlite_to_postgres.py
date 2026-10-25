@@ -11,6 +11,7 @@ import json
 import logging
 import sqlite3
 import sys
+import uuid
 from pathlib import Path
 
 from sqlalchemy import MetaData, Table, create_engine, select, text
@@ -110,7 +111,7 @@ def migrate_data(
 
                 logger.info("Migrating table '%s': %d records found in SQLite...", table_name, len(rows))
 
-                # Identify boolean and JSON columns from target table
+                # Identify boolean, JSON, and UUID columns from target table
                 boolean_cols = {
                     col.name
                     for col in pg_table.columns
@@ -120,6 +121,11 @@ def migrate_data(
                     col.name
                     for col in pg_table.columns
                     if "json" in str(col.type).lower()
+                }
+                uuid_cols = {
+                    col.name
+                    for col in pg_table.columns
+                    if "uuid" in str(col.type).lower()
                 }
 
                 records_to_insert = []
@@ -136,6 +142,14 @@ def migrate_data(
                                 record[j_col] = json.loads(record[j_col])
                             except (ValueError, TypeError):
                                 pass
+                    # Coerce UUID fields to valid UUID strings
+                    for u_col in uuid_cols:
+                        if u_col in record and record[u_col] is not None:
+                            val = str(record[u_col]).strip()
+                            try:
+                                record[u_col] = str(uuid.UUID(val))
+                            except Exception:
+                                record[u_col] = str(uuid.uuid5(uuid.NAMESPACE_DNS, val))
                     records_to_insert.append(record)
 
                 if not dry_run and records_to_insert:

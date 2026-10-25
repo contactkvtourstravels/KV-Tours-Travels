@@ -1229,6 +1229,22 @@ class PaymentService:
                     )
                     db.commit()
 
+                    # Safely dispatch payment failed notification to customer
+                    try:
+                        booking = db.get(Booking, payment.booking_id) if payment.booking_id else None
+                        if booking:
+                            from app.services.email_service import get_email_service
+
+                            get_email_service().send_payment_failed(
+                                db,
+                                booking=booking,
+                                payment=payment,
+                                reason=error_desc or error_code or "Payment transaction failed.",
+                            )
+                            db.commit()
+                    except Exception as notif_exc:  # noqa: BLE001
+                        logger.warning("Failed to dispatch payment failed email: %s", notif_exc)
+
             return {"status": "success", "event": event_type}
 
         return {"status": "unhandled", "event": event_type}
@@ -2330,6 +2346,8 @@ class PaymentService:
         bt_enabled = bool(bank_cfg.get("bank_transfer_enabled", False))
         branch_enabled = bool(bank_cfg.get("branch_payment_enabled", False))
 
+        from app.services.payment_credential_service import resolve_razorpay_webhook_url
+
         return PaymentSettingsResponse(
             online_payments_enabled=online_enabled,
             maintenance_message=maint_msg,
@@ -2338,7 +2356,7 @@ class PaymentService:
             razorpay_key_id_masked=masked_key,
             razorpay_environment=rzp_env,
             razorpay_enabled=rzp_enabled,
-            webhook_url="https://kvtours.in/api/v1/payments/razorpay/webhook",
+            webhook_url=resolve_razorpay_webhook_url(),
             webhook_secret_configured=webhook_secret_configured,
             key_secret_configured=key_secret_configured,
             has_custom_credentials=has_custom,
@@ -2346,6 +2364,8 @@ class PaymentService:
             last_diagnostic_status=last_diag_status,
             live_readiness_checklist=live_checklist,
             encryption_configured=encryption_configured,
+            encryption_key_status=summary.get("encryption_key_status", "valid"),
+            encryption_key_message=summary.get("encryption_key_message"),
             test_credentials=test_summary,
             live_credentials=live_summary,
             webhook_last_received_at=last_webhook_log.created_at if last_webhook_log else None,

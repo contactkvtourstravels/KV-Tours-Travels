@@ -16,7 +16,6 @@ import {
   ToggleLeft,
   ToggleRight,
   ShieldCheck,
-  Clock,
   Check,
   ExternalLink,
   Info,
@@ -24,8 +23,8 @@ import {
   Radio,
   Copy,
   RefreshCw,
-  Terminal,
-  ShieldAlert,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import {
   adminApi,
@@ -61,69 +60,52 @@ export default function ResendEmailSection({
   onDirtyChange,
   onViewLogs,
 }: ResendEmailSectionProps) {
-  // Environment Mode (Development / Test Sandbox vs Production)
-  const [emailEnvironmentMode, setEmailEnvironmentMode] = useState<"development" | "production">(
-    settings.email_environment_mode === "production" ? "production" : "development"
-  );
+  const defaultAgencyName = settings.public_display_name || settings.agency_name || "The Wild Root";
 
   // Master Toggle & Sender Configuration
   const [emailEnabled, setEmailEnabled] = useState(settings.email_enabled ?? true);
-  const [senderName, setSenderName] = useState(settings.email_sender_name || "KV Tours & Travels");
-  const [senderEmail, setSenderEmail] = useState(
-    settings.email_sender_email || (settings.email_environment_mode === "production" ? "bookings@kvtours.in" : "onboarding@resend.dev")
-  );
+  const [senderName, setSenderName] = useState(settings.email_sender_name || defaultAgencyName);
+  const [senderEmail, setSenderEmail] = useState(settings.email_sender_email || "bookings@thewildroot.in");
   const [replyToEmail, setReplyToEmail] = useState(
-    settings.email_reply_to || settings.reply_to_email || "concierge@kvtours.in"
+    settings.email_reply_to || settings.reply_to_email || "concierge@thewildroot.in"
   );
   const [adminNotificationEmail, setAdminNotificationEmail] = useState(
-    settings.admin_notification_email || "admin@kvtours.in"
+    settings.admin_notification_email || "admin@thewildroot.in"
   );
 
   // Protected Resend API Key
-  const [changeKeyMode, setChangeKeyMode] = useState(false);
-  const [apiKey, setApiKey] = useState("");
-  const [showKeyInput, setShowKeyInput] = useState(false);
   const keyConfigured = Boolean(settings.resend_api_key_configured);
-  const keyMasked = settings.resend_api_key_masked;
+  const keyMasked = settings.resend_api_key_masked || "re_••••••••••••••••••••••••••••••••";
+  const [isReplacingKey, setIsReplacingKey] = useState(!keyConfigured);
+  const [apiKey, setApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
 
-  // Development Webhook Tunnel URL & Webhook Secret
-  const [tunnelUrl, setTunnelUrl] = useState(settings.resend_webhook_tunnel_url || "");
-  const [changeSecretMode, setChangeSecretMode] = useState(false);
-  const [webhookSecret, setWebhookSecret] = useState("");
-  const [showSecretInput, setShowSecretInput] = useState(false);
+  // Test Email State
+  const [testRecipient, setTestRecipient] = useState(settings.admin_notification_email || "admin@thewildroot.in");
+  const [sendingTest, setSendingTest] = useState(false);
+  const [testResult, setTestResult] = useState<EmailSendTestResponse | null>(null);
+  const [lastTestStatus, setLastTestStatus] = useState<"success" | "failed" | "not_tested">("not_tested");
+  const [lastTestTimestamp, setLastTestTimestamp] = useState<string | null>(null);
+
+  // Sender Domain Verification State
+  const [verifyingDomain, setVerifyingDomain] = useState(false);
+  const [domainResult, setDomainResult] = useState<EmailTestConnectionResponse | null>(null);
+
+  // Connection Test State
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [connectionResult, setConnectionResult] = useState<EmailTestConnectionResponse | null>(null);
+
+  // Collapsible Advanced Settings (Optional Webhooks)
+  const [showAdvancedWebhooks, setShowAdvancedWebhooks] = useState(false);
   const secretConfigured = Boolean(settings.resend_webhook_signing_secret_configured);
-  const secretMasked = settings.resend_webhook_signing_secret_masked;
-
-  // Individual Notification Preferences
-  const [notifyBookingConfirm, setNotifyBookingConfirm] = useState(
-    settings.email_booking_confirmation_enabled ?? true
-  );
-  const [notifyInquiryAck, setNotifyInquiryAck] = useState(
-    settings.email_inquiry_ack_enabled ?? true
-  );
-  const [notifyPaymentReceipt, setNotifyPaymentReceipt] = useState(
-    settings.email_payment_receipt_enabled ?? true
-  );
-  const [notifyCancellationAck, setNotifyCancellationAck] = useState(
-    settings.email_cancellation_updates_enabled ?? true
-  );
-  const [notifyPaymentReminder, setNotifyPaymentReminder] = useState(
-    settings.email_trip_reminders_enabled ?? true
-  );
-
-  // Editable Template Subjects
-  const [subjectBooking, setSubjectBooking] = useState(
-    settings.email_subject_booking_confirmation || "Your Booking Confirmation — KV Tours & Travels"
-  );
-  const [subjectReceipt, setSubjectReceipt] = useState(
-    settings.email_subject_payment_receipt || "Payment Receipt — KV Tours & Travels"
-  );
-  const [subjectInquiry, setSubjectInquiry] = useState(
-    settings.email_subject_inquiry_ack || "Inquiry Received — KV Tours & Travels"
-  );
-  const [subjectReminder, setSubjectReminder] = useState(
-    settings.email_subject_trip_reminder || "Your Upcoming Journey with KV Tours & Travels"
-  );
+  const secretMasked = settings.resend_webhook_signing_secret_masked || "whsec_••••••••••••••••";
+  const [isReplacingSecret, setIsReplacingSecret] = useState(!secretConfigured);
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [showWebhookSecret, setShowWebhookSecret] = useState(false);
+  const [verifyingWebhook, setVerifyingWebhook] = useState(false);
+  const [webhookVerifyResult, setWebhookVerifyResult] = useState<ResendWebhookVerifyResponse | null>(null);
+  const [webhookStats, setWebhookStats] = useState<ResendWebhookStatsResponse | null>(null);
+  const [loadingWebhookStats, setLoadingWebhookStats] = useState(false);
 
   // UI Feedback States
   const [saving, setSaving] = useState(false);
@@ -131,26 +113,14 @@ export default function ResendEmailSection({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  // Diagnostics States
-  const [testingConnection, setTestingConnection] = useState(false);
-  const [connectionResult, setConnectionResult] = useState<EmailTestConnectionResponse | null>(null);
+  // Derive target sender domain
+  const senderDomain = senderEmail.includes("@") ? senderEmail.split("@")[1].trim() : "thewildroot.in";
 
-  const [verifyingSender, setVerifyingSender] = useState(false);
-  const [senderVerifyResult, setSenderVerifyResult] = useState<EmailTestConnectionResponse | null>(null);
+  // Production Webhook URL
+  const productionWebhookUrl =
+    settings.resend_webhook_url || "https://travel-agency-kdrs.onrender.com/api/v1/webhooks/resend";
 
-  // Webhook Verification & Stats
-  const [verifyingWebhook, setVerifyingWebhook] = useState(false);
-  const [webhookVerifyResult, setWebhookVerifyResult] = useState<ResendWebhookVerifyResponse | null>(null);
-  const [webhookStats, setWebhookStats] = useState<ResendWebhookStatsResponse | null>(null);
-  const [loadingWebhookStats, setLoadingWebhookStats] = useState(false);
-
-  // Send Test Email State
-  const [testRecipient, setTestRecipient] = useState(
-    settings.email_environment_mode === "production" ? settings.admin_notification_email || "" : "delivered@resend.dev"
-  );
-  const [sendingTest, setSendingTest] = useState(false);
-  const [testSendResult, setTestSendResult] = useState<EmailSendTestResponse | null>(null);
-
+  // Load webhook delivery statistics on demand
   const loadWebhookStats = useCallback(async () => {
     setLoadingWebhookStats(true);
     try {
@@ -164,54 +134,33 @@ export default function ResendEmailSection({
   }, []);
 
   useEffect(() => {
-    loadWebhookStats();
-  }, [loadWebhookStats]);
+    if (showAdvancedWebhooks) {
+      loadWebhookStats();
+    }
+  }, [showAdvancedWebhooks, loadWebhookStats]);
 
   // Track dirty state
   useEffect(() => {
     const isDirty =
-      emailEnvironmentMode !== (settings.email_environment_mode === "production" ? "production" : "development") ||
       emailEnabled !== (settings.email_enabled ?? true) ||
-      senderName !== (settings.email_sender_name || "KV Tours & Travels") ||
-      senderEmail !== (settings.email_sender_email || "bookings@kvtours.in") ||
-      replyToEmail !== (settings.email_reply_to || settings.reply_to_email || "concierge@kvtours.in") ||
-      adminNotificationEmail !== (settings.admin_notification_email || "admin@kvtours.in") ||
-      tunnelUrl !== (settings.resend_webhook_tunnel_url || "") ||
-      notifyBookingConfirm !== (settings.email_booking_confirmation_enabled ?? true) ||
-      notifyInquiryAck !== (settings.email_inquiry_ack_enabled ?? true) ||
-      notifyPaymentReceipt !== (settings.email_payment_receipt_enabled ?? true) ||
-      notifyCancellationAck !== (settings.email_cancellation_updates_enabled ?? true) ||
-      notifyPaymentReminder !== (settings.email_trip_reminders_enabled ?? true) ||
-      subjectBooking !== (settings.email_subject_booking_confirmation || "Your Booking Confirmation — KV Tours & Travels") ||
-      subjectReceipt !== (settings.email_subject_payment_receipt || "Payment Receipt — KV Tours & Travels") ||
-      subjectInquiry !== (settings.email_subject_inquiry_ack || "Inquiry Received — KV Tours & Travels") ||
-      subjectReminder !== (settings.email_subject_trip_reminder || "Your Upcoming Journey with KV Tours & Travels") ||
-      (changeKeyMode && apiKey.trim().length > 0) ||
-      (changeSecretMode && webhookSecret.trim().length > 0);
+      senderName !== (settings.email_sender_name || defaultAgencyName) ||
+      senderEmail !== (settings.email_sender_email || "bookings@thewildroot.in") ||
+      replyToEmail !== (settings.email_reply_to || settings.reply_to_email || "concierge@thewildroot.in") ||
+      adminNotificationEmail !== (settings.admin_notification_email || "admin@thewildroot.in") ||
+      apiKey.trim().length > 0 ||
+      webhookSecret.trim().length > 0;
 
     onDirtyChange(isDirty);
   }, [
-    emailEnvironmentMode,
     emailEnabled,
     senderName,
     senderEmail,
     replyToEmail,
     adminNotificationEmail,
-    tunnelUrl,
-    notifyBookingConfirm,
-    notifyInquiryAck,
-    notifyPaymentReceipt,
-    notifyCancellationAck,
-    notifyPaymentReminder,
-    subjectBooking,
-    subjectReceipt,
-    subjectInquiry,
-    subjectReminder,
-    changeKeyMode,
     apiKey,
-    changeSecretMode,
     webhookSecret,
     settings,
+    defaultAgencyName,
     onDirtyChange,
   ]);
 
@@ -222,32 +171,21 @@ export default function ResendEmailSection({
   };
 
   const handleReset = () => {
-    setEmailEnvironmentMode(settings.email_environment_mode === "production" ? "production" : "development");
     setEmailEnabled(settings.email_enabled ?? true);
-    setSenderName(settings.email_sender_name || "KV Tours & Travels");
-    setSenderEmail(settings.email_sender_email || "bookings@kvtours.in");
-    setReplyToEmail(settings.email_reply_to || settings.reply_to_email || "concierge@kvtours.in");
-    setAdminNotificationEmail(settings.admin_notification_email || "admin@kvtours.in");
-    setTunnelUrl(settings.resend_webhook_tunnel_url || "");
-    setNotifyBookingConfirm(settings.email_booking_confirmation_enabled ?? true);
-    setNotifyInquiryAck(settings.email_inquiry_ack_enabled ?? true);
-    setNotifyPaymentReceipt(settings.email_payment_receipt_enabled ?? true);
-    setNotifyCancellationAck(settings.email_cancellation_updates_enabled ?? true);
-    setNotifyPaymentReminder(settings.email_trip_reminders_enabled ?? true);
-    setSubjectBooking(settings.email_subject_booking_confirmation || "Your Booking Confirmation — KV Tours & Travels");
-    setSubjectReceipt(settings.email_subject_payment_receipt || "Payment Receipt — KV Tours & Travels");
-    setSubjectInquiry(settings.email_subject_inquiry_ack || "Inquiry Received — KV Tours & Travels");
-    setSubjectReminder(settings.email_subject_trip_reminder || "Your Upcoming Journey with KV Tours & Travels");
-    setChangeKeyMode(false);
+    setSenderName(settings.email_sender_name || defaultAgencyName);
+    setSenderEmail(settings.email_sender_email || "bookings@thewildroot.in");
+    setReplyToEmail(settings.email_reply_to || settings.reply_to_email || "concierge@thewildroot.in");
+    setAdminNotificationEmail(settings.admin_notification_email || "admin@thewildroot.in");
     setApiKey("");
-    setShowKeyInput(false);
-    setChangeSecretMode(false);
+    setIsReplacingKey(!keyConfigured);
+    setShowApiKey(false);
     setWebhookSecret("");
-    setShowSecretInput(false);
+    setIsReplacingSecret(!secretConfigured);
+    setShowWebhookSecret(false);
     setErrors({});
     setConnectionResult(null);
-    setSenderVerifyResult(null);
-    setWebhookVerifyResult(null);
+    setDomainResult(null);
+    setTestResult(null);
   };
 
   const handleTestConnection = async () => {
@@ -269,24 +207,79 @@ export default function ResendEmailSection({
     }
   };
 
-  const handleVerifySender = async () => {
+  const handleVerifyDomain = async () => {
     try {
-      setVerifyingSender(true);
-      setSenderVerifyResult(null);
+      setVerifyingDomain(true);
+      setDomainResult(null);
       const res = await adminApi.verifyEmailSender();
-      setSenderVerifyResult(res);
+      setDomainResult(res);
     } catch (err: unknown) {
-      setSenderVerifyResult({
+      setDomainResult({
         success: false,
-        sender_domain: senderEmail.split("@")[1] || "unknown",
+        sender_domain: senderDomain,
         status: "provider_error",
         sender_status: "provider_error",
-        message: err instanceof Error ? err.message : "Sender domain verification failed.",
+        message: err instanceof Error ? err.message : "Domain verification check failed.",
         provider: "resend",
         api_key_configured: false,
       });
     } finally {
-      setVerifyingSender(false);
+      setVerifyingDomain(false);
+    }
+  };
+
+  const handleSendTestEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (sendingTest) return;
+
+    const recipient = testRecipient.trim();
+    if (!recipient || !recipient.includes("@") || !recipient.includes(".")) {
+      setTestResult({
+        success: false,
+        provider: "resend",
+        recipient: testRecipient,
+        message: "Please enter a valid recipient email address (e.g. admin@thewildroot.in).",
+        timestamp: new Date().toISOString(),
+      });
+      setLastTestStatus("failed");
+      return;
+    }
+
+    if (!emailEnabled) {
+      setTestResult({
+        success: false,
+        provider: "resend",
+        recipient: recipient,
+        message: "Email sending is currently disabled. Please enable email delivery and save settings before sending a test.",
+        timestamp: new Date().toISOString(),
+      });
+      setLastTestStatus("failed");
+      return;
+    }
+
+    try {
+      setSendingTest(true);
+      setTestResult(null);
+      const res = await adminApi.sendTestEmail({
+        recipient_email: recipient,
+        subject: `${defaultAgencyName} — Email Configuration Test`,
+      });
+      setTestResult(res);
+      setLastTestStatus(res.success ? "success" : "failed");
+      setLastTestTimestamp(new Date().toLocaleTimeString());
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Failed to deliver test email.";
+      setTestResult({
+        success: false,
+        provider: "resend",
+        recipient: recipient,
+        message: errMsg,
+        timestamp: new Date().toISOString(),
+      });
+      setLastTestStatus("failed");
+      setLastTestTimestamp(new Date().toLocaleTimeString());
+    } finally {
+      setSendingTest(false);
     }
   };
 
@@ -294,7 +287,7 @@ export default function ResendEmailSection({
     try {
       setVerifyingWebhook(true);
       setWebhookVerifyResult(null);
-      const secretToTest = changeSecretMode && webhookSecret.trim() ? webhookSecret.trim() : undefined;
+      const secretToTest = webhookSecret.trim() ? webhookSecret.trim() : undefined;
       const res = await adminApi.verifyEmailWebhook({ signing_secret: secretToTest });
       setWebhookVerifyResult(res);
       loadWebhookStats();
@@ -303,8 +296,8 @@ export default function ResendEmailSection({
         success: false,
         status: "verification_failed",
         message: err instanceof Error ? err.message : "Webhook signature algorithm verification failed.",
-        webhook_url: `/api/v1/webhooks/resend`,
-        is_https: false,
+        webhook_url: productionWebhookUrl,
+        is_https: true,
         signing_secret_configured: false,
       });
     } finally {
@@ -312,48 +305,22 @@ export default function ResendEmailSection({
     }
   };
 
-  const handleSendTestEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!testRecipient.trim()) return;
-
-    try {
-      setSendingTest(true);
-      setTestSendResult(null);
-      const res = await adminApi.sendTestEmail(testRecipient.trim());
-      setTestSendResult(res);
-    } catch (err: unknown) {
-      setTestSendResult({
-        success: false,
-        provider: "resend",
-        recipient: testRecipient,
-        message: err instanceof Error ? err.message : "Failed to deliver test email.",
-        timestamp: new Date().toISOString(),
-      });
-    } finally {
-      setSendingTest(false);
-    }
-  };
-
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!canEdit) return;
+    if (!canEdit || saving) return;
 
     const validationErrors: Record<string, string> = {};
-    if (!senderEmail.trim()) {
-      validationErrors.email_sender_email = "Sender email address is required.";
+
+    if (!senderEmail.trim() || !senderEmail.includes("@")) {
+      validationErrors.email_sender_email = "Valid sender email address is required.";
     }
 
-    if (tunnelUrl.trim() && !tunnelUrl.trim().startsWith("https://")) {
-      validationErrors.resend_webhook_tunnel_url =
-        "Webhook tunnel URL must begin with 'https://' (Resend requires HTTPS).";
-    }
-
-    if (changeKeyMode && apiKey.trim() && !apiKey.trim().startsWith("re_")) {
+    if (apiKey.trim() && !apiKey.trim().startsWith("re_")) {
       validationErrors.resend_api_key = "Resend API keys must begin with 're_'.";
     }
 
-    if (changeSecretMode && webhookSecret.trim() && !webhookSecret.trim().startsWith("whsec_")) {
-      validationErrors.resend_webhook_signing_secret = "Resend Webhook secrets typically begin with 'whsec_'.";
+    if (webhookSecret.trim() && !webhookSecret.trim().startsWith("whsec_")) {
+      validationErrors.resend_webhook_signing_secret = "Resend Webhook signing secrets typically begin with 'whsec_'.";
     }
 
     if (Object.keys(validationErrors).length > 0) {
@@ -366,41 +333,31 @@ export default function ResendEmailSection({
       setErrors({});
 
       const payload: Partial<AdminSiteSettings> = {
-        email_environment_mode: emailEnvironmentMode,
+        email_environment_mode: "production",
         email_enabled: emailEnabled,
         email_sender_name: senderName.trim(),
         email_sender_email: senderEmail.trim(),
         email_reply_to: replyToEmail.trim() || undefined,
-        reply_to_email: replyToEmail.trim() || undefined,
         admin_notification_email: adminNotificationEmail.trim() || undefined,
-        resend_webhook_tunnel_url: tunnelUrl.trim() || undefined,
-        email_booking_confirmation_enabled: notifyBookingConfirm,
-        email_inquiry_ack_enabled: notifyInquiryAck,
-        email_payment_receipt_enabled: notifyPaymentReceipt,
-        email_cancellation_updates_enabled: notifyCancellationAck,
-        email_trip_reminders_enabled: notifyPaymentReminder,
-        email_subject_booking_confirmation: subjectBooking.trim(),
-        email_subject_payment_receipt: subjectReceipt.trim(),
-        email_subject_inquiry_ack: subjectInquiry.trim(),
-        email_subject_trip_reminder: subjectReminder.trim(),
       };
 
-      if (changeKeyMode && apiKey.trim()) {
+      // Only pass API key if the user entered a new key; blank preserves existing key!
+      if (apiKey.trim()) {
         payload.resend_api_key = apiKey.trim();
       }
 
-      if (changeSecretMode && webhookSecret.trim()) {
+      // Only pass webhook secret if the user entered a new secret
+      if (webhookSecret.trim()) {
         payload.resend_webhook_signing_secret = webhookSecret.trim();
       }
 
       const updated = await adminApi.updateSettings(payload);
       onSaved(updated);
-      setChangeKeyMode(false);
       setApiKey("");
-      setChangeSecretMode(false);
+      setIsReplacingKey(false);
       setWebhookSecret("");
+      setIsReplacingSecret(false);
       setSaveSuccess(true);
-      loadWebhookStats();
       setTimeout(() => setSaveSuccess(false), 4000);
     } catch (err: unknown) {
       setErrors({ global: err instanceof Error ? err.message : "Failed to persist Resend settings." });
@@ -409,60 +366,26 @@ export default function ResendEmailSection({
     }
   };
 
-  // Determine active effective webhook URL
-  const localBackendUrl = "http://localhost:8000/api/v1/webhooks/resend";
-  const activeWebhookUrl =
-    tunnelUrl.trim() ||
-    webhookStats?.webhook_url ||
-    (typeof window !== "undefined" && window.location.protocol === "https:"
-      ? `${window.location.origin}/api/v1/webhooks/resend`
-      : null);
-
-  const isWebhookHttps = Boolean(
-    activeWebhookUrl && activeWebhookUrl.startsWith("https://")
-  );
-
-  // Extract DNS records returned by Resend /domains
-  const domainDetails = senderVerifyResult?.details as Record<string, unknown> | undefined;
-  const rawRecords = (senderVerifyResult?.dns_records || (domainDetails?.records as DomainRecord[]) || []) as DomainRecord[];
+  const rawDnsRecords: DomainRecord[] = (domainResult?.dns_records as DomainRecord[]) || [];
 
   return (
-    <form onSubmit={handleSave} className="space-y-6">
-      {/* 1. Header Card */}
+    <div className="space-y-6">
+      {/* 1. Header & Actions */}
       <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-start gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7] flex items-center justify-center shrink-0">
-              <Mail className="w-6 h-6 text-[#C5A880]" />
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-[#24292F] text-white flex items-center justify-center shadow-xs">
+              <Mail className="w-5 h-5 text-[#C5A880]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-lg font-serif font-bold text-[#202124]">
-                  Resend Transactional Email Engine
-                </h2>
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                    emailEnabled && keyConfigured
-                      ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                      : "bg-stone-100 text-stone-600 border-stone-200"
-                  }`}
-                >
-                  {emailEnabled && keyConfigured ? "Engine Active" : "Engine Suspended"}
-                </span>
-
-                <span
-                  className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full border ${
-                    emailEnvironmentMode === "development"
-                      ? "bg-amber-50 text-amber-800 border-amber-200"
-                      : "bg-blue-50 text-blue-800 border-blue-200"
-                  }`}
-                >
-                  {emailEnvironmentMode === "development" ? "Dev / Sandbox Mode" : "Production Mode"}
+                <h2 className="text-base font-bold text-[#202124]">Resend Email Delivery</h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  Production
                 </span>
               </div>
-              <p className="text-xs text-[#5F6368] mt-1 max-w-2xl font-light">
-                High-deliverability customer transactional communications exclusively powered by the official Resend API.
-                Dispatches booking vouchers, PDF receipts, inquiry acknowledgments, and operational alerts.
+              <p className="text-xs text-[#5F6368] mt-0.5">
+                Authoritative transactional email dispatch for bookings, payment receipts, customer inquiries, and admin alerts.
               </p>
             </div>
           </div>
@@ -480,12 +403,13 @@ export default function ResendEmailSection({
 
             {canEdit && (
               <button
-                type="submit"
+                type="button"
+                onClick={handleSave}
                 disabled={saving}
                 className="px-5 py-2 rounded-xl bg-[#24292F] hover:bg-[#3D4450] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition shadow-xs disabled:opacity-50 cursor-pointer"
               >
                 <Save className="w-3.5 h-3.5 text-[#C5A880]" />
-                <span>{saving ? "Saving..." : "Save Settings"}</span>
+                <span>{saving ? "Saving..." : "Save Configuration"}</span>
               </button>
             )}
           </div>
@@ -494,7 +418,7 @@ export default function ResendEmailSection({
         {saveSuccess && (
           <div className="mt-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-medium flex items-center gap-2 animate-fadeIn">
             <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-            <span>Resend configuration securely saved and synchronized across KV Tours services.</span>
+            <span>Email configuration securely saved and synchronized across {defaultAgencyName} services.</span>
           </div>
         )}
 
@@ -506,125 +430,274 @@ export default function ResendEmailSection({
         )}
       </div>
 
-      {/* 2. Environment Mode Selector (Development vs Production) */}
-      <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E4E5E7]">
-          <div>
-            <h3 className="text-sm font-bold text-[#202124] flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[#C5A880]" />
-              <span>Email Environment &amp; Custom Domain Strategy</span>
-            </h3>
-            <p className="text-xs text-[#5F6368] mt-0.5">
-              Select whether you are testing without a custom domain or operating with a verified production domain.
-            </p>
+      {/* 2. Top Status Cards Overview */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Email Delivery Status */}
+        <div className="bg-white border border-[#E4E5E7] rounded-2xl p-5 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#5F6368] uppercase tracking-wider">Email Delivery</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                emailEnabled
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : "bg-stone-100 text-stone-600 border-stone-200"
+              }`}
+            >
+              {emailEnabled ? "Enabled" : "Disabled"}
+            </span>
           </div>
+          <div className="text-sm font-bold text-[#202124]">
+            {emailEnabled ? "Active Dispatch" : "Suspended"}
+          </div>
+          <p className="text-[11px] text-[#5F6368]">
+            Master switch for all customer &amp; admin transactional emails.
+          </p>
+        </div>
 
-          {/* Mode Switcher Tabs */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl self-start sm:self-auto">
-            <button
-              type="button"
-              onClick={() => {
-                setEmailEnvironmentMode("development");
-                if (senderEmail === "bookings@kvtours.in") {
-                  setSenderEmail("onboarding@resend.dev");
-                }
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                emailEnvironmentMode === "development"
-                  ? "bg-white text-[#202124] shadow-2xs border border-[#D3D8DF]"
-                  : "text-[#5F6368] hover:text-[#202124]"
+        {/* API Key Status */}
+        <div className="bg-white border border-[#E4E5E7] rounded-2xl p-5 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#5F6368] uppercase tracking-wider">API Key</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                keyConfigured
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : "bg-rose-50 text-rose-800 border-rose-200"
               }`}
             >
-              Development / Test Mode
-            </button>
+              {keyConfigured ? "Configured" : "Not Configured"}
+            </span>
+          </div>
+          <div className="text-xs font-mono text-[#202124] truncate">
+            {keyConfigured ? keyMasked : "Missing Resend Key"}
+          </div>
+          <div className="flex items-center justify-between pt-1">
             <button
               type="button"
-              onClick={() => {
-                setEmailEnvironmentMode("production");
-                if (senderEmail === "onboarding@resend.dev") {
-                  setSenderEmail("bookings@kvtours.in");
-                }
-              }}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                emailEnvironmentMode === "production"
-                  ? "bg-[#24292F] text-white shadow-2xs"
-                  : "text-[#5F6368] hover:text-[#202124]"
-              }`}
+              onClick={handleTestConnection}
+              disabled={testingConnection || !keyConfigured}
+              className="text-[11px] font-semibold text-[#24292F] hover:underline flex items-center gap-1 disabled:opacity-40 cursor-pointer"
             >
-              Production Mode
+              <Zap className="w-3 h-3 text-[#C5A880]" />
+              <span>{testingConnection ? "Testing..." : "Test Connectivity"}</span>
             </button>
           </div>
         </div>
 
-        {/* Development Mode Guidance */}
-        {emailEnvironmentMode === "development" ? (
-          <div className="p-4 bg-amber-50/70 border border-amber-200 rounded-xl space-y-3">
-            <div className="flex items-start gap-3">
-              <Info className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
-              <div className="space-y-1.5">
-                <span className="text-xs font-bold text-amber-900 block">
-                  Development Mode: Testing Without a Custom Domain
-                </span>
-                <p className="text-xs text-amber-800 leading-relaxed font-light">
-                  You do not need to purchase or configure a custom domain yet. In this mode, Resend permits outbound email delivery using their official onboarding sender:
-                  <code className="mx-1 px-1.5 py-0.5 bg-white border border-amber-200 rounded text-amber-900 font-mono font-bold">
-                    onboarding@resend.dev
-                  </code>
-                </p>
-                <div className="text-[11px] text-amber-800 bg-white/70 border border-amber-200/80 p-2.5 rounded-lg space-y-1">
-                  <div className="font-semibold text-amber-900">Resend Free Account / Sandbox Restrictions:</div>
-                  <ul className="list-disc pl-4 space-y-0.5">
-                    <li>Outbound emails can only be delivered to your registered Resend account owner email address.</li>
-                    <li>Official test sinks: Use <code className="font-mono font-bold">delivered@resend.dev</code> to verify successful delivery (returns 200 OK), or <code className="font-mono font-bold">bounced@resend.dev</code> to simulate a bounce event.</li>
-                    <li>Sending to arbitrary customer email addresses will be rejected with <code className="font-mono">403 Forbidden</code> until a custom domain is verified.</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+        {/* Sender Domain Status */}
+        <div className="bg-white border border-[#E4E5E7] rounded-2xl p-5 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#5F6368] uppercase tracking-wider">Sender Domain</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                domainResult?.success
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : domainResult?.status === "pending"
+                  ? "bg-amber-50 text-amber-800 border-amber-200"
+                  : "bg-stone-100 text-stone-600 border-stone-200"
+              }`}
+            >
+              {domainResult?.success
+                ? "Verified"
+                : domainResult?.status === "pending"
+                ? "Pending DNS"
+                : domainResult
+                ? "Not Verified"
+                : "Check Status"}
+            </span>
+          </div>
+          <div className="text-xs font-mono text-[#202124] truncate font-bold">
+            {senderDomain}
+          </div>
+          <div className="flex items-center justify-between pt-1">
+            <button
+              type="button"
+              onClick={handleVerifyDomain}
+              disabled={verifyingDomain || !keyConfigured}
+              className="text-[11px] font-semibold text-[#24292F] hover:underline flex items-center gap-1 disabled:opacity-40 cursor-pointer"
+            >
+              <RefreshCw className={`w-3 h-3 ${verifyingDomain ? "animate-spin" : ""}`} />
+              <span>{verifyingDomain ? "Checking..." : "Verify Domain"}</span>
+            </button>
+          </div>
+        </div>
 
-            {senderEmail !== "onboarding@resend.dev" && (
-              <div className="flex items-center justify-between pt-1 border-t border-amber-200">
-                <span className="text-[11px] text-amber-800">
-                  Current sender is set to <code className="font-mono font-bold">{senderEmail}</code>.
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setSenderEmail("onboarding@resend.dev")}
-                  className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition cursor-pointer"
-                >
-                  Switch Sender to onboarding@resend.dev
-                </button>
-              </div>
-            )}
+        {/* Last Test Email Status */}
+        <div className="bg-white border border-[#E4E5E7] rounded-2xl p-5 shadow-2xs space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#5F6368] uppercase tracking-wider">Last Test Email</span>
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
+                lastTestStatus === "success"
+                  ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                  : lastTestStatus === "failed"
+                  ? "bg-rose-50 text-rose-800 border-rose-200"
+                  : "bg-stone-100 text-stone-600 border-stone-200"
+              }`}
+            >
+              {lastTestStatus === "success" ? "Success" : lastTestStatus === "failed" ? "Failed" : "Not Tested"}
+            </span>
           </div>
-        ) : (
-          <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-xl space-y-2">
-            <div className="flex items-start gap-3">
-              <ShieldCheck className="w-4 h-4 text-blue-700 shrink-0 mt-0.5" />
-              <div>
-                <span className="text-xs font-bold text-blue-900 block">
-                  Production Mode: Verified Custom Domain Required
-                </span>
-                <p className="text-xs text-blue-800 leading-relaxed font-light">
-                  Production transactional email delivery requires a custom domain configured in your Resend account with valid SPF, DKIM, and MX DNS records.
-                  We never mark a domain as verified until confirmed by the Resend Domains API.
-                </p>
-              </div>
-            </div>
+          <div className="text-xs text-[#202124] truncate font-medium">
+            {lastTestTimestamp ? `Tested at ${lastTestTimestamp}` : "No test sent this session"}
           </div>
-        )}
+          <div className="flex items-center justify-between pt-1">
+            <button
+              type="button"
+              onClick={onViewLogs}
+              className="text-[11px] font-semibold text-[#5F6368] hover:text-[#202124] flex items-center gap-1 cursor-pointer"
+            >
+              <span>View Delivery Logs &rarr;</span>
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* 3. Master Toggle & Connection Actions */}
-      <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs space-y-4">
-        <div className="flex items-center justify-between pb-4 border-b border-[#E4E5E7]">
+      {/* API Connection Test Diagnostic Feedback */}
+      {connectionResult && (
+        <div
+          className={`p-4 rounded-2xl border text-xs font-medium space-y-1.5 animate-fadeIn ${
+            connectionResult.success
+              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+              : "bg-rose-50 border-rose-200 text-rose-900"
+          }`}
+        >
+          <div className="flex items-center gap-2 font-bold">
+            {connectionResult.success ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            )}
+            <span>{connectionResult.message}</span>
+          </div>
+          <p className="text-[11px] opacity-80">
+            Provider: <code className="font-mono">Resend API</code> • Authentication status:{" "}
+            <code className="font-mono">{connectionResult.status}</code>
+          </p>
+        </div>
+      )}
+
+      {/* Domain Verification Diagnostic Feedback */}
+      {domainResult && (
+        <div
+          className={`p-4 rounded-2xl border text-xs font-medium space-y-3 animate-fadeIn ${
+            domainResult.success
+              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+              : domainResult.status === "pending"
+              ? "bg-amber-50 border-amber-200 text-amber-900"
+              : "bg-rose-50 border-rose-200 text-rose-900"
+          }`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2 font-bold">
+              {domainResult.success ? (
+                <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+              ) : domainResult.status === "pending" ? (
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              ) : (
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              )}
+              <span>{domainResult.message}</span>
+            </div>
+
+            <a
+              href="https://resend.com/domains"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#24292F] hover:underline"
+            >
+              <span>Resend Domains Dashboard</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
+
+          {/* DNS Records Table for Unverified Domains */}
+          {rawDnsRecords.length > 0 && (
+            <div className="space-y-2 pt-2 border-t border-current/10">
+              <div className="flex items-center justify-between text-[11px] font-semibold">
+                <span>Required DNS Records for {senderDomain}:</span>
+                <span className="opacity-80">Add these at your domain registrar (e.g. Cloudflare, GoDaddy)</span>
+              </div>
+
+              <div className="border border-current/20 rounded-xl overflow-x-auto bg-white text-[#202124]">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-[#F7F7F5] text-[#5F6368] font-semibold border-b border-[#E4E5E7]">
+                    <tr>
+                      <th className="px-3 py-2">Record</th>
+                      <th className="px-3 py-2">Type</th>
+                      <th className="px-3 py-2">Host / Name</th>
+                      <th className="px-3 py-2">Value / Target</th>
+                      <th className="px-3 py-2">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E5E7] font-mono text-[11px]">
+                    {rawDnsRecords.map((rec, idx) => (
+                      <tr key={idx} className="hover:bg-[#F7F7F5]">
+                        <td className="px-3 py-2 font-semibold">{rec.record || "TXT"}</td>
+                        <td className="px-3 py-2 text-[#5F6368]">{rec.type}</td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate max-w-xs">{rec.name}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(rec.name, `dns_name_${idx}`)}
+                              className="text-[#5F6368] hover:text-[#202124] cursor-pointer"
+                            >
+                              {copiedKey === `dns_name_${idx}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate max-w-xs">{rec.value}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleCopy(rec.value, `dns_val_${idx}`)}
+                              className="text-[#5F6368] hover:text-[#202124] cursor-pointer"
+                            >
+                              {copiedKey === `dns_val_${idx}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2">
+                          <span
+                            className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                              rec.status === "verified"
+                                ? "bg-emerald-50 text-emerald-800 border-emerald-300"
+                                : "bg-amber-50 text-amber-800 border-amber-300"
+                            }`}
+                          >
+                            {rec.status || "Pending"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 3. Primary Email Configuration Form */}
+      <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs space-y-6">
+        <div>
+          <h3 className="text-sm font-bold text-[#202124] flex items-center gap-2">
+            <Globe className="w-4 h-4 text-[#C5A880]" />
+            <span>Production Email Settings</span>
+          </h3>
+          <p className="text-xs text-[#5F6368] mt-0.5">
+            Configure sender identity, contact routing, and API credentials. Leave key fields blank to preserve existing secrets.
+          </p>
+        </div>
+
+        {/* Master Dispatch Toggle */}
+        <div className="p-4 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-[#202124] flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[#C5A880]" />
-              <span>Master Transactional Email Toggle</span>
-            </h3>
-            <p className="text-xs text-[#5F6368] mt-0.5">
-              Enable or suspend outbound transactional email dispatch globally across the application.
+            <span className="text-xs font-bold text-[#202124] block">Enable Outgoing Transactional Emails</span>
+            <p className="text-[11px] text-[#5F6368] mt-0.5">
+              Allow the system to dispatch automated booking confirmations, payment receipts, and customer inquiry responses.
             </p>
           </div>
           <button
@@ -635,159 +708,77 @@ export default function ResendEmailSection({
               emailEnabled ? "text-[#24292F] hover:text-[#1A1D21]" : "text-stone-400 hover:text-stone-500"
             }`}
           >
-            {emailEnabled ? <ToggleRight className="w-9 h-9" /> : <ToggleLeft className="w-9 h-9" />}
+            {emailEnabled ? <ToggleRight className="w-9 h-9" /> : <ToggleLeft className="w-9 h-9 text-stone-300" />}
           </button>
         </div>
 
-        {/* Action Row */}
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={handleTestConnection}
-              disabled={testingConnection}
-              className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 border border-[#D3D8DF] text-[#202124] text-xs font-bold rounded-xl transition shadow-2xs flex items-center gap-2 disabled:opacity-50 cursor-pointer"
-            >
-              <Zap className="w-3.5 h-3.5 text-[#C5A880]" />
-              <span>{testingConnection ? "Testing Resend API..." : "Test API Connection"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={handleVerifySender}
-              disabled={verifyingSender}
-              className="px-3.5 py-2 bg-white hover:bg-[#F7F7F5] border border-[#D3D8DF] text-[#202124] text-xs font-semibold rounded-xl transition shadow-2xs flex items-center gap-2 disabled:opacity-50 cursor-pointer"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>{verifyingSender ? "Checking Status..." : "Verify Domain & DNS"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onViewLogs}
-              className="px-3.5 py-2 bg-white hover:bg-[#F7F7F5] border border-[#D3D8DF] text-[#5F6368] hover:text-[#202124] text-xs font-semibold rounded-xl transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <Clock className="w-3.5 h-3.5" />
-              <span>View Delivery Logs</span>
-            </button>
-          </div>
-
-          <div className="text-[11px] text-[#5F6368]">
-            API Key:{" "}
-            {keyConfigured ? (
-              <span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                Encrypted ({keyMasked || "re_••••"})
-              </span>
-            ) : (
-              <span className="font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
-                Not Configured
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* API Connection Result Card */}
-        {connectionResult && (
-          <div
-            className={`p-4 rounded-xl border text-xs font-medium space-y-1.5 animate-fadeIn ${
-              connectionResult.success
-                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                : "bg-rose-50 border-rose-200 text-rose-900"
-            }`}
-          >
-            <div className="flex items-center gap-2 font-bold">
-              {connectionResult.success ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-              )}
-              <span>{connectionResult.message}</span>
-            </div>
-            <p className="text-[11px] opacity-80">
-              Provider status: <code className="font-mono">{connectionResult.status}</code> • Tested via authenticated Resend API endpoint.
-            </p>
-            {connectionResult.permitted_recipients_note && (
-              <p className="text-[11px] text-amber-800 bg-white/70 p-2 rounded border border-amber-200">
-                {connectionResult.permitted_recipients_note}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* 4. Resend API Key Credentials Card */}
-      <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs space-y-5">
-        <div>
-          <h3 className="text-sm font-bold text-[#202124]">API Key &amp; Secure Storage</h3>
-          <p className="text-xs text-[#5F6368] mt-0.5">
-            Your secret API key from the Resend Dashboard (resend.com/api-keys). Stored encrypted with AES-256-GCM.
-          </p>
-        </div>
-
-        <div className="p-4 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl space-y-3">
+        {/* Resend API Key Field */}
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Lock className="w-4 h-4 text-[#C5A880]" />
-              <span className="text-xs font-bold text-[#202124]">Resend API Key (`re_...`)</span>
-            </div>
-            {keyConfigured && !changeKeyMode && (
-              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                Saved &amp; Encrypted
+            <label className="text-xs font-bold text-[#202124] flex items-center gap-2">
+              <Lock className="w-3.5 h-3.5 text-[#C5A880]" />
+              <span>Resend API Key (`re_...`)</span>
+            </label>
+            {keyConfigured && (
+              <span className="text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                Active Key Stored &amp; Encrypted
               </span>
             )}
           </div>
 
-          {!changeKeyMode && keyConfigured ? (
-            <div className="flex items-center justify-between gap-3 pt-1">
-              <div className="font-mono text-xs text-[#5F6368] bg-white px-3 py-2 border border-[#D3D8DF] rounded-xl flex-1">
-                {keyMasked || "re_••••••••••••••••••••••••••••••••"}
+          {!isReplacingKey && keyConfigured ? (
+            <div className="flex items-center gap-3">
+              <div className="flex-1 font-mono text-xs px-3.5 py-2.5 bg-stone-50 border border-[#D3D8DF] rounded-xl text-[#5F6368] select-none">
+                {keyMasked}
               </div>
               {canEdit && (
                 <button
                   type="button"
-                  onClick={() => setChangeKeyMode(true)}
-                  className="px-3 py-2 bg-white border border-[#D3D8DF] hover:bg-[#F7F7F5] text-xs font-semibold text-[#202124] rounded-xl transition shadow-2xs whitespace-nowrap cursor-pointer"
+                  onClick={() => setIsReplacingKey(true)}
+                  className="px-3.5 py-2.5 bg-white border border-[#D3D8DF] hover:bg-[#F7F7F5] text-xs font-semibold text-[#202124] rounded-xl transition shadow-2xs cursor-pointer whitespace-nowrap"
                 >
-                  Change Key
+                  Replace Key
                 </button>
               )}
             </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="relative">
                 <input
-                  type={showKeyInput ? "text" : "password"}
+                  type={showApiKey ? "text" : "password"}
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   disabled={!canEdit}
-                  placeholder="re_123456789_abcdefghijklmnopqrstuvwxyz"
-                  className="w-full px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-xs font-mono focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden pr-10 text-[#202124]"
+                  placeholder={keyConfigured ? "•••••••••••••••• (Leave blank to keep active key)" : "re_123456789_abcdefghijklmnopqrstuvwxyz"}
+                  className={`w-full font-mono text-xs px-3.5 py-2.5 bg-white border rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden pr-10 ${
+                    errors.resend_api_key ? "border-rose-400 bg-rose-50/20" : "border-[#D3D8DF]"
+                  }`}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowKeyInput(!showKeyInput)}
+                  onClick={() => setShowApiKey(!showApiKey)}
                   className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5F6368] hover:text-[#202124] p-1 cursor-pointer"
                 >
-                  {showKeyInput ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+
               {errors.resend_api_key && (
                 <p className="text-[11px] text-rose-600">{errors.resend_api_key}</p>
               )}
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] text-[#5F6368]">
-                  Stored with AES-256-GCM authenticated encryption. The plaintext key is never returned to the frontend.
-                </p>
+
+              <div className="flex items-center justify-between text-[11px] text-[#5F6368]">
+                <span>Stored using AES-256-GCM encryption. Never returned in plaintext to the browser.</span>
                 {keyConfigured && (
                   <button
                     type="button"
                     onClick={() => {
-                      setChangeKeyMode(false);
+                      setIsReplacingKey(false);
                       setApiKey("");
                     }}
-                    className="text-[11px] font-semibold text-[#5F6368] hover:text-[#202124] cursor-pointer"
+                    className="font-semibold text-[#24292F] hover:underline cursor-pointer"
                   >
-                    Cancel
+                    Keep Existing Key
                   </button>
                 )}
               </div>
@@ -795,10 +786,11 @@ export default function ResendEmailSection({
           )}
         </div>
 
-        {/* Sender Identity Details */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-bold text-[#202124] mb-1.5">
+        {/* Sender and Routing Configuration Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#E4E5E7]">
+          {/* Sender Display Name */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#202124]">
               Sender Display Name <span className="text-rose-500">*</span>
             </label>
             <input
@@ -806,14 +798,15 @@ export default function ResendEmailSection({
               value={senderName}
               onChange={(e) => setSenderName(e.target.value)}
               disabled={!canEdit}
-              placeholder="KV Tours & Travels"
-              className="w-full px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-xs text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden disabled:bg-stone-50"
+              placeholder={defaultAgencyName}
+              className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
             />
-            <p className="text-[10px] text-[#5F6368] mt-1">Appears as the From display name in emails</p>
+            <p className="text-[11px] text-[#5F6368]">Shown as the sender name in the customer&apos;s email client.</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[#202124] mb-1.5">
+          {/* Outbound Sender Email */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#202124]">
               Outbound Sender Email Address <span className="text-rose-500">*</span>
             </label>
             <input
@@ -821,23 +814,20 @@ export default function ResendEmailSection({
               value={senderEmail}
               onChange={(e) => setSenderEmail(e.target.value)}
               disabled={!canEdit}
-              placeholder={emailEnvironmentMode === "development" ? "onboarding@resend.dev" : "bookings@kvtours.in"}
-              className={`w-full px-3 py-2 bg-white border rounded-xl text-xs text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden disabled:bg-stone-50 ${
-                errors.email_sender_email ? "border-rose-400 bg-rose-50/30" : "border-[#D3D8DF]"
+              placeholder="bookings@thewildroot.in"
+              className={`w-full text-xs px-3.5 py-2.5 bg-white border rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden ${
+                errors.email_sender_email ? "border-rose-400 bg-rose-50/20" : "border-[#D3D8DF]"
               }`}
             />
             {errors.email_sender_email && (
-              <p className="text-[11px] text-rose-600 mt-1">{errors.email_sender_email}</p>
+              <p className="text-[11px] text-rose-600">{errors.email_sender_email}</p>
             )}
-            <p className="text-[10px] text-[#5F6368] mt-1">
-              {emailEnvironmentMode === "development"
-                ? "In development mode, use onboarding@resend.dev (no custom domain needed)."
-                : "Must match a verified domain configured in Resend Domains."}
-            </p>
+            <p className="text-[11px] text-[#5F6368]">Must belong to a domain verified in your Resend account.</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[#202124] mb-1.5">
+          {/* Customer Reply-To */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#202124]">
               Customer Reply-To Address
             </label>
             <input
@@ -845,773 +835,362 @@ export default function ResendEmailSection({
               value={replyToEmail}
               onChange={(e) => setReplyToEmail(e.target.value)}
               disabled={!canEdit}
-              placeholder="concierge@kvtours.in"
-              className="w-full px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-xs text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden disabled:bg-stone-50"
+              placeholder="concierge@thewildroot.in"
+              className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
             />
-            <p className="text-[10px] text-[#5F6368] mt-1">Where direct customer replies are routed</p>
+            <p className="text-[11px] text-[#5F6368]">Where customer replies are delivered when they hit &apos;Reply&apos;.</p>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-[#202124] mb-1.5">
-              Administrator Notification Email
+          {/* Admin Notification Email */}
+          <div className="space-y-1.5">
+            <label className="block text-xs font-bold text-[#202124]">
+              Admin Notification Email
             </label>
             <input
               type="email"
               value={adminNotificationEmail}
               onChange={(e) => setAdminNotificationEmail(e.target.value)}
               disabled={!canEdit}
-              placeholder="admin@kvtours.in"
-              className="w-full px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-xs text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden disabled:bg-stone-50"
+              placeholder="admin@thewildroot.in"
+              className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
             />
-            <p className="text-[10px] text-[#5F6368] mt-1">Receives administrative alerts for bookings &amp; payments</p>
+            <p className="text-[11px] text-[#5F6368]">Receives automated internal alerts for bookings and customer inquiries.</p>
           </div>
         </div>
-      </div>
 
-      {/* 5. Domain Verification Status & DNS Records */}
-      <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#E4E5E7]">
-          <div>
-            <h3 className="text-sm font-bold text-[#202124] flex items-center gap-2">
-              <Globe className="w-4 h-4 text-[#C5A880]" />
-              <span>Sender Domain Verification &amp; DNS Records</span>
-            </h3>
-            <p className="text-xs text-[#5F6368] mt-0.5">
-              Live domain verification queried directly from the Resend API.
-            </p>
-          </div>
-
-          <a
-            href="https://resend.com/domains"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-[#24292F] hover:underline font-semibold"
-          >
-            <span>Resend Domains Dashboard</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        </div>
-
-        {/* Sender Domain Verification Status Card */}
-        <div className="p-4 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <span className="text-xs font-semibold text-[#202124]">
-                Target Domain:{" "}
-                <span className="font-mono font-bold text-[#202124]">
-                  {senderEmail.split("@")[1] || "resend.dev"}
-                </span>
-              </span>
-              <p className="text-[11px] text-[#5F6368]">
-                Sender: <code className="font-mono">{senderEmail}</code>
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleVerifySender}
-                disabled={verifyingSender}
-                className="px-3 py-1.5 text-xs bg-white border border-[#D3D8DF] rounded-lg hover:bg-[#F7F7F5] font-semibold text-[#202124] flex items-center gap-1.5 transition cursor-pointer"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${verifyingSender ? "animate-spin" : ""}`} />
-                <span>Check Domain Status</span>
-              </button>
-
-              {senderVerifyResult ? (
-                <span
-                  className={`px-3 py-1 text-xs font-bold rounded-full uppercase tracking-wider border ${
-                    senderVerifyResult.status === "sandbox_ready" || senderVerifyResult.status === "verified"
-                      ? "bg-emerald-50 text-emerald-800 border-emerald-300"
-                      : senderVerifyResult.status === "pending"
-                      ? "bg-amber-50 text-amber-800 border-amber-300"
-                      : "bg-rose-50 text-rose-800 border-rose-300"
-                  }`}
-                >
-                  {senderVerifyResult.status === "sandbox_ready"
-                    ? "Sandbox Ready (resend.dev)"
-                    : senderVerifyResult.status === "verified"
-                    ? "Domain Verified"
-                    : senderVerifyResult.status === "pending"
-                    ? "Pending DNS Verification"
-                    : senderVerifyResult.status === "not_configured"
-                    ? "Not Configured in Resend"
-                    : "Unverified / Error"}
-                </span>
-              ) : (
-                <span className="px-3 py-1 text-xs font-medium rounded-full bg-stone-100 text-[#5F6368] border border-stone-200">
-                  Click Check Status
-                </span>
-              )}
-            </div>
-          </div>
-
-          {senderVerifyResult && (
-            <p className="text-xs text-[#202124] pt-2 border-t border-[#E4E5E7] leading-relaxed">
-              {senderVerifyResult.message}
-            </p>
-          )}
-        </div>
-
-        {/* DNS Records Table */}
-        {rawRecords.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-[#202124] uppercase tracking-wide">
-                Required DNS Records from Resend:
-              </h4>
-              <span className="text-[11px] text-[#5F6368]">
-                Configure these at your domain registrar (Cloudflare / GoDaddy / Namecheap)
-              </span>
-            </div>
-
-            <div className="border border-[#E4E5E7] rounded-xl overflow-x-auto bg-white">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-[#F7F7F5] text-[#5F6368] font-semibold border-b border-[#E4E5E7]">
-                  <tr>
-                    <th className="px-3 py-2">Record</th>
-                    <th className="px-3 py-2">Type</th>
-                    <th className="px-3 py-2">Host / Name</th>
-                    <th className="px-3 py-2">Value / Content</th>
-                    <th className="px-3 py-2">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#E4E5E7] font-mono text-[#202124]">
-                  {rawRecords.map((rec, idx) => (
-                    <tr key={idx} className="hover:bg-[#F7F7F5]">
-                      <td className="px-3 py-2 font-semibold">{rec.record || "TXT"}</td>
-                      <td className="px-3 py-2 text-[#5F6368]">{rec.type}</td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="truncate max-w-xs">{rec.name}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(rec.name, `dns_name_${idx}`)}
-                            className="text-[#5F6368] hover:text-[#202124] cursor-pointer"
-                          >
-                            {copiedKey === `dns_name_${idx}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <div className="flex items-center gap-1.5">
-                          <span className="truncate max-w-xs">{rec.value}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopy(rec.value, `dns_val_${idx}`)}
-                            className="text-[#5F6368] hover:text-[#202124] cursor-pointer"
-                          >
-                            {copiedKey === `dns_val_${idx}` ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                          </button>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                            rec.status === "verified"
-                              ? "bg-emerald-50 text-emerald-800 border-emerald-300"
-                              : "bg-amber-50 text-amber-800 border-amber-300"
-                          }`}
-                        >
-                          {rec.status || "Pending"}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        {/* Save Button */}
+        {canEdit && (
+          <div className="pt-2 flex justify-end">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="px-6 py-2.5 rounded-xl bg-[#24292F] hover:bg-[#3D4450] text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition shadow-xs disabled:opacity-50 cursor-pointer"
+            >
+              <Save className="w-3.5 h-3.5 text-[#C5A880]" />
+              <span>{saving ? "Persisting Settings..." : "Save Configuration"}</span>
+            </button>
           </div>
         )}
+      </div>
 
-        {/* Send Direct Test Email Form */}
-        <div className="p-4 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-            <span className="text-xs font-bold text-[#202124] flex items-center gap-2">
-              <Send className="w-3.5 h-3.5 text-[#C5A880]" />
+      {/* 4. Send Test Email Section */}
+      <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-bold text-[#202124] flex items-center gap-2">
+              <Send className="w-4 h-4 text-[#C5A880]" />
               <span>Send Transactional Test Email</span>
-            </span>
-            <span className="text-[11px] text-[#5F6368]">
-              Performs real API delivery dispatch through Resend
-            </span>
+            </h3>
+            <p className="text-xs text-[#5F6368] mt-0.5">
+              Verify real outbound delivery and HTML rendering through Resend. Does not modify customer records.
+            </p>
           </div>
 
-          {/* Quick Recipient Preset Chips */}
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <span className="text-[11px] text-[#5F6368] font-semibold">Quick Recipient:</span>
-            <button
-              type="button"
-              onClick={() => setTestRecipient("delivered@resend.dev")}
-              className="px-2.5 py-1 bg-white hover:bg-stone-50 border border-[#D3D8DF] rounded-lg text-[11px] font-mono text-[#202124] transition cursor-pointer"
-              title="Resend official delivery test sink (simulates 200 OK delivery without needing custom domain)"
-            >
-              delivered@resend.dev (Sandbox 200 OK)
-            </button>
-            <button
-              type="button"
-              onClick={() => setTestRecipient("bounced@resend.dev")}
-              className="px-2.5 py-1 bg-white hover:bg-stone-50 border border-[#D3D8DF] rounded-lg text-[11px] font-mono text-[#202124] transition cursor-pointer"
-              title="Resend bounce test sink (simulates bounce event)"
-            >
-              bounced@resend.dev (Bounce Test)
-            </button>
-            {adminNotificationEmail && (
-              <button
-                type="button"
-                onClick={() => setTestRecipient(adminNotificationEmail)}
-                className="px-2.5 py-1 bg-white hover:bg-stone-50 border border-[#D3D8DF] rounded-lg text-[11px] font-mono text-[#202124] transition cursor-pointer"
-                title="Your admin notification email"
-              >
-                Admin Email ({adminNotificationEmail})
-              </button>
-            )}
+          <div className="text-[11px] text-[#5F6368]">
+            Rate limit: 5 test emails per minute
           </div>
+        </div>
 
+        <form onSubmit={handleSendTestEmail} className="space-y-3">
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <input
               type="email"
               value={testRecipient}
               onChange={(e) => setTestRecipient(e.target.value)}
-              placeholder="Enter test recipient (e.g. delivered@resend.dev or your account email)..."
-              className="w-full text-xs px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
+              placeholder="Recipient email address (e.g. admin@thewildroot.in)..."
+              disabled={sendingTest}
+              className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden disabled:bg-stone-50"
             />
             <button
-              type="button"
-              onClick={handleSendTestEmail}
-              disabled={sendingTest || !testRecipient.trim()}
-              className="w-full sm:w-auto px-4 py-2 bg-[#24292F] hover:bg-[#3D4450] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-xs whitespace-nowrap disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer"
+              type="submit"
+              disabled={sendingTest || !testRecipient.trim() || !emailEnabled}
+              className="w-full sm:w-auto px-5 py-2.5 bg-[#24292F] hover:bg-[#3D4450] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition shadow-xs whitespace-nowrap disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
             >
               <Send className="w-3.5 h-3.5 text-[#C5A880]" />
-              <span>{sendingTest ? "Sending..." : "Send Test Email"}</span>
+              <span>{sendingTest ? "Delivering..." : "Send Test Email"}</span>
             </button>
           </div>
 
-          {testSendResult && (
+          {adminNotificationEmail && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-[11px] text-[#5F6368]">Quick recipient:</span>
+              <button
+                type="button"
+                onClick={() => setTestRecipient(adminNotificationEmail)}
+                className="px-2.5 py-0.5 bg-stone-100 hover:bg-stone-200 border border-stone-200 rounded-md text-[11px] font-mono text-[#202124] transition cursor-pointer"
+              >
+                {adminNotificationEmail}
+              </button>
+            </div>
+          )}
+
+          {testResult && (
             <div
-              className={`p-3 rounded-xl border text-xs font-medium space-y-1 animate-fadeIn ${
-                testSendResult.success
+              className={`p-3.5 rounded-xl border text-xs font-medium space-y-1 animate-fadeIn ${
+                testResult.success
                   ? "bg-emerald-50 border-emerald-200 text-emerald-900"
                   : "bg-rose-50 border-rose-200 text-rose-900"
               }`}
             >
               <div className="flex items-center gap-2 font-bold">
-                {testSendResult.success ? (
+                {testResult.success ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                 ) : (
                   <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
                 )}
-                <span>{testSendResult.message}</span>
+                <span>{testResult.message}</span>
               </div>
-              {testSendResult.message_id && (
+              {testResult.message_id && (
                 <p className="font-mono text-[11px] opacity-80">
-                  Resend Message ID: {testSendResult.message_id} • Target Recipient: {testSendResult.recipient}
+                  Resend Message ID: {testResult.message_id} &bull; Delivered to: {testResult.recipient}
                 </p>
               )}
             </div>
           )}
-        </div>
+        </form>
       </div>
 
-      {/* 6. Resend Webhook Configuration & Development Tunnel */}
-      <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs space-y-5">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#E4E5E7]">
-          <div>
-            <h3 className="text-sm font-bold text-[#202124] flex items-center gap-2">
-              <Radio className="w-4 h-4 text-[#C5A880]" />
-              <span>Resend Webhook Configuration &amp; Event Delivery</span>
-            </h3>
-            <p className="text-xs text-[#5F6368] mt-0.5">
-              Processes real-time delivery notifications (delivered, bounced, opened, clicked) using Svix HMAC-SHA256 signature verification.
-            </p>
-          </div>
-
-          <a
-            href="https://resend.com/webhooks"
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex items-center gap-1.5 text-xs text-[#24292F] hover:underline font-semibold"
-          >
-            <span>Resend Webhooks Dashboard</span>
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
-        </div>
-
-        {/* Webhook HTTPS Guidance & Local vs Tunnel Distinction */}
-        <div className="p-4 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl space-y-4">
-          {/* Active Webhook Status Banner */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#E4E5E7]">
+      {/* 5. Collapsible Advanced Settings (Optional Real-Time Webhooks) */}
+      <div className="bg-white border border-[#E4E5E7] rounded-2xl shadow-2xs overflow-hidden">
+        <button
+          type="button"
+          onClick={() => setShowAdvancedWebhooks(!showAdvancedWebhooks)}
+          className="w-full p-6 text-left flex items-center justify-between hover:bg-[#F7F7F5] transition cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <Radio className="w-5 h-5 text-[#C5A880]" />
             <div>
-              <span className="text-xs font-bold text-[#202124] block">
-                Active Webhook Endpoint Registration Status:
-              </span>
-              <p className="text-[11px] text-[#5F6368]">
-                Resend requires public HTTPS endpoints. It strictly rejects local HTTP URLs.
-              </p>
-            </div>
-            <div>
-              {isWebhookHttps ? (
-                <span className="px-3 py-1 text-xs font-bold rounded-full bg-emerald-50 text-emerald-800 border border-emerald-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>HTTPS Ready for Resend</span>
-                </span>
-              ) : (
-                <span className="px-3 py-1 text-xs font-bold rounded-full bg-amber-50 text-amber-800 border border-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                  <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                  <span>Not Configured (Requires HTTPS)</span>
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Local Reference URL */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-[#5F6368]">
-                Local Backend URL (Reference only — Incompatible with Resend Webhooks):
-              </label>
-              <span className="text-[10px] font-bold text-stone-500 bg-stone-200 px-2 py-0.5 rounded">
-                Local HTTP (Rejected by Resend)
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                readOnly
-                value={localBackendUrl}
-                className="w-full font-mono text-xs px-3 py-2 bg-stone-100 border border-[#D3D8DF] rounded-xl text-stone-600 select-all"
-              />
-              <button
-                type="button"
-                onClick={() => handleCopy(localBackendUrl, "local_url")}
-                className="px-3 py-2 text-xs font-semibold bg-white border border-[#D3D8DF] hover:bg-[#F7F7F5] rounded-xl flex items-center gap-1.5 shrink-0 shadow-2xs cursor-pointer text-[#202124]"
-              >
-                {copiedKey === "local_url" ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                <span>Copy</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Development Tunnel URL Input */}
-          <div className="space-y-2 pt-2 border-t border-[#E4E5E7]">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#202124] flex items-center gap-1.5">
-                <Terminal className="w-3.5 h-3.5 text-[#C5A880]" />
-                <span>Development Webhook Tunnel URL (Public HTTPS):</span>
-              </label>
-              <span className="text-[10px] text-[#5F6368]">
-                Paste your ngrok / cloudflared HTTPS URL here
-              </span>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <input
-                type="text"
-                value={tunnelUrl}
-                onChange={(e) => setTunnelUrl(e.target.value)}
-                disabled={!canEdit}
-                placeholder="https://your-tunnel.ngrok-free.app/api/v1/webhooks/resend"
-                className={`w-full font-mono text-xs px-3 py-2 bg-white border rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden ${
-                  errors.resend_webhook_tunnel_url ? "border-rose-400 bg-rose-50/30" : "border-[#D3D8DF]"
-                }`}
-              />
-              {tunnelUrl.trim() && (
-                <button
-                  type="button"
-                  onClick={() => handleCopy(tunnelUrl.trim(), "tunnel_url")}
-                  className="px-3 py-2 text-xs font-semibold bg-white border border-[#D3D8DF] hover:bg-[#F7F7F5] rounded-xl flex items-center gap-1.5 shrink-0 shadow-2xs cursor-pointer text-[#202124]"
-                >
-                  {copiedKey === "tunnel_url" ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
-                  <span>Copy</span>
-                </button>
-              )}
-            </div>
-            {errors.resend_webhook_tunnel_url && (
-              <p className="text-[11px] text-rose-600">{errors.resend_webhook_tunnel_url}</p>
-            )}
-
-            {/* Tunnel Instructions Box */}
-            <div className="p-3 bg-white border border-[#D3D8DF] rounded-xl text-xs space-y-1.5 text-[#5F6368]">
-              <div className="font-semibold text-[#202124] flex items-center gap-1.5">
-                <Info className="w-3.5 h-3.5 text-[#C5A880]" />
-                <span>How to test webhooks in local development:</span>
-              </div>
-              <p className="text-[11px] leading-relaxed">
-                1. Start a secure HTTPS tunnel pointing to your FastAPI port (8000):
-              </p>
-              <pre className="font-mono text-[11px] bg-stone-100 p-2 rounded border border-stone-200 text-[#202124] overflow-x-auto">
-                ngrok http 8000
-              </pre>
-              <p className="text-[11px] leading-relaxed">
-                2. Copy the resulting forwarding URL (e.g. <code className="font-mono text-emerald-700">https://xyz.ngrok-free.app</code>), append <code className="font-mono">/api/v1/webhooks/resend</code>, paste it above and save settings.
-              </p>
-              <p className="text-[11px] leading-relaxed">
-                3. Add this URL to your Resend Webhooks Dashboard and copy the Signing Secret below.
-              </p>
-            </div>
-          </div>
-
-          {/* Webhook Signing Secret Input */}
-          <div className="space-y-3 pt-2 border-t border-[#E4E5E7]">
-            <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Lock className="w-4 h-4 text-[#C5A880]" />
-                <span className="text-xs font-bold text-[#202124]">
-                  Webhook Signing Secret (`whsec_...`)
+                <h3 className="text-sm font-bold text-[#202124]">Advanced Settings — Real-Time Delivery Webhooks</h3>
+                <span className="text-[10px] font-semibold text-stone-500 bg-stone-100 px-2 py-0.5 rounded border border-stone-200 uppercase">
+                  Optional
                 </span>
               </div>
-              {secretConfigured && !changeSecretMode && (
-                <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300">
-                  Encrypted &amp; Configured
-                </span>
-              )}
+              <p className="text-xs text-[#5F6368] mt-0.5">
+                Track delivery confirmations, bounces, and complaints in real time using Svix HMAC-SHA256 signatures.
+              </p>
             </div>
+          </div>
+          {showAdvancedWebhooks ? (
+            <ChevronUp className="w-4 h-4 text-[#5F6368]" />
+          ) : (
+            <ChevronDown className="w-4 h-4 text-[#5F6368]" />
+          )}
+        </button>
 
-            {!changeSecretMode && secretConfigured ? (
-              <div className="flex items-center justify-between gap-3">
-                <div className="font-mono text-xs text-[#5F6368] bg-white px-3 py-2 border border-[#D3D8DF] rounded-xl flex-1">
-                  {secretMasked || "whsec_••••••••••••••••••••••••"}
-                </div>
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={() => setChangeSecretMode(true)}
-                    className="px-3 py-2 bg-white border border-[#D3D8DF] hover:bg-[#F7F7F5] text-xs font-semibold text-[#202124] rounded-xl transition shadow-2xs cursor-pointer"
-                  >
-                    Change Secret
-                  </button>
-                )}
+        {showAdvancedWebhooks && (
+          <div className="p-6 pt-0 space-y-5 border-t border-[#E4E5E7] mt-2">
+            <div className="p-4 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl space-y-4">
+              {/* Informational Guidance */}
+              <div className="flex items-start gap-2.5 text-xs text-[#5F6368]">
+                <Info className="w-4 h-4 text-[#C5A880] shrink-0 mt-0.5" />
+                <p className="leading-relaxed">
+                  Webhooks are <strong className="text-[#202124]">optional</strong> for transactional email delivery. Outbound emails work completely without webhooks. Configuring a webhook enables live delivery status logs (delivered, opened, bounced).
+                </p>
               </div>
-            ) : (
-              <div className="space-y-2">
-                <div className="relative">
+
+              {/* Production Webhook URL */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-bold text-[#202124]">
+                    Production Webhook Endpoint URL (HTTPS):
+                  </label>
+                  <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    HTTPS Production Ready
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
                   <input
-                    type={showSecretInput ? "text" : "password"}
-                    value={webhookSecret}
-                    onChange={(e) => setWebhookSecret(e.target.value)}
-                    disabled={!canEdit}
-                    placeholder="whsec_123456789_abcdefghijklmnopqrstuvwxyz"
-                    className="w-full px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-xs font-mono text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden pr-10"
+                    type="text"
+                    readOnly
+                    value={productionWebhookUrl}
+                    className="w-full font-mono text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] select-all"
                   />
                   <button
                     type="button"
-                    onClick={() => setShowSecretInput(!showSecretInput)}
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5F6368] hover:text-[#202124] p-1 cursor-pointer"
+                    onClick={() => handleCopy(productionWebhookUrl, "prod_webhook_url")}
+                    className="px-4 py-2.5 text-xs font-semibold bg-white border border-[#D3D8DF] hover:bg-[#F7F7F5] rounded-xl flex items-center gap-1.5 shrink-0 shadow-2xs cursor-pointer text-[#202124]"
                   >
-                    {showSecretInput ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {copiedKey === "prod_webhook_url" ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                    <span>Copy URL</span>
                   </button>
                 </div>
-                {errors.resend_webhook_signing_secret && (
-                  <p className="text-[11px] text-rose-600">{errors.resend_webhook_signing_secret}</p>
-                )}
+                <p className="text-[11px] text-[#5F6368]">
+                  Paste this exact URL into your Resend Dashboard &rarr; Webhooks.
+                </p>
+              </div>
+
+              {/* Webhook Signing Secret */}
+              <div className="space-y-2 pt-2 border-t border-[#E4E5E7]">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] text-[#5F6368]">
-                    Resend signs webhooks using Svix HMAC-SHA256. Retrieve this from Resend Dashboard &gt; Webhooks &gt; Signing Secret.
-                  </p>
+                  <label className="text-xs font-bold text-[#202124] flex items-center gap-2">
+                    <Lock className="w-3.5 h-3.5 text-[#C5A880]" />
+                    <span>Webhook Signing Secret (`whsec_...`)</span>
+                  </label>
                   {secretConfigured && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setChangeSecretMode(false);
-                        setWebhookSecret("");
-                      }}
-                      className="text-[11px] font-semibold text-[#5F6368] hover:text-[#202124] cursor-pointer"
-                    >
-                      Cancel
-                    </button>
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Configured &amp; Encrypted
+                    </span>
                   )}
                 </div>
-              </div>
-            )}
 
-            <div className="pt-2 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={handleVerifyWebhook}
-                disabled={verifyingWebhook}
-                className="px-3.5 py-2 bg-white hover:bg-[#F7F7F5] border border-[#D3D8DF] text-[#202124] text-xs font-bold rounded-xl transition shadow-2xs flex items-center gap-2 disabled:opacity-50 cursor-pointer"
-              >
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                <span>{verifyingWebhook ? "Testing Algorithm..." : "Verify Webhook Signature Algorithm"}</span>
-              </button>
-
-              <span className="text-[11px] text-[#5F6368] italic">
-                Email webhooks track delivery events only — never payment status.
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Webhook Signature Verification Result */}
-        {webhookVerifyResult && (
-          <div
-            className={`p-4 rounded-xl border text-xs font-medium space-y-1.5 animate-fadeIn ${
-              webhookVerifyResult.success
-                ? "bg-emerald-50 border-emerald-200 text-emerald-900"
-                : "bg-rose-50 border-rose-200 text-rose-900"
-            }`}
-          >
-            <div className="flex items-center gap-2 font-bold">
-              {webhookVerifyResult.success ? (
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-              ) : (
-                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-              )}
-              <span>{webhookVerifyResult.message}</span>
-            </div>
-            {webhookVerifyResult.diagnostics && (
-              <pre className="text-[11px] font-mono opacity-80 whitespace-pre-wrap bg-white/70 p-2 rounded border border-current/20">
-                {JSON.stringify(webhookVerifyResult.diagnostics, null, 2)}
-              </pre>
-            )}
-          </div>
-        )}
-
-        {/* Webhook Event Statistics Cards */}
-        {webhookStats && (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-[#202124] uppercase tracking-wide">
-                Webhook Delivery Statistics &amp; Event Activity:
-              </h4>
-              <button
-                type="button"
-                onClick={loadWebhookStats}
-                disabled={loadingWebhookStats}
-                className="p-1 hover:bg-[#F7F7F5] rounded text-[#5F6368] hover:text-[#202124] transition cursor-pointer"
-                title="Refresh webhook statistics"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 ${loadingWebhookStats ? "animate-spin" : ""}`} />
-              </button>
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-3 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl">
-                <span className="text-[10px] text-[#5F6368] uppercase font-semibold">Total Events</span>
-                <div className="text-xl font-bold text-[#202124] mt-0.5">
-                  {webhookStats.total_events_received}
-                </div>
-              </div>
-
-              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                <span className="text-[10px] text-emerald-700 uppercase font-semibold">Delivered</span>
-                <div className="text-xl font-bold text-emerald-700 mt-0.5">
-                  {webhookStats.delivered_count}
-                </div>
-              </div>
-
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
-                <span className="text-[10px] text-rose-700 uppercase font-semibold">Bounced</span>
-                <div className="text-xl font-bold text-rose-700 mt-0.5">
-                  {webhookStats.bounced_count}
-                </div>
-              </div>
-
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                <span className="text-[10px] text-amber-700 uppercase font-semibold">Complaints</span>
-                <div className="text-xl font-bold text-amber-700 mt-0.5">
-                  {webhookStats.complained_count}
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Webhook Events */}
-            {webhookStats.recent_events.length > 0 && (
-              <div className="border border-[#E4E5E7] rounded-xl overflow-hidden mt-3 bg-white">
-                <div className="px-4 py-2.5 bg-[#F7F7F5] text-xs font-semibold text-[#202124] border-b border-[#E4E5E7]">
-                  Recent Processed Webhook Events (Idempotent deduplication by Svix ID)
-                </div>
-                <div className="divide-y divide-[#E4E5E7] max-h-48 overflow-y-auto">
-                  {webhookStats.recent_events.map((evt, i) => (
-                    <div key={i} className="px-4 py-2 flex items-center justify-between text-xs hover:bg-[#F7F7F5]">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                            evt.event_type === "email.delivered"
-                              ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                              : evt.event_type === "email.bounced"
-                              ? "bg-rose-50 text-rose-800 border-rose-200"
-                              : "bg-stone-100 text-stone-700 border-stone-200"
-                          }`}
-                        >
-                          {evt.event_type}
-                        </span>
-                        <span className="font-mono text-[#5F6368] truncate max-w-xs">
-                          {evt.recipient || evt.email_id || evt.event_id}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-[#5F6368]">
-                        {new Date(evt.timestamp).toLocaleString()}
-                      </span>
+                {!isReplacingSecret && secretConfigured ? (
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 font-mono text-xs px-3.5 py-2.5 bg-stone-50 border border-[#D3D8DF] rounded-xl text-[#5F6368] select-none">
+                      {secretMasked}
                     </div>
-                  ))}
+                    {canEdit && (
+                      <button
+                        type="button"
+                        onClick={() => setIsReplacingSecret(true)}
+                        className="px-3.5 py-2.5 bg-white border border-[#D3D8DF] hover:bg-[#F7F7F5] text-xs font-semibold text-[#202124] rounded-xl transition shadow-2xs cursor-pointer whitespace-nowrap"
+                      >
+                        Change Secret
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-1.5">
+                    <div className="relative">
+                      <input
+                        type={showWebhookSecret ? "text" : "password"}
+                        value={webhookSecret}
+                        onChange={(e) => setWebhookSecret(e.target.value)}
+                        disabled={!canEdit}
+                        placeholder={secretConfigured ? "•••••••••••••••• (Leave blank to keep active secret)" : "whsec_123456789_abcdefghijklmnopqrstuvwxyz"}
+                        className={`w-full font-mono text-xs px-3.5 py-2.5 bg-white border rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden pr-10 ${
+                          errors.resend_webhook_signing_secret ? "border-rose-400 bg-rose-50/20" : "border-[#D3D8DF]"
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowWebhookSecret(!showWebhookSecret)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5F6368] hover:text-[#202124] p-1 cursor-pointer"
+                      >
+                        {showWebhookSecret ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+
+                    {errors.resend_webhook_signing_secret && (
+                      <p className="text-[11px] text-rose-600">{errors.resend_webhook_signing_secret}</p>
+                    )}
+
+                    <div className="flex items-center justify-between text-[11px] text-[#5F6368]">
+                      <span>Obtain this signing secret from Resend Dashboard &rarr; Webhooks.</span>
+                      {secretConfigured && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsReplacingSecret(false);
+                            setWebhookSecret("");
+                          }}
+                          className="font-semibold text-[#24292F] hover:underline cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Verify Webhook Algorithm Button */}
+                <div className="pt-2 flex items-center justify-between">
+                  <button
+                    type="button"
+                    onClick={handleVerifyWebhook}
+                    disabled={verifyingWebhook || (!secretConfigured && !webhookSecret.trim())}
+                    className="px-3.5 py-2 bg-white hover:bg-[#F7F7F5] border border-[#D3D8DF] text-[#202124] text-xs font-bold rounded-xl transition shadow-2xs flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>{verifyingWebhook ? "Testing..." : "Verify Webhook Signature Algorithm"}</span>
+                  </button>
+
+                  <span className="text-[11px] text-[#5F6368] italic">
+                    Email webhooks never alter payment or booking transaction state.
+                  </span>
+                </div>
+              </div>
+
+              {/* Webhook Verification Result */}
+              {webhookVerifyResult && (
+                <div
+                  className={`p-3.5 rounded-xl border text-xs font-medium space-y-1.5 animate-fadeIn ${
+                    webhookVerifyResult.success
+                      ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                      : "bg-rose-50 border-rose-200 text-rose-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-bold">
+                    {webhookVerifyResult.success ? (
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                    ) : (
+                      <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                    )}
+                    <span>{webhookVerifyResult.message}</span>
+                  </div>
+                  {webhookVerifyResult.diagnostics && (
+                    <pre className="text-[11px] font-mono opacity-80 whitespace-pre-wrap bg-white/70 p-2 rounded border border-current/20">
+                      {JSON.stringify(webhookVerifyResult.diagnostics, null, 2)}
+                    </pre>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Webhook Statistics Summary */}
+            {webhookStats && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-[#202124] uppercase tracking-wide">
+                    Live Webhook Event Statistics:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={loadWebhookStats}
+                    disabled={loadingWebhookStats}
+                    className="p-1 hover:bg-[#F7F7F5] rounded text-[#5F6368] hover:text-[#202124] transition cursor-pointer"
+                    title="Refresh stats"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingWebhookStats ? "animate-spin" : ""}`} />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  <div className="p-3 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl">
+                    <span className="text-[10px] text-[#5F6368] uppercase font-semibold">Total Events</span>
+                    <div className="text-lg font-bold text-[#202124] mt-0.5">
+                      {webhookStats.total_events_received}
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                    <span className="text-[10px] text-emerald-700 uppercase font-semibold">Delivered</span>
+                    <div className="text-lg font-bold text-emerald-700 mt-0.5">
+                      {webhookStats.delivered_count}
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl">
+                    <span className="text-[10px] text-rose-700 uppercase font-semibold">Bounced</span>
+                    <div className="text-lg font-bold text-rose-700 mt-0.5">
+                      {webhookStats.bounced_count}
+                    </div>
+                  </div>
+
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                    <span className="text-[10px] text-amber-700 uppercase font-semibold">Complaints</span>
+                    <div className="text-lg font-bold text-amber-700 mt-0.5">
+                      {webhookStats.complained_count}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
           </div>
         )}
       </div>
-
-      {/* 7. Individual Notification Triggers */}
-      <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs space-y-4">
-        <div>
-          <h3 className="text-sm font-bold text-[#202124]">Individual Notification Triggers</h3>
-          <p className="text-xs text-[#5F6368] mt-0.5">
-            Fine-grained toggles for specific transactional customer events.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-          <label className="p-3 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl flex items-center justify-between cursor-pointer hover:bg-stone-100 transition">
-            <div>
-              <span className="text-xs font-bold text-[#202124] block">Booking Confirmation</span>
-              <span className="text-[11px] text-[#5F6368]">Dispatched upon itinerary booking creation</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={notifyBookingConfirm}
-              onChange={(e) => setNotifyBookingConfirm(e.target.checked)}
-              disabled={!canEdit}
-              className="w-4 h-4 rounded text-[#24292F] focus:ring-[#C5A880] cursor-pointer"
-            />
-          </label>
-
-          <label className="p-3 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl flex items-center justify-between cursor-pointer hover:bg-stone-100 transition">
-            <div>
-              <span className="text-xs font-bold text-[#202124] block">Inquiry Acknowledgment</span>
-              <span className="text-[11px] text-[#5F6368]">Immediate acknowledgment when lead submits form</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={notifyInquiryAck}
-              onChange={(e) => setNotifyInquiryAck(e.target.checked)}
-              disabled={!canEdit}
-              className="w-4 h-4 rounded text-[#24292F] focus:ring-[#C5A880] cursor-pointer"
-            />
-          </label>
-
-          <label className="p-3 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl flex items-center justify-between cursor-pointer hover:bg-stone-100 transition">
-            <div>
-              <span className="text-xs font-bold text-[#202124] block">Payment Receipt</span>
-              <span className="text-[11px] text-[#5F6368]">Delivered after authorized payment verification with PDF</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={notifyPaymentReceipt}
-              onChange={(e) => setNotifyPaymentReceipt(e.target.checked)}
-              disabled={!canEdit}
-              className="w-4 h-4 rounded text-[#24292F] focus:ring-[#C5A880] cursor-pointer"
-            />
-          </label>
-
-          <label className="p-3 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl flex items-center justify-between cursor-pointer hover:bg-stone-100 transition">
-            <div>
-              <span className="text-xs font-bold text-[#202124] block">Cancellation Updates</span>
-              <span className="text-[11px] text-[#5F6368]">Sent when a booking is modified or canceled</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={notifyCancellationAck}
-              onChange={(e) => setNotifyCancellationAck(e.target.checked)}
-              disabled={!canEdit}
-              className="w-4 h-4 rounded text-[#24292F] focus:ring-[#C5A880] cursor-pointer"
-            />
-          </label>
-
-          <label className="p-3 bg-[#F7F7F5] border border-[#E4E5E7] rounded-xl flex items-center justify-between cursor-pointer hover:bg-stone-100 transition sm:col-span-2">
-            <div>
-              <span className="text-xs font-bold text-[#202124] block">Trip Reminders &amp; Due Notices</span>
-              <span className="text-[11px] text-[#5F6368]">Automated departure reminder and balance notice 3 days prior</span>
-            </div>
-            <input
-              type="checkbox"
-              checked={notifyPaymentReminder}
-              onChange={(e) => setNotifyPaymentReminder(e.target.checked)}
-              disabled={!canEdit}
-              className="w-4 h-4 rounded text-[#24292F] focus:ring-[#C5A880] cursor-pointer"
-            />
-          </label>
-        </div>
-      </div>
-
-      {/* 8. Editable Template Subjects */}
-      <div className="bg-white border border-[#E4E5E7] rounded-2xl p-6 shadow-2xs space-y-4">
-        <div>
-          <h3 className="text-sm font-bold text-[#202124]">Supported Email Template Subjects</h3>
-          <p className="text-xs text-[#5F6368] mt-0.5">
-            Customize transactional email subject headers sent to customers.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-[#202124] mb-1">
-              Booking Confirmation Subject
-            </label>
-            <input
-              type="text"
-              value={subjectBooking}
-              onChange={(e) => setSubjectBooking(e.target.value)}
-              disabled={!canEdit}
-              className="w-full text-xs px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#202124] mb-1">
-              Payment Receipt Subject
-            </label>
-            <input
-              type="text"
-              value={subjectReceipt}
-              onChange={(e) => setSubjectReceipt(e.target.value)}
-              disabled={!canEdit}
-              className="w-full text-xs px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#202124] mb-1">
-              Inquiry Acknowledgment Subject
-            </label>
-            <input
-              type="text"
-              value={subjectInquiry}
-              onChange={(e) => setSubjectInquiry(e.target.value)}
-              disabled={!canEdit}
-              className="w-full text-xs px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-[#202124] mb-1">
-              Trip Reminder Subject
-            </label>
-            <input
-              type="text"
-              value={subjectReminder}
-              onChange={(e) => setSubjectReminder(e.target.value)}
-              disabled={!canEdit}
-              className="w-full text-xs px-3 py-2 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* 9. Security & Infrastructure Guidance */}
-      <div className="p-4 bg-stone-50 border border-stone-200 rounded-2xl text-xs text-[#202124] space-y-2">
-        <div className="flex items-center gap-2 font-bold">
-          <ShieldAlert className="w-4 h-4 text-[#C5A880] shrink-0" />
-          <span>Security &amp; Encryption Architecture</span>
-        </div>
-        <p className="text-[11px] text-[#5F6368] leading-relaxed">
-          The database securely stores the runtime Resend API key and webhook secret encrypted with AES-256-GCM.
-          For production deployments on Render, ensure the master encryption key{" "}
-          <code className="font-mono bg-white px-1.5 py-0.5 rounded border border-stone-300 text-[#202124]">
-            PAYMENT_CREDENTIALS_ENCRYPTION_KEY
-          </code>{" "}
-          is configured in the Render Dashboard environment settings. Saving settings here updates runtime operations immediately without redeploying.
-        </p>
-      </div>
-    </form>
+    </div>
   );
 }

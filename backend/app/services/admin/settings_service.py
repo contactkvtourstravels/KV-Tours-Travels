@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
@@ -17,6 +18,7 @@ from app.core.encryption import (
     DecryptionError,
     decrypt_secret,
     encrypt_secret,
+    inspect_encryption_key,
     resolve_encryption_key,
 )
 from app.models.content import NotificationLog, SiteSetting
@@ -72,16 +74,33 @@ def get_decrypted_secret(db: Session, key: str) -> str | None:
     return raw_val
 
 
+def get_resend_api_key(db: Session | None = None) -> str:
+    """Retrieve the Resend API key in order of precedence:
+    1. Encrypted database secret store (Admin Settings page)
+    2. OS environment variable (Render Dashboard RESEND_API_KEY fallback)
+    3. Core application settings fallback (resend_api_key)
+    """
+    if db is not None:
+        db_key = get_decrypted_secret(db, "resend_api_key")
+        if db_key and db_key.strip():
+            return db_key.strip()
+    env_key = os.environ.get("RESEND_API_KEY", "").strip()
+    if env_key:
+        return env_key
+    settings = get_settings()
+    sec_key = settings.resend_api_key.get_secret_value().strip()
+    if sec_key:
+        return sec_key
+    return ""
+
+
 def _store_secret(db: Session, key: str, plaintext: str, description: str) -> None:
-    """Store secret encrypted if key configured, otherwise stored private."""
+    """Store secret encrypted with AES-256-GCM. Stored private (is_public=False)."""
     clean_val = plaintext.strip()
     key_bytes = resolve_encryption_key(get_settings())
-    stored_val = clean_val
-    if key_bytes and len(key_bytes) == 32:
-        try:
-            stored_val = encrypt_secret(clean_val, key_bytes)
-        except Exception as exc:  # noqa: BLE001
-            logger.warning("Could not encrypt secret %s: %s; storing unencrypted.", key, exc)
+    if not key_bytes or len(key_bytes) != 32:
+        raise ValueError(f"Cannot encrypt secret {key}: 32-byte encryption key could not be resolved.")
+    stored_val = encrypt_secret(clean_val, key_bytes)
 
     row = db.get(SiteSetting, key)
     if row is None:
@@ -95,6 +114,40 @@ def _store_secret(db: Session, key: str, plaintext: str, description: str) -> No
     else:
         row.value = stored_val
         row.is_public = False
+
+
+def resolve_resend_webhook_url(db: Session | None = None) -> tuple[str, bool]:
+    """Resolve the production webhook URL for Resend.
+    Returns (webhook_url, is_https).
+    Precedence:
+    1. If a custom tunnel/proxy URL is explicitly configured in SiteSetting ('resend_webhook_tunnel_url') and starts with https://
+    2. settings.backend_url if it starts with https://
+    3. RENDER_EXTERNAL_URL env var if set
+    4. BACKEND_URL env var if set
+    5. Production Render backend domain fallback: 'https://travel-agency-kdrs.onrender.com/api/v1/webhooks/resend'
+    """
+    route_suffix = "/api/v1/webhooks/resend"
+
+    if db is not None:
+        tunnel_row = db.get(SiteSetting, "resend_webhook_tunnel_url")
+        if tunnel_row and tunnel_row.value:
+            t_url = str(tunnel_row.value).strip()
+            if t_url.startswith("https://"):
+                return f"{t_url.rstrip('/')}{route_suffix}", True
+
+    settings = get_settings()
+    if settings.backend_url and settings.backend_url.startswith("https://"):
+        return f"{settings.backend_url.rstrip('/')}{route_suffix}", True
+
+    render_url = os.environ.get("RENDER_EXTERNAL_URL", "").strip()
+    if render_url.startswith("https://"):
+        return f"{render_url.rstrip('/')}{route_suffix}", True
+
+    backend_env = os.environ.get("BACKEND_URL", "").strip()
+    if backend_env.startswith("https://"):
+        return f"{backend_env.rstrip('/')}{route_suffix}", True
+
+    return f"https://travel-agency-kdrs.onrender.com{route_suffix}", True
 
 
 def resolve_resend_signing_secret(db: Session) -> tuple[str | None, str]:
@@ -201,13 +254,10 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
     )
 
     # Resend email secrets status
-    resend_key_raw = overrides.get("resend_api_key")
-    resend_key_str = str(resend_key_raw) if resend_key_raw else None
-    resend_key_configured = bool(resend_key_str and len(resend_key_str) > 0) or bool(
-        settings.resend_api_key.get_secret_value()
-    )
+    resolved_resend_key = get_resend_api_key(db)
+    resend_key_configured = bool(resolved_resend_key and len(resolved_resend_key) > 0)
     resend_key_masked = (
-        _mask_token(get_decrypted_secret(db, "resend_api_key") or settings.resend_api_key.get_secret_value())
+        _mask_token(resolved_resend_key)
         if resend_key_configured
         else None
     )
@@ -215,14 +265,7 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
     webhook_status = check_resend_signing_secret_status(db)
     resend_webhook_configured = webhook_status["configured"] and webhook_status["decryptable"]
     resend_webhook_masked = webhook_status["masked"]
-    tunnel_raw = overrides.get("resend_webhook_tunnel_url")
-    tunnel_url = str(tunnel_raw).strip() if tunnel_raw else ""
-    if tunnel_url.startswith("https://"):
-        resend_webhook_url = f"{tunnel_url.rstrip('/')}/api/v1/webhooks/resend"
-    elif settings.backend_url.startswith("https://"):
-        resend_webhook_url = f"{settings.backend_url.rstrip('/')}/api/v1/webhooks/resend"
-    else:
-        resend_webhook_url = None
+    resend_webhook_url, _ = resolve_resend_webhook_url(db)
 
     feat_dests = overrides.get("featured_destination_ids")
     featured_destination_ids = [str(x) for x in feat_dests] if isinstance(feat_dests, list) else []
@@ -343,26 +386,19 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         whatsapp_verify_token_configured=wa_verify_configured,
         whatsapp_verify_token_masked=wa_verify_masked,
         whatsapp_app_secret_configured=wa_secret_configured,
-        whatsapp_app_secret_masked=wa_secret_masked,
-
         # Resend Email Configuration
-        email_environment_mode=str(overrides.get("email_environment_mode", "development")),
+        email_environment_mode=str(overrides.get("email_environment_mode", "production")),
         email_provider=str(overrides.get("email_provider", "resend")),
         resend_api_key_configured=resend_key_configured,
         resend_api_key_masked=resend_key_masked,
         resend_webhook_signing_secret_configured=resend_webhook_configured,
         resend_webhook_signing_secret_masked=resend_webhook_masked,
         resend_webhook_url=resend_webhook_url,
-        resend_webhook_tunnel_url=tunnel_url if tunnel_url else None,
-        email_sender_name=str(overrides.get("email_sender_name", "Wild Root")),
-        email_sender_email=str(
-            overrides.get(
-                "email_sender_email",
-                "onboarding@resend.dev" if str(overrides.get("email_environment_mode", "development")) == "development" else "bookings@wildroot.in",
-            )
-        ),
-        email_reply_to=str(overrides.get("email_reply_to", "concierge@wildroot.in")),
-        admin_notification_email=str(overrides.get("admin_notification_email", "admin@wildroot.in")),
+        resend_webhook_tunnel_url=str(overrides.get("resend_webhook_tunnel_url")).strip() if overrides.get("resend_webhook_tunnel_url") else None,
+        email_sender_name=str(overrides.get("email_sender_name", "The Wild Root")),
+        email_sender_email=str(overrides.get("email_sender_email", "bookings@thewildroot.in")),
+        email_reply_to=str(overrides.get("email_reply_to", "concierge@thewildroot.in")),
+        admin_notification_email=str(overrides.get("admin_notification_email", "admin@thewildroot.in")),
         email_enabled=_parse_bool(overrides.get("email_enabled"), True),
         email_booking_confirmation_enabled=_parse_bool(
             overrides.get("email_booking_confirmation_enabled"), True
@@ -658,15 +694,29 @@ def update_admin_settings(
         sec_val = getattr(payload, sec_key, None)
         if sec_val is not None:
             clean_sec = sec_val.strip()
-            if clean_sec:
-                _store_secret(db, sec_key, clean_sec, sec_desc)
-                changes[sec_key] = {"status": "updated_secret_redacted"}
-            else:
-                # If an explicit empty string was passed, remove the secret record from database
-                existing_row = db.get(SiteSetting, sec_key)
-                if existing_row:
-                    db.delete(existing_row)
-                    changes[sec_key] = {"status": "removed"}
+            # If the user left it blank or sent a masked placeholder (e.g. 're_••••' or '••••'),
+            # preserve the existing stored secret and never overwrite with an empty value.
+            if not clean_sec or "•" in clean_sec or clean_sec.startswith("••••"):
+                continue
+
+            # Validate specific secret formats
+            if sec_key == "resend_api_key":
+                if not clean_sec.startswith("re_"):
+                    from fastapi import HTTPException
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Resend API keys must begin with 're_'.",
+                    )
+            elif sec_key == "resend_webhook_signing_secret":
+                if not (clean_sec.startswith("whsec_") or len(clean_sec) >= 16):
+                    from fastapi import HTTPException
+                    raise HTTPException(
+                        status_code=400,
+                        detail="Resend Webhook secrets must begin with 'whsec_' or be a valid signing secret.",
+                    )
+
+            _store_secret(db, sec_key, clean_sec, sec_desc)
+            changes[sec_key] = {"status": "updated_secret_redacted"}
 
     if changes:
         record_audit_log(
@@ -688,12 +738,12 @@ def update_admin_settings(
 
 def test_resend_connection(db: Session) -> EmailTestConnectionResponse:
     """Validate Resend API key authentication via official Resend endpoint."""
-    api_key = get_decrypted_secret(db, "resend_api_key") or get_settings().resend_api_key.get_secret_value()
+    api_key = get_resend_api_key(db)
     if not api_key:
         return EmailTestConnectionResponse(
             success=False,
             status="unconfigured",
-            message="Resend API key is not configured. Please input a key starting with 're_'.",
+            message="Resend API key is not configured. Please input a key starting with 're_' or set RESEND_API_KEY.",
             provider="resend",
             api_key_configured=False,
         )
@@ -725,11 +775,31 @@ def test_resend_connection(db: Session) -> EmailTestConnectionResponse:
                     api_key_configured=True,
                     details={"keys_count": len(data.get("data", []))},
                 )
-            if resp.status_code in (401, 403):
+            if resp.status_code == 403:
+                # In Resend, keys created with "Sending access" only cannot list API keys, but are valid for sending!
+                err_text = resp.text.lower()
+                if "restricted" in err_text or "permission to send" in err_text or "sending access" in err_text:
+                    return EmailTestConnectionResponse(
+                        success=True,
+                        status="authenticated",
+                        message="Successfully authenticated with Resend API (Sending-Access API Key). Ready for transactional delivery.",
+                        provider="resend",
+                        api_key_configured=True,
+                        details={"restricted": True, "permission": "sending_only"},
+                    )
                 return EmailTestConnectionResponse(
                     success=False,
                     status="unauthorized",
-                    message="Resend rejected the provided API key. Please check that the key is valid and active.",
+                    message="Resend rejected the provided API key (HTTP 403). Please verify API key permissions.",
+                    provider="resend",
+                    api_key_configured=True,
+                    details={"status_code": resp.status_code},
+                )
+            if resp.status_code == 401:
+                return EmailTestConnectionResponse(
+                    success=False,
+                    status="unauthorized",
+                    message="Resend rejected the provided API key (HTTP 401 Unauthorized). Please check that the key is valid and active.",
                     provider="resend",
                     api_key_configured=True,
                     details={"status_code": resp.status_code},
@@ -757,15 +827,13 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
     """Verify sender domain configuration via Resend API."""
     settings = get_settings()
     sender_row = db.get(SiteSetting, "email_sender_email")
-    env_mode_row = db.get(SiteSetting, "email_environment_mode")
-    env_mode = str(env_mode_row.value).strip() if env_mode_row and env_mode_row.value else "development"
-    sender_email = str(sender_row.value).strip() if sender_row and sender_row.value else ("onboarding@resend.dev" if env_mode == "development" else settings.email_from)
+    sender_email = str(sender_row.value).strip() if sender_row and sender_row.value else settings.email_from
     if "<" in sender_email and ">" in sender_email:
         sender_email = sender_email.split("<")[1].split(">")[0].strip()
 
-    domain = sender_email.split("@")[-1] if "@" in sender_email else "kvtours.in"
+    domain = sender_email.split("@")[-1] if "@" in sender_email else "thewildroot.in"
 
-    api_key = get_decrypted_secret(db, "resend_api_key") or settings.resend_api_key.get_secret_value()
+    api_key = get_resend_api_key(db)
     if not api_key:
         return EmailTestConnectionResponse(
             success=False,
@@ -778,21 +846,38 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
             is_sandbox=False,
         )
 
+    env_mode_row = db.get(SiteSetting, "email_environment_mode")
+    env_mode = str(env_mode_row.value).strip().lower() if env_mode_row and env_mode_row.value else "production"
+
     # Detect Resend Sandbox domain
     if domain.lower() == "resend.dev" or sender_email.lower().endswith("@resend.dev"):
+        if env_mode == "development":
+            return EmailTestConnectionResponse(
+                success=True,
+                status="sandbox_ready",
+                message=(
+                    "Resend sandbox active (onboarding@resend.dev) without a custom domain. "
+                    "Emails can only be delivered to your verified Resend account owner email."
+                ),
+                provider="resend",
+                api_key_configured=True,
+                sender_domain=domain,
+                sender_status="sandbox_ready",
+                is_sandbox=True,
+                details={"sandbox": True, "sender": sender_email},
+            )
         return EmailTestConnectionResponse(
-            success=True,
-            status="sandbox_ready",
+            success=False,
+            status="unverified",
             message=(
-                "Resend Sandbox Active (onboarding@resend.dev). In Development/Test Mode without a custom domain, "
-                "emails can only be delivered to your Resend account owner email or official test sinks (delivered@resend.dev, bounced@resend.dev)."
+                "Resend sandbox sender (onboarding@resend.dev) detected. Production customer emails cannot be sent from resend.dev. "
+                "Please configure a sender address on your verified domain (e.g. bookings@thewildroot.in) and verify the domain at resend.com/domains."
             ),
             provider="resend",
             api_key_configured=True,
             sender_domain=domain,
-            sender_status="sandbox_ready",
+            sender_status="unverified",
             is_sandbox=True,
-            permitted_recipients_note="Resend account owner email or delivered@resend.dev / bounced@resend.dev",
             details={"sandbox": True, "sender": sender_email},
         )
 
@@ -820,10 +905,15 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
 
                     d_status = matching.get("status", "pending")
                     is_verified = d_status == "verified"
+                    status_msg = (
+                        f"Domain '{domain}' is verified and active in Resend. Ready for production transactional email delivery."
+                        if is_verified
+                        else f"Domain '{domain}' status in Resend is '{d_status}'. Please configure the required DNS records at your domain registrar."
+                    )
                     return EmailTestConnectionResponse(
                         success=is_verified,
                         status=d_status,
-                        message=f"Domain '{domain}' status in Resend is '{d_status}'.",
+                        message=status_msg,
                         provider="resend",
                         api_key_configured=True,
                         sender_domain=domain,
@@ -835,7 +925,11 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
                 return EmailTestConnectionResponse(
                     success=False,
                     status="not_found",
-                    message=f"Domain '{domain}' was not found in your Resend account. Add and verify your domain at resend.com/domains, or use 'onboarding@resend.dev' in Development Mode.",
+                    message=(
+                        f"Domain '{domain}' was not found in your Resend account. "
+                        f"Please visit https://resend.com/domains, add '{domain}', "
+                        "and configure the required DNS records at your domain registrar."
+                    ),
                     provider="resend",
                     api_key_configured=True,
                     sender_domain=domain,
@@ -871,42 +965,140 @@ def send_test_email(
     admin_id: UUID,
 ) -> EmailSendTestResponse:
     """Send an explicit test email to verify transactional delivery without affecting customers."""
+    # 1. Check if outgoing emails are enabled
+    email_enabled_row = db.get(SiteSetting, "email_enabled")
+    if email_enabled_row is not None and str(email_enabled_row.value).lower() in ("false", "0", "no"):
+        raise ValueError(
+            "Transactional email delivery is currently disabled in Admin Settings. "
+            "Please enable 'Outgoing Transactional Emails' before sending test messages."
+        )
+
+    # 2. Check and clean recipient
+    clean_recipient = recipient_email.strip().lower()
+    if not clean_recipient or "@" not in clean_recipient or "." not in clean_recipient:
+        raise ValueError("A valid recipient email address is required.")
+
+    # 3. Retrieve Resend API key
+    api_key = get_resend_api_key(db)
+    if not api_key:
+        raise ValueError(
+            "Resend API key is not configured. Please add RESEND_API_KEY to your Render environment variables "
+            "or enter and save your API key in the Resend Email settings."
+        )
+
     settings = get_settings()
-    api_key = get_decrypted_secret(db, "resend_api_key") or settings.resend_api_key.get_secret_value()
+    from app.services.catalog_service import get_public_settings
+    pub = get_public_settings(db)
+    agency_name = pub.public_display_name or pub.agency_name or settings.agency_name or "The Wild Root"
+    accent_color = pub.brand_accent_color or "#D4AF37"
 
     sender_name_row = db.get(SiteSetting, "email_sender_name")
-    sender_name = str(sender_name_row.value).strip() if sender_name_row and sender_name_row.value else settings.agency_name
+    sender_name = str(sender_name_row.value).strip() if sender_name_row and sender_name_row.value else agency_name
 
     sender_email_row = db.get(SiteSetting, "email_sender_email")
-    sender_email = str(sender_email_row.value).strip() if sender_email_row and sender_email_row.value else "bookings@kvtours.in"
+    if sender_email_row and sender_email_row.value:
+        sender_email = str(sender_email_row.value).strip()
+    else:
+        sender_email = "bookings@thewildroot.in"
 
     reply_to_row = db.get(SiteSetting, "email_reply_to")
-    reply_to = str(reply_to_row.value).strip() if reply_to_row and reply_to_row.value else "concierge@kvtours.in"
+    if reply_to_row and reply_to_row.value:
+        reply_to = str(reply_to_row.value).strip()
+    else:
+        reply_to = pub.customer_support_email or pub.contact_email or "concierge@thewildroot.in"
 
     from_header = f"{sender_name} <{sender_email}>"
+    now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
-    html_content = f"""
-    <div style="font-family: sans-serif; color: #202124; max-width: 600px; padding: 24px;">
-        <h2 style="color: #0A0A0A; border-bottom: 2px solid #D4AF37; padding-bottom: 8px;">
-            KV TOURS & TRAVELS — System Delivery Verification
-        </h2>
-        <p>This is an automated test message dispatched by an authorized administrator.</p>
-        <div style="background: #F7F7F5; padding: 16px; border-radius: 8px; margin: 16px 0;">
-            <p><strong>Recipient:</strong> {recipient_email}</p>
-            <p><strong>Sender:</strong> {from_header}</p>
-            <p><strong>Reply-To:</strong> {reply_to}</p>
-            <p><strong>Timestamp:</strong> {datetime.now(timezone.utc).isoformat()}</p>
-            {f'<p><strong>Admin Notes:</strong> {notes}</p>' if notes else ''}
-        </div>
-        <p style="color: #70757A; font-size: 12px;">KV Tours & Travels Coimbatore • Authoritative Notification Engine</p>
-    </div>
-    """
+    # Branded luxury HTML content
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0A0A0A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #E5E5E5; line-height: 1.6;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0A0A0A; padding: 40px 16px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background: #141414; border: 1px solid #262626; border-radius: 8px; overflow: hidden;">
+                    <tr>
+                        <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid #262626; background: #0A0A0A;">
+                            <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.15em; color: {accent_color}; text-transform: uppercase;">
+                                {agency_name}
+                            </h1>
+                            <p style="margin: 6px 0 0; font-size: 12px; color: #737373; letter-spacing: 0.08em; text-transform: uppercase;">
+                                System Delivery Verification • Production Engine
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 36px 32px;">
+                            <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; color: #FFFFFF; border-left: 3px solid {accent_color}; padding-left: 12px;">
+                                Email Configuration Test
+                            </h2>
+                            <p style="margin: 0 0 20px; font-size: 14px; color: #D4D4D4;">
+                                This is an automated test message dispatched by an authorized administrator to verify that your Resend transactional email integration is operational.
+                            </p>
+                            <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; background: #0A0A0A; border-radius: 6px; overflow: hidden; border: 1px solid #262626;">
+                                <tr style="border-bottom: 1px solid #1F1F1F;">
+                                    <td style="padding: 10px 16px; color: #737373; width: 120px;">Recipient</td>
+                                    <td style="padding: 10px 16px; color: #E5E5E5; font-weight: 600;">{clean_recipient}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #1F1F1F;">
+                                    <td style="padding: 10px 16px; color: #737373;">Sender</td>
+                                    <td style="padding: 10px 16px; color: #E5E5E5;">{from_header}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #1F1F1F;">
+                                    <td style="padding: 10px 16px; color: #737373;">Reply-To</td>
+                                    <td style="padding: 10px 16px; color: #E5E5E5;">{reply_to}</td>
+                                </tr>
+                                <tr style="border-bottom: 1px solid #1F1F1F;">
+                                    <td style="padding: 10px 16px; color: #737373;">Timestamp</td>
+                                    <td style="padding: 10px 16px; color: #A3A3A3;">{now_iso}</td>
+                                </tr>
+                                {f'<tr><td style="padding: 10px 16px; color: #737373;">Admin Notes</td><td style="padding: 10px 16px; color: #E5E5E5;">{notes}</td></tr>' if notes else ''}
+                            </table>
+                            <div style="background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 6px; padding: 14px 16px; margin-top: 24px;">
+                                <p style="margin: 0; font-size: 12px; color: #E5E5E5; line-height: 1.5;">
+                                    <strong style="color: {accent_color};">Status: Verified & Operational.</strong><br>
+                                    Transactional emails (booking confirmations, payment receipts, inquiries) are active.
+                                </p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 20px 32px; background: #0A0A0A; border-top: 1px solid #262626; font-size: 11px; color: #525252; text-align: center;">
+                            &copy; {datetime.now(timezone.utc).year} {agency_name}. Authoritative Notification Engine.
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>"""
+
+    # Readable plain-text alternative
+    text_content = f"""{agency_name} — Email Configuration Test
+==================================================
+
+This is an automated test message dispatched by an authorized administrator to verify that your Resend transactional email integration is operational.
+
+Delivery Details:
+- Recipient: {clean_recipient}
+- Sender: {from_header}
+- Reply-To: {reply_to}
+- Mode: Production Transactional Delivery
+- Timestamp: {now_iso}
+{f'- Admin Notes: {notes}' if notes else ''}
+
+Status: Verified & Operational
+(c) {datetime.now(timezone.utc).year} {agency_name}
+"""
 
     provider = "resend"
-
-    if not api_key:
-        raise ValueError("Resend API key is not configured. Please enter and save your Resend API key before sending test emails.")
-
     try:
         with httpx.Client(timeout=10.0) as client:
             resp = client.post(
@@ -917,10 +1109,11 @@ def send_test_email(
                 },
                 json={
                     "from": from_header,
-                    "to": [recipient_email],
+                    "to": [clean_recipient],
                     "reply_to": reply_to,
                     "subject": subject,
                     "html": html_content,
+                    "text": text_content,
                 },
             )
             if resp.status_code != 200:
@@ -948,7 +1141,7 @@ def send_test_email(
     log_entry = NotificationLog(
         channel="email",
         notification_type="admin_test_email",
-        recipient=recipient_email,
+        recipient=clean_recipient,
         recipient_user_id=admin_id,
         subject=subject,
         provider=provider,
@@ -961,10 +1154,10 @@ def send_test_email(
 
     return EmailSendTestResponse(
         success=True,
-        message=f"Test email successfully accepted by {provider.upper()} provider.",
+        message=f"Test email successfully accepted by Resend API (ID: {provider_msg_id}).",
         provider=provider,
         message_id=provider_msg_id,
-        recipient=recipient_email,
+        recipient=clean_recipient,
         timestamp=datetime.now(timezone.utc),
     )
 
@@ -1069,12 +1262,30 @@ def get_configuration_health(db: Session) -> ConfigurationHealthResponse:
         else "unconfigured"
     )
 
-    # 5. Payment Gateway
+    # 5. Payment Gateway & Encryption Key Health
+    key_info = inspect_encryption_key(get_settings())
     razorpay_row = db.get(SiteSetting, "razorpay_gateway_config")
-    rzp_configured = False
+    rzp_enabled = False
     if razorpay_row and isinstance(razorpay_row.value, dict):
-        rzp_configured = bool(razorpay_row.value.get("enabled"))
-    payment_status = "configured" if rzp_configured else "default_test"
+        rzp_enabled = bool(razorpay_row.value.get("enabled"))
+
+    if key_info["status"] == "valid":
+        payment_status = "configured" if rzp_enabled else "default_test"
+        payment_desc = "Razorpay gateway configured with valid AES-256-GCM encryption key."
+        payment_score = 100 if rzp_enabled else 70
+    elif key_info["status"] == "missing":
+        payment_status = "action_required"
+        payment_desc = (
+            "PAYMENT_CREDENTIALS_ENCRYPTION_KEY is missing from Render environment variables. "
+            "Please configure a 32-byte Base64 encryption key."
+        )
+        payment_score = 0
+    else:  # malformed
+        payment_status = "action_required"
+        payment_desc = (
+            f"PAYMENT_CREDENTIALS_ENCRYPTION_KEY is malformed: {key_info['message']}"
+        )
+        payment_score = 0
 
     # 6. Bank Transfer
     bank_row = db.get(SiteSetting, "bank_transfer_settings")
@@ -1091,6 +1302,8 @@ def get_configuration_health(db: Session) -> ConfigurationHealthResponse:
         score += 25  # 25%
     if payment_status == "configured":
         score += 10  # 10%
+    elif payment_status == "default_test":
+        score += 7   # 7%
     if bank_status == "enabled":
         score += 10  # 10%
 
@@ -1124,8 +1337,8 @@ def get_configuration_health(db: Session) -> ConfigurationHealthResponse:
         {
             "name": "Online Payment Gateway",
             "status": payment_status,
-            "score": 100 if payment_status == "configured" else 50,
-            "description": "Razorpay sandbox/live processing.",
+            "score": payment_score,
+            "description": payment_desc,
         },
         {
             "name": "Direct Bank Transfer",
@@ -1166,23 +1379,8 @@ def verify_resend_webhook_configuration(
 
     settings = get_settings()
     local_url = "http://localhost:8000/api/v1/webhooks/resend"
-
-    # 1. URL resolution: Local reference vs Public HTTPS endpoint
-    tunnel_row = db.get(SiteSetting, "resend_webhook_tunnel_url")
-    tunnel_url = str(tunnel_row.value).strip() if tunnel_row and tunnel_row.value else ""
-
-    public_webhook_url: str | None = None
-    if tunnel_url.startswith("https://"):
-        public_webhook_url = f"{tunnel_url.rstrip('/')}/api/v1/webhooks/resend"
-        is_https = True
-        webhook_url = public_webhook_url
-    elif settings.backend_url.startswith("https://"):
-        public_webhook_url = f"{settings.backend_url.rstrip('/')}/api/v1/webhooks/resend"
-        is_https = True
-        webhook_url = public_webhook_url
-    else:
-        is_https = False
-        webhook_url = local_url
+    public_webhook_url, is_https = resolve_resend_webhook_url(db)
+    webhook_url = public_webhook_url
 
     # 2. Secret resolution & persistence check
     if signing_secret and signing_secret.strip():
@@ -1417,20 +1615,8 @@ def get_resend_webhook_stats(db: Session) -> ResendWebhookStatsResponse:
 
     settings = get_settings()
     local_url = "http://localhost:8000/api/v1/webhooks/resend"
-    tunnel_row = db.get(SiteSetting, "resend_webhook_tunnel_url")
-    tunnel_url = str(tunnel_row.value).strip() if tunnel_row and tunnel_row.value else ""
-    public_webhook_url: str | None = None
-    if tunnel_url.startswith("https://"):
-        public_webhook_url = f"{tunnel_url.rstrip('/')}/api/v1/webhooks/resend"
-        webhook_url = public_webhook_url
-        is_https = True
-    elif settings.backend_url.startswith("https://"):
-        public_webhook_url = f"{settings.backend_url.rstrip('/')}/api/v1/webhooks/resend"
-        webhook_url = public_webhook_url
-        is_https = True
-    else:
-        webhook_url = local_url
-        is_https = False
+    public_webhook_url, is_https = resolve_resend_webhook_url(db)
+    webhook_url = public_webhook_url
 
     sec_status = check_resend_signing_secret_status(db)
     is_configured = sec_status["configured"] and sec_status["decryptable"]

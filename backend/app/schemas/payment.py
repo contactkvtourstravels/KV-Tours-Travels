@@ -503,6 +503,8 @@ class PaymentSettingsResponse(BaseModel):
     last_diagnostic_status: str | None = None
     live_readiness_checklist: dict[str, bool]
     encryption_configured: bool = True
+    encryption_key_status: str = "valid"  # "valid", "missing", "malformed"
+    encryption_key_message: str | None = None
     test_credentials: EnvironmentCredentialSummary | None = None
     live_credentials: EnvironmentCredentialSummary | None = None
     webhook_last_received_at: datetime | None = None

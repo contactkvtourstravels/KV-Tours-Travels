@@ -9,7 +9,9 @@ Features:
 
 from __future__ import annotations
 
+import html
 import logging
+import re
 import smtplib
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -26,6 +28,7 @@ from app.core.config import get_settings
 from app.models.commerce import (
     Booking,
     BookingCancellationRequest,
+    Inquiry,
     Payment,
     PaymentRefund,
 )
@@ -152,12 +155,18 @@ class EmailService:
             try:
                 from app.services.catalog_service import get_public_settings
                 pub = get_public_settings(db)
-                return pub.customer_support_email or pub.contact_email
+                return pub.customer_support_email or pub.contact_email or "concierge@thewildroot.in"
             except Exception:
                 pass
-        return self.settings.contact_email
+        return self.settings.contact_email or "concierge@thewildroot.in"
 
-    def _send_via_mock(self, to_email: str, subject: str, _html_body: str) -> str:
+    def _send_via_mock(
+        self,
+        to_email: str,
+        subject: str,
+        _html_body: str,
+        text_body: str | None = None,
+    ) -> str:
         """Simulate email dispatch in test or development environments."""
         provider_id = f"mock-msg-{uuid4().hex[:12]}"
         logger.info(
@@ -170,17 +179,14 @@ class EmailService:
         to_email: str,
         subject: str,
         html_body: str,
+        text_body: str | None = None,
         db: Session | None = None,
     ) -> str:
         """Send email via Resend API."""
-        api_key = None
-        if db is not None:
-            from app.services.admin.settings_service import get_decrypted_secret
-            api_key = get_decrypted_secret(db, "resend_api_key")
+        from app.services.admin.settings_service import get_resend_api_key
+        api_key = get_resend_api_key(db)
         if not api_key:
-            api_key = self.settings.resend_api_key.get_secret_value()
-        if not api_key:
-            raise ValueError("Resend API key is not configured in settings or RESEND_API_KEY")
+            raise ValueError("Resend API key is not configured in settings, RESEND_API_KEY, or database")
 
         email_from = self.settings.email_from
         email_reply_to = self.settings.email_reply_to
@@ -193,9 +199,16 @@ class EmailService:
             if s_email and s_email.value:
                 email_from = f"{sender_name_val} <{s_email.value}>"
             elif s_name and s_name.value:
-                email_from = f"{s_name.value} <{self.settings.contact_email}>"
+                email_from = f"{s_name.value} <{self._get_fallback_concierge_email(db)}>"
             if s_reply and s_reply.value:
                 email_reply_to = str(s_reply.value)
+
+        # Generate a clean plain-text fallback if not explicitly passed
+        if not text_body:
+            clean = re.sub(r"<style.*?</style>", "", html_body, flags=re.DOTALL)
+            clean = re.sub(r"<script.*?</script>", "", clean, flags=re.DOTALL)
+            clean = re.sub(r"<[^>]+>", " ", clean)
+            text_body = "\n".join([line.strip() for line in clean.splitlines() if line.strip()])
 
         payload = {
             "from": email_from,
@@ -203,6 +216,7 @@ class EmailService:
             "reply_to": email_reply_to,
             "subject": subject,
             "html": html_body,
+            "text": text_body,
         }
 
         with httpx.Client(timeout=10.0) as client:
@@ -253,6 +267,7 @@ class EmailService:
         to_email: str,
         subject: str,
         html_body: str,
+        text_body: str | None = None,
         notification_type: str,
         booking_id: UUID | None = None,
         recipient_user_id: UUID | None = None,
@@ -299,12 +314,15 @@ class EmailService:
             return log_entry
 
         provider_row = db.get(SiteSetting, "email_provider")
-        provider = str(provider_row.value).lower() if provider_row and provider_row.value else self.settings.email_provider.lower()
-        if provider == "resend":
-            from app.services.admin.settings_service import get_decrypted_secret
-            api_key = get_decrypted_secret(db, "resend_api_key") or self.settings.resend_api_key.get_secret_value()
-            if not api_key:
-                provider = "mock"
+        from app.services.admin.settings_service import get_resend_api_key
+        api_key = get_resend_api_key(db)
+        if provider_row and provider_row.value:
+            provider = str(provider_row.value).lower()
+        else:
+            provider = "resend" if api_key else self.settings.email_provider.lower()
+
+        if provider == "resend" and not api_key:
+            provider = "mock"
 
         log_entry = NotificationLog(
             channel="email",
@@ -323,11 +341,15 @@ class EmailService:
         # 2. Attempt dispatch
         try:
             if provider == "resend":
-                provider_msg_id = self._send_via_resend(to_email, subject, html_body, db=db)
+                provider_msg_id = self._send_via_resend(
+                    to_email, subject, html_body, text_body=text_body, db=db
+                )
             elif provider == "smtp":
                 provider_msg_id = self._send_via_smtp(to_email, subject, html_body)
             else:
-                provider_msg_id = self._send_via_mock(to_email, subject, html_body)
+                provider_msg_id = self._send_via_mock(
+                    to_email, subject, html_body, text_body=text_body
+                )
 
             log_entry.status = "sent"
             log_entry.provider_message_id = provider_msg_id
@@ -498,7 +520,7 @@ class EmailService:
         subject = f"Deposit Received: INR {amount:,.2f} — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         user_name = user.first_name if user else "Traveller"
-        to_email = user.email if user else "concierge@kvtours.in"
+        to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         content = f"""
@@ -550,7 +572,7 @@ class EmailService:
         subject = f"Bank Transfer Awaiting Verification — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         user_name = user.first_name if user else "Traveller"
-        to_email = user.email if user else "concierge@kvtours.in"
+        to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         content = f"""
@@ -608,7 +630,7 @@ class EmailService:
         subject = f"Payment Verified: INR {amount:,.2f} — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         user_name = user.first_name if user else "Traveller"
-        to_email = user.email if user else "concierge@kvtours.in"
+        to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         status_text = "Paid in Full" if balance <= Decimal("0.00") else f"Partially Paid (INR {balance:,.2f} remaining)"
@@ -659,7 +681,7 @@ class EmailService:
         subject = f"Bank Transfer Not Verified — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/booking/payment/{booking.booking_reference}"
         user_name = user.first_name if user else "Traveller"
-        to_email = user.email if user else "concierge@kvtours.in"
+        to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         content = f"""
@@ -695,7 +717,7 @@ class EmailService:
         subject = f"Balance Due: INR {outstanding_balance:,.2f} — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/booking/payment/{booking.booking_reference}"
         user_name = user.first_name if user else "Traveller"
-        to_email = user.email if user else "concierge@kvtours.in"
+        to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         deadline_str = f"<p>Payment Deadline: <strong>{payment_deadline}</strong></p>" if payment_deadline else ""
@@ -732,7 +754,7 @@ class EmailService:
         subject = f"Journey Paid in Full! Booking Confirmed — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         user_name = user.first_name if user else "Traveller"
-        to_email = user.email if user else "concierge@kvtours.in"
+        to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         content = f"""
@@ -768,14 +790,18 @@ class EmailService:
         db: Session,
         booking: Booking,
         payment: Payment,
-        user: User,
+        user: User | None = None,
         reason: str | None = None,
     ) -> NotificationLog:
         """Template 3: Payment failed."""
+        user = user or booking.user
+        user_name = user.first_name if user else "Traveller"
+        to_email = user.email if user else self._get_fallback_concierge_email(db)
+        user_id = user.id if user else None
         subject = f"Payment Unsuccessful for Booking {booking.booking_reference}"
-        action_url = f"{self.settings.frontend_url}/booking"
+        action_url = f"{self.settings.frontend_url}/booking/payment/{booking.booking_reference}"
         content = f"""
-        <p>Dear {user.first_name},</p>
+        <p>Dear {user_name},</p>
         <p>We were unable to process your payment for booking <strong>{booking.booking_reference}</strong>.</p>
         <p style="color: #EF4444; background: #261111; padding: 12px; border-radius: 4px; font-size: 13px;">
             Reason: {reason or "Transaction declined or expired by bank."}
@@ -788,12 +814,12 @@ class EmailService:
         idempotency_key = f"email:payment_failed:{payment.id}:{payment.updated_at.isoformat() if payment.updated_at else 'init'}"
         return self.dispatch(
             db,
-            to_email=user.email,
+            to_email=to_email,
             subject=subject,
             html_body=html,
             notification_type="payment_failed",
             booking_id=booking.id,
-            recipient_user_id=user.id,
+            recipient_user_id=user_id,
             idempotency_key=idempotency_key,
         )
 
@@ -1026,6 +1052,239 @@ class EmailService:
             booking_id=booking.id,
             recipient_user_id=user.id,
             idempotency_key=idempotency_key,
+        )
+
+    def send_inquiry_received_ack(
+        self,
+        db: Session,
+        inquiry: Inquiry,
+    ) -> NotificationLog | None:
+        """Template: Inquiry received confirmation for customer."""
+        pref_row = db.get(SiteSetting, "email_inquiry_ack_enabled")
+        if pref_row is not None and str(pref_row.value).lower() in ("false", "0", "no"):
+            logger.info("Inquiry acknowledgment email is disabled in settings.")
+            return None
+
+        agency_name = self._get_agency_name(db)
+        subj_row = db.get(SiteSetting, "email_subject_inquiry_ack")
+        subject = (
+            str(subj_row.value).strip()
+            if subj_row and subj_row.value
+            else f"Inquiry Received — {agency_name}"
+        )
+
+        safe_name = html.escape(inquiry.name)
+        safe_msg = html.escape(inquiry.message)
+        phone_html = (
+            f'<tr style="border-bottom: 1px solid #262626;"><td style="padding: 8px 0; color: #A3A3A3;">Contact Phone</td><td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{html.escape(inquiry.phone)}</td></tr>'
+            if inquiry.phone
+            else ""
+        )
+
+        content = f"""
+        <p>Dear {safe_name},</p>
+        <p>Thank you for reaching out to <strong>{agency_name}</strong>. We have received your inquiry and our travel concierge team has begun reviewing your details.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Inquiry Reference</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #D4AF37;">INQ-{str(inquiry.id)[:8].upper()}</td>
+            </tr>
+            {phone_html}
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Channel / Source</td>
+                <td style="padding: 8px 0; text-align: right; color: #FFFFFF; text-transform: capitalize;">{inquiry.source.replace('_', ' ')}</td>
+            </tr>
+        </table>
+        <div style="background: #141414; border: 1px solid #262626; border-radius: 6px; padding: 14px 16px; margin: 20px 0;">
+            <p style="margin: 0 0 6px; font-size: 12px; color: #737373; text-transform: uppercase; letter-spacing: 0.05em;">Your Message</p>
+            <p style="margin: 0; font-size: 13px; color: #E5E5E5; white-space: pre-wrap;">{safe_msg}</p>
+        </div>
+        <p>A dedicated destination specialist will respond to you within 24 hours with custom options and recommendations.</p>
+        """
+        html_email = _render_base_email(
+            "Inquiry Received",
+            content,
+            f"{self.settings.frontend_url}/contact",
+            "Contact Concierge",
+            db=db,
+        )
+        idempotency_key = f"email:inquiry_ack:{inquiry.id}"
+        return self.dispatch(
+            db,
+            to_email=inquiry.email,
+            subject=subject,
+            html_body=html_email,
+            notification_type="inquiry_acknowledgment",
+            recipient_user_id=inquiry.user_id,
+            idempotency_key=idempotency_key,
+        )
+
+    def send_inquiry_admin_alert(
+        self,
+        db: Session,
+        inquiry: Inquiry,
+    ) -> NotificationLog | None:
+        """Administrative notification: New customer inquiry submitted."""
+        admin_email_row = db.get(SiteSetting, "admin_notification_email")
+        admin_email = (
+            str(admin_email_row.value).strip()
+            if admin_email_row and admin_email_row.value
+            else "admin@thewildroot.in"
+        )
+        if not admin_email or "@" not in admin_email:
+            return None
+
+        agency_name = self._get_agency_name(db)
+        subject = f"New Inquiry: {inquiry.name} via {inquiry.source.replace('_', ' ').title()}"
+
+        safe_name = html.escape(inquiry.name)
+        safe_email = html.escape(inquiry.email)
+        safe_msg = html.escape(inquiry.message)
+        safe_phone = html.escape(inquiry.phone) if inquiry.phone else "Not provided"
+
+        content = f"""
+        <p>A new customer inquiry has been received through the public website.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Guest Name</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #FFFFFF;">{safe_name}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Guest Email</td>
+                <td style="padding: 8px 0; text-align: right; color: #D4AF37;">{safe_email}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Phone</td>
+                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{safe_phone}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Channel</td>
+                <td style="padding: 8px 0; text-align: right; color: #FFFFFF; text-transform: capitalize;">{inquiry.source.replace('_', ' ')}</td>
+            </tr>
+        </table>
+        <div style="background: #141414; border: 1px solid #262626; border-radius: 6px; padding: 14px 16px; margin: 20px 0;">
+            <p style="margin: 0 0 6px; font-size: 12px; color: #737373; text-transform: uppercase;">Message</p>
+            <p style="margin: 0; font-size: 13px; color: #E5E5E5; white-space: pre-wrap;">{safe_msg}</p>
+        </div>
+        """
+        html_email = _render_base_email(
+            "New Customer Inquiry",
+            content,
+            f"{self.settings.frontend_url}/admin/inquiries",
+            "View in Admin Portal",
+            db=db,
+        )
+        idempotency_key = f"email:inquiry_admin_alert:{inquiry.id}"
+        return self.dispatch(
+            db,
+            to_email=admin_email,
+            subject=subject,
+            html_body=html_email,
+            notification_type="admin_inquiry_alert",
+            idempotency_key=idempotency_key,
+        )
+
+    def send_admin_booking_notification(
+        self,
+        db: Session,
+        booking: Booking,
+        user: User,
+    ) -> NotificationLog | None:
+        """Administrative notification: New customer booking created."""
+        admin_email_row = db.get(SiteSetting, "admin_notification_email")
+        admin_email = (
+            str(admin_email_row.value).strip()
+            if admin_email_row and admin_email_row.value
+            else "admin@thewildroot.in"
+        )
+        if not admin_email or "@" not in admin_email:
+            return None
+
+        agency_name = self._get_agency_name(db)
+        package_title = booking.package.title if booking.package else "Custom Journey"
+        dep_date = str(booking.departure.departure_date) if booking.departure else "TBD"
+        subject = f"New Booking Reserved: {booking.booking_reference} — {package_title}"
+
+        content = f"""
+        <p>A new booking reservation has been created on {agency_name}.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Booking Reference</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #D4AF37;">{booking.booking_reference}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Customer</td>
+                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{user.first_name} {user.last_name or ''} ({user.email})</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Package</td>
+                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{package_title}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Departure Date</td>
+                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{dep_date}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #262626;">
+                <td style="padding: 8px 0; color: #A3A3A3;">Travellers</td>
+                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.number_of_travellers}</td>
+            </tr>
+            <tr>
+                <td style="padding: 8px 0; color: #A3A3A3;">Total Amount</td>
+                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #22C55E;">INR {booking.total:,.2f}</td>
+            </tr>
+        </table>
+        """
+        html_email = _render_base_email(
+            "New Booking Reserved",
+            content,
+            f"{self.settings.frontend_url}/admin/bookings/{booking.id}",
+            "Manage Booking in Portal",
+            db=db,
+        )
+        idempotency_key = f"email:admin_booking_alert:{booking.id}"
+        return self.dispatch(
+            db,
+            to_email=admin_email,
+            subject=subject,
+            html_body=html_email,
+            notification_type="admin_booking_alert",
+            booking_id=booking.id,
+            idempotency_key=idempotency_key,
+        )
+
+    def send_password_reset_email(
+        self,
+        db: Session,
+        user: User,
+        reset_url: str,
+    ) -> NotificationLog:
+        """Authentication notification: Password reset instructions."""
+        agency_name = self._get_agency_name(db)
+        subject = f"Reset Your Password — {agency_name}"
+        user_name = user.first_name if user.first_name else "Valued Guest"
+
+        content = f"""
+        <p>Dear {html.escape(user_name)},</p>
+        <p>We received a request to reset the password for your account on <strong>{agency_name}</strong>.</p>
+        <p>Click the button below to choose a secure new password. For your security, this password reset link is valid for <strong>30 minutes</strong> only.</p>
+        <p style="color: #737373; font-size: 12px; margin-top: 24px;">
+            If you did not initiate this request, no action is needed. Your account remains completely secure and your current password has not been changed.
+        </p>
+        """
+        html_email = _render_base_email(
+            "Reset Your Password",
+            content,
+            reset_url,
+            "Reset Password",
+            db=db,
+        )
+        return self.dispatch(
+            db,
+            to_email=user.email,
+            subject=subject,
+            html_body=html_email,
+            notification_type="password_reset",
+            recipient_user_id=user.id,
         )
 
 

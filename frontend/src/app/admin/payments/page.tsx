@@ -745,6 +745,26 @@ export default function AdminPaymentControlCenterPage() {
       });
     }
 
+    // 4b. Server Encryption Key Configuration
+    if (settings?.encryption_configured) {
+      checks.push({
+        id: 4.5,
+        name: "Encryption Key Health",
+        category: "Credentials",
+        status: "PASS",
+        summary: "Server encryption key PAYMENT_CREDENTIALS_ENCRYPTION_KEY is valid and AES-256-GCM authenticated encryption is active.",
+      });
+    } else {
+      checks.push({
+        id: 4.5,
+        name: "Encryption Key Health",
+        category: "Credentials",
+        status: "FAIL",
+        summary: settings?.encryption_key_message || "PAYMENT_CREDENTIALS_ENCRYPTION_KEY is missing or invalid in Render environment variables.",
+        actionRequired: "Configure a 32-byte Base64 encryption key in Render Dashboard -> travel-agency-kdrs -> Environment.",
+      });
+    }
+
     // 5. Razorpay credentials exist
     const hasKeyId = Boolean(envData?.key_id || (targetEnv === "test" && settings?.razorpay_key_id_masked));
     const hasSecret = Boolean(envData?.key_secret_configured || settings?.key_secret_configured);
@@ -1690,49 +1710,83 @@ export default function AdminPaymentControlCenterPage() {
                 </div>
               </div>
 
-              {/* Encryption & Server Environment (.env) Defaults Active Banner */}
-              <div className="p-4 sm:p-5 rounded-2xl border bg-[#FDFBF7] border-[#E8DCC4] flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <ShieldCheck className="w-4 h-4 text-emerald-700" />
-                    <span className="text-xs font-bold text-[#202124]">
-                      {settings?.has_custom_credentials
-                        ? "Custom Database Credentials Active (AES-256-GCM Encrypted)"
-                        : "Server Environment (.env) Defaults Active"}
-                    </span>
-                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      Encrypted at Rest
-                    </span>
+              {/* Encryption Key Status Banner */}
+              {settings?.encryption_configured ? (
+                <div className="p-4 sm:p-5 rounded-2xl border bg-emerald-50/60 border-emerald-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <ShieldCheck className="w-4 h-4 text-emerald-700" />
+                      <span className="text-xs font-bold text-emerald-950">
+                        {settings?.has_custom_credentials
+                          ? "Database Credentials Protected with AES-256-GCM Authenticated Encryption"
+                          : "Server Encryption Key Active & Verified (32-byte Master Key)"}
+                      </span>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        Encrypted at Rest
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-emerald-900/80">
+                      Sensitive Key Secrets and Webhook Signing Secrets are protected with AES-256-GCM authenticated encryption. Credentials cannot be leaked in plaintext over API payloads or server logs.
+                    </p>
                   </div>
-                  <p className="text-[11px] text-[#5F6368]">
-                    Sensitive Key Secrets and Webhook Signing Secrets are protected with AES-256-GCM authenticated encryption. Runtime isolation prevents credentials from ever being returned in API payloads or logged in plaintext.
-                  </p>
-                </div>
 
-                <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-                  {isElevated && (
-                    <button
-                      type="button"
-                      onClick={() => handleStartEditCredentials(selectedConfigEnv)}
-                      className="px-4 py-2 bg-[#24292F] hover:bg-[#3D4450] text-[#E8DCC4] rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-xs cursor-pointer"
-                    >
-                      <Key className="w-3.5 h-3.5 text-[#C5A880]" />
-                      <span>Change API Credentials</span>
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                    {isElevated && (
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditCredentials(selectedConfigEnv)}
+                        className="px-4 py-2 bg-[#24292F] hover:bg-[#3D4450] text-[#E8DCC4] rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+                      >
+                        <Key className="w-3.5 h-3.5 text-[#C5A880]" />
+                        <span>Change API Credentials</span>
+                      </button>
+                    )}
 
-                  {settings?.has_custom_credentials && isElevated && (
-                    <button
-                      type="button"
-                      onClick={handleResetApiCredentials}
-                      disabled={savingCredentials}
-                      className="px-3.5 py-2 text-xs text-rose-700 hover:text-rose-900 border border-rose-200 hover:bg-rose-50 rounded-xl font-bold uppercase tracking-wider transition-colors cursor-pointer"
-                    >
-                      {savingCredentials ? "Resetting..." : "Reset to .env"}
-                    </button>
-                  )}
+                    {settings?.has_custom_credentials && isElevated && (
+                      <button
+                        type="button"
+                        onClick={handleResetApiCredentials}
+                        disabled={savingCredentials}
+                        className="px-3.5 py-2 text-xs text-rose-700 hover:text-rose-900 border border-rose-200 hover:bg-rose-50 rounded-xl font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                      >
+                        {savingCredentials ? "Resetting..." : "Reset to .env"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="p-4 sm:p-5 rounded-2xl border bg-rose-50 border-rose-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <AlertTriangle className="w-4 h-4 text-rose-600" />
+                      <span className="text-xs font-bold text-rose-950">
+                        {settings?.encryption_key_status === "missing"
+                          ? "Encryption Key Missing: PAYMENT_CREDENTIALS_ENCRYPTION_KEY"
+                          : "Encryption Key Malformed"}
+                      </span>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                        Configuration Required
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-rose-900">
+                      {settings?.encryption_key_message ||
+                        "Please configure a 32-byte (Base64 or Hex encoded) encryption key in your backend environment variables (Render Dashboard → travel-agency-kdrs → Environment). Plaintext storage is strictly prohibited."}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                    <a
+                      href="https://dashboard.render.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-xs"
+                    >
+                      <span>Open Render Dashboard</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+                </div>
+              )}
 
               {/* Environment Tabs (Test Sandbox vs Live Production) */}
               <div className="space-y-4">

@@ -299,6 +299,20 @@ def request_password_reset(
             _dev_reset_tokens[cleaned_email] = raw_token
             logger.info("Dev password reset token generated for %s", cleaned_email)
 
+        # Dispatch password reset instructions email safely
+        try:
+            from app.services.email_service import get_email_service
+
+            reset_url = f"{settings.frontend_url.rstrip('/')}/reset-password?token={raw_token}"
+            get_email_service().send_password_reset_email(db, user, reset_url)
+            db.commit()
+        except Exception as exc:  # noqa: BLE001
+            logger.warning(
+                "Failed to dispatch password reset email for %s: %s",
+                cleaned_email,
+                exc,
+            )
+
 
 def reset_password(
     db: Session,

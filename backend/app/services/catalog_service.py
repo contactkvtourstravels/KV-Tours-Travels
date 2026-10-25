@@ -822,6 +822,17 @@ def create_public_inquiry(
     db.commit()
     db.refresh(inquiry)
 
+    # Trigger customer acknowledgment and admin notification safely
+    try:
+        from app.services.email_service import get_email_service
+
+        email_svc = get_email_service()
+        email_svc.send_inquiry_received_ack(db, inquiry)
+        email_svc.send_inquiry_admin_alert(db, inquiry)
+        db.commit()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Failed to dispatch inquiry notification emails: %s", exc)
+
     pub = get_public_settings(db)
     agency_display = pub.public_display_name or pub.agency_name or "our agency"
     city_display = f" {pub.city}" if pub.city else ""

@@ -15,6 +15,7 @@ from app.core.permissions import (
     ROLE_STAFF,
     ROLE_SUPER_ADMIN,
 )
+from app.core.rate_limit import email_test_limiter, get_client_ip
 from app.db.session import get_db_session
 from app.models.user import User
 from app.schemas.admin import (
@@ -132,11 +133,12 @@ def send_test_email_endpoint(
     request: Request,
     db: DbSession,
 ) -> EmailSendTestResponse:
-    """Send an explicit test email to a specified recipient. CSRF protected."""
+    """Send an explicit test email to a specified recipient. CSRF and rate-limit protected."""
     verify_csrf_token(request)
+    email_test_limiter.check(get_client_ip(request))
     return send_test_email(
         db=db,
-        recipient_email=payload.recipient_email,
+        recipient_email=payload.recipient_email or payload.recipient or "",
         subject=payload.subject,
         notes=payload.notes,
         admin_id=admin.id,

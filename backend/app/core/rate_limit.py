@@ -176,6 +176,13 @@ admin_ops_limiter = RateLimiter(
     error_message="Outbound communication rate limit reached for this session.",
 )
 
+# Admin test email limiter: max 5 dispatches per minute per IP to prevent spam or relay abuse
+email_test_limiter = RateLimiter(
+    default_max_attempts=5,
+    default_window_seconds=60,
+    error_message="Too many test emails requested. Please wait 1 minute before sending another test email.",
+)
+
 ALL_LIMITERS: list[RateLimiter] = [
     register_limiter,
     password_reset_limiter,
@@ -185,6 +192,7 @@ ALL_LIMITERS: list[RateLimiter] = [
     booking_limiter,
     cancellation_limiter,
     admin_ops_limiter,
+    email_test_limiter,
 ]
 
 

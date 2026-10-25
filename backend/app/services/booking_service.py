@@ -659,14 +659,16 @@ class BookingService:
         db.commit()
         db.refresh(booking)
 
-        # Trigger authoritative booking created notification safely
+        # Trigger authoritative booking created notifications safely
         try:
             from app.services.email_service import get_email_service
 
-            get_email_service().send_booking_created(db, booking, current_user)
+            email_svc = get_email_service()
+            email_svc.send_booking_created(db, booking, current_user)
+            email_svc.send_admin_booking_notification(db, booking, current_user)
             db.commit()
         except Exception as exc:  # noqa: BLE001
-            logger.warning("Failed to dispatch booking created notification: %s", exc)
+            logger.warning("Failed to dispatch booking notification emails: %s", exc)
 
         return booking
 

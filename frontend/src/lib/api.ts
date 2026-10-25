@@ -3245,6 +3245,8 @@ export interface PaymentSettingsResponse {
   last_diagnostic_status: string | null;
   live_readiness_checklist: Record<string, boolean>;
   encryption_configured?: boolean;
+  encryption_key_status?: "valid" | "missing" | "malformed";
+  encryption_key_message?: string | null;
   test_credentials?: EnvironmentCredentialSummary | null;
   live_credentials?: EnvironmentCredentialSummary | null;
   webhook_last_received_at?: string | null;

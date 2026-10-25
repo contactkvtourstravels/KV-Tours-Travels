@@ -931,7 +931,7 @@ class AdminSiteSettingsResponse(BaseModel):
     whatsapp_app_secret_masked: str | None = None
 
     # Resend Email Configuration
-    email_environment_mode: str = "development"
+    email_environment_mode: str = "production"
     email_provider: str = "resend"
     resend_api_key_configured: bool = False
     resend_api_key_masked: str | None = None
@@ -939,20 +939,20 @@ class AdminSiteSettingsResponse(BaseModel):
     resend_webhook_signing_secret_masked: str | None = None
     resend_webhook_url: str | None = None
     resend_webhook_tunnel_url: str | None = None
-    email_sender_name: str = "Wild Root"
-    email_sender_email: str = "bookings@wildroot.in"
-    email_reply_to: str = "concierge@wildroot.in"
-    admin_notification_email: str | None = "admin@wildroot.in"
+    email_sender_name: str = "The Wild Root"
+    email_sender_email: str = "bookings@thewildroot.in"
+    email_reply_to: str = "concierge@thewildroot.in"
+    admin_notification_email: str | None = "admin@thewildroot.in"
     email_enabled: bool = True
     email_booking_confirmation_enabled: bool = True
     email_inquiry_ack_enabled: bool = True
     email_payment_receipt_enabled: bool = True
     email_cancellation_updates_enabled: bool = True
     email_trip_reminders_enabled: bool = True
-    email_subject_booking_confirmation: str = "Your Booking Confirmation — Wild Root"
-    email_subject_payment_receipt: str = "Payment Receipt — Wild Root"
-    email_subject_inquiry_ack: str = "Inquiry Received — Wild Root"
-    email_subject_trip_reminder: str = "Your Upcoming Journey with Wild Root"
+    email_subject_booking_confirmation: str = "Your Booking Confirmation — The Wild Root"
+    email_subject_payment_receipt: str = "Payment Receipt — The Wild Root"
+    email_subject_inquiry_ack: str = "Inquiry Received — The Wild Root"
+    email_subject_trip_reminder: str = "Your Upcoming Journey with The Wild Root"
 
     # Homepage Content & Visibility
     hero_headline: str = "Handcrafted Journeys Beyond the Ordinary"
@@ -1298,7 +1298,7 @@ class EmailSendTestRequest(BaseModel):
 
     recipient_email: str | None = None
     recipient: str | None = None
-    subject: str = "KV Tours & Travels — System Test Notification"
+    subject: str = "The Wild Root — Email Configuration Test"
     notes: str | None = None
 
     @model_validator(mode="after")

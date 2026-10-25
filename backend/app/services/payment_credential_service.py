@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Any
 
@@ -17,6 +18,7 @@ from app.core.encryption import (
     DecryptionError,
     decrypt_secret,
     encrypt_secret,
+    inspect_encryption_key,
     resolve_encryption_key,
 )
 from app.core.permissions import ROLE_ADMIN, ROLE_SUPER_ADMIN, get_user_roles
@@ -27,6 +29,23 @@ from app.services.razorpay_client import RazorpayClient, reset_razorpay_client
 logger = logging.getLogger(__name__)
 
 SETTING_KEY_GATEWAY_CONFIG = "razorpay_gateway_config"
+
+
+def resolve_razorpay_webhook_url() -> str:
+    """Resolve public production webhook receiver URL for Razorpay."""
+    settings = get_settings()
+    route_suffix = "/api/v1/payments/razorpay/webhook"
+    if settings.backend_url and settings.backend_url.startswith("https://"):
+        return f"{settings.backend_url.rstrip('/')}{route_suffix}"
+    render_url = os.environ.get("RENDER_EXTERNAL_URL", "").strip()
+    if render_url and render_url.startswith("https://"):
+        return f"{render_url.rstrip('/')}{route_suffix}"
+    backend_env = os.environ.get("BACKEND_URL", "").strip()
+    if backend_env and backend_env.startswith("https://"):
+        return f"{backend_env.rstrip('/')}{route_suffix}"
+    if settings.is_production:
+        return f"https://travel-agency-kdrs.onrender.com{route_suffix}"
+    return f"{settings.backend_url.rstrip('/')}{route_suffix}"
 
 
 def _now_utc() -> datetime:
@@ -108,8 +127,13 @@ class PaymentCredentialService:
     @classmethod
     def is_encryption_configured(cls) -> bool:
         """Check if server encryption key is configured and valid 32 bytes."""
-        key_bytes = resolve_encryption_key(get_settings())
-        return key_bytes is not None and len(key_bytes) == 32
+        inspection = inspect_encryption_key(get_settings())
+        return inspection["status"] == "valid" and inspection["key_bytes"] is not None
+
+    @classmethod
+    def get_encryption_status(cls) -> dict[str, Any]:
+        """Return structured encryption configuration diagnostics ('valid', 'missing', 'malformed')."""
+        return inspect_encryption_key(get_settings())
 
     @classmethod
     def get_active_credentials(
@@ -182,8 +206,8 @@ class PaymentCredentialService:
         """Return safe, non-sensitive credential status summary for admin views."""
         cfg = cls.get_raw_config(db)
         settings = get_settings()
-        key_bytes = resolve_encryption_key(settings)
-        encryption_active = key_bytes is not None and len(key_bytes) == 32
+        key_info = inspect_encryption_key(settings)
+        encryption_active = key_info["status"] == "valid" and key_info["key_bytes"] is not None
 
         def _summarize_env(env_name: str) -> dict[str, Any]:
             env_data = cfg.get(env_name, {})
@@ -238,6 +262,8 @@ class PaymentCredentialService:
             "active_environment": active_env,
             "gateway_enabled": enabled,
             "encryption_configured": encryption_active,
+            "encryption_key_status": key_info["status"],
+            "encryption_key_message": key_info["message"],
             "test": test_summary,
             "live": live_summary,
         }
@@ -270,15 +296,24 @@ class PaymentCredentialService:
             )
 
         # 2. Check encryption key before modifying secrets
+        key_info = inspect_encryption_key(get_settings())
         key_bytes = resolve_encryption_key(get_settings())
-        if not key_bytes or len(key_bytes) != 32:
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "Server encryption key PAYMENT_CREDENTIALS_ENCRYPTION_KEY is missing or invalid. "
+        if not key_bytes or len(key_bytes) != 32 or key_info["status"] != "valid":
+            if key_info["status"] == "malformed":
+                detail_msg = (
+                    f"Server encryption key PAYMENT_CREDENTIALS_ENCRYPTION_KEY is invalid or malformed: {key_info['message']} "
                     "Please configure a 32-byte (Base64 or Hex encoded) encryption key in your backend "
                     "environment variables to securely store payment credentials. Plaintext storage is strictly prohibited."
-                ),
+                )
+            else:
+                detail_msg = (
+                    "Server encryption key PAYMENT_CREDENTIALS_ENCRYPTION_KEY is missing. "
+                    "Please configure a 32-byte (Base64 or Hex encoded) encryption key in your backend "
+                    "environment variables to securely store payment credentials. Plaintext storage is strictly prohibited."
+                )
+            raise HTTPException(
+                status_code=400,
+                detail=detail_msg,
             )
 
         # 3. Retrieve and lock configuration
@@ -867,7 +902,7 @@ class PaymentCredentialService:
             db, target_env=selected_env
         )
         now = _now_utc()
-        webhook_url = "https://kvtours.in/api/v1/payments/razorpay/webhook"
+        webhook_url = resolve_razorpay_webhook_url()
 
         is_configured = bool(webhook_secret and webhook_secret.strip())
         sig_active = False

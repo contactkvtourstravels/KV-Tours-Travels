@@ -32,7 +32,7 @@ const DESTINATION_FALLBACKS: Record<string, string> = {
 };
 
 function GroupTripsContent() {
-  const { displayName, getWhatsAppUrl } = useBranding();
+  const { displayName, getWhatsAppUrl, whatsappEnabled } = useBranding();
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
@@ -337,16 +337,18 @@ function GroupTripsContent() {
                         >
                           {dep.status === "sold_out" || dep.available_capacity <= 0 ? "Waitlist" : "Enquire"}
                         </button>
-                        <a
-                          href={waDirect}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="h-10 w-10 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] hover:bg-[#DCF3EA] flex items-center justify-center transition-all shrink-0"
-                          title="Reserve on WhatsApp"
-                          aria-label="Reserve seats on WhatsApp"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                        </a>
+                        {whatsappEnabled && Boolean(waDirect) && (
+                          <a
+                            href={waDirect}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="h-10 w-10 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] hover:bg-[#DCF3EA] flex items-center justify-center transition-all shrink-0"
+                            title="Reserve on WhatsApp"
+                            aria-label="Reserve seats on WhatsApp"
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </a>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -2,92 +2,189 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Compass, Sparkles } from "lucide-react";
+import { Compass, Sparkles, ShieldCheck, Headphones, MapPin } from "lucide-react";
 import { useBranding } from "@/context/BrandingContext";
 
 interface AuthBrandingPanelProps {
   title?: string;
   tagline?: string;
+  badgeLabel?: string;
+  supportingDescription?: string;
+  className?: string;
+  showPillars?: boolean;
 }
 
 export function AuthBrandingPanel({
-  title = "Every journey, thoughtfully designed.",
+  title,
   tagline,
+  badgeLabel,
+  supportingDescription,
+  className = "",
+  showPillars = true,
 }: AuthBrandingPanelProps) {
-  const { displayName, shortName, initials, city, state, logoUrl, tagline: brandTagline } = useBranding();
-  const resolvedTagline = tagline || brandTagline || "Curated travel experiences & bespoke expeditions.";
+  const {
+    settings,
+    displayName,
+    shortName,
+    initials,
+    city,
+    state,
+    logoUrl,
+    tagline: brandTagline,
+    heroHeadline,
+    heroSubtitle,
+    conciergeLabel,
+    phone,
+    email,
+  } = useBranding();
+
+  // Dynamic content resolution with graceful fallbacks
+  const resolvedBrandName = displayName || settings?.agency_name || "Luxury Travel Concierge";
+  const locationText = [city, state].filter(Boolean).join(", ") || settings?.agency_location || "";
+  const resolvedBadgeLabel =
+    badgeLabel ||
+    conciergeLabel ||
+    settings?.pdf_badge_label ||
+    settings?.contact_cta_text ||
+    "Private Concierge";
+  const resolvedTitle = title || heroHeadline || settings?.hero_headline || "Every journey, thoughtfully designed.";
+  const resolvedTagline = tagline || brandTagline || settings?.tagline || "Curated bespoke journeys & private expeditions.";
+  const resolvedDescription =
+    supportingDescription ||
+    heroSubtitle ||
+    settings?.hero_subtitle ||
+    settings?.business_description ||
+    resolvedTagline;
+
+  const bgImageUrl =
+    settings?.hero_image_url ||
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80";
 
   return (
-    <div className="relative w-full lg:w-[38%] min-h-[220px] lg:min-h-full bg-[#18191B] text-white flex flex-col justify-between p-6 sm:p-10 lg:p-12 overflow-hidden select-none">
-      {/* Background Travel Image with Refined Luxury Overlay */}
+    <aside
+      aria-label={`${resolvedBrandName} Brand Overview`}
+      className={`relative w-full lg:w-[42%] min-h-[260px] lg:min-h-full bg-[#131A17] text-[#FAF9F5] flex flex-col justify-between p-6 sm:p-10 lg:p-12 overflow-hidden select-none border-b lg:border-b-0 lg:border-r border-[#FAF9F5]/10 ${className}`}
+    >
+      {/* Background Hero Image with Deep Forest & Soft Gold Atmospheric Overlays */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&q=80"
-          alt={`${displayName} Luxury Travel`}
+          src={bgImageUrl}
+          alt={`${resolvedBrandName} Bespoke Travel`}
           fill
           priority
-          sizes="(max-width: 1024px) 100vw, 40vw"
-          className="object-cover object-center opacity-40 mix-blend-luminosity scale-105"
+          sizes="(max-width: 1024px) 100vw, 42vw"
+          className="object-cover object-center opacity-30 mix-blend-luminosity scale-105 motion-safe:transition-transform motion-safe:duration-1000 motion-reduce:transform-none"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#111213] via-[#111213]/80 to-[#111213]/90" />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(198,161,91,0.15)_0%,transparent_70%)]" />
+        {/* Layered luxury lighting gradients */}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#101613] via-[#131A17]/85 to-[#101613]/90" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(197,168,128,0.18)_0%,transparent_65%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_bottom_right,rgba(88,104,81,0.15)_0%,transparent_60%)]" />
       </div>
 
       {/* Top Brand Header */}
       <div className="relative z-10 flex items-center justify-between">
-        <Link href="/" className="inline-flex items-center gap-2.5 group">
+        <Link
+          href="/"
+          className="inline-flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A880] rounded-xl p-1 -m-1 transition-all"
+        >
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={logoUrl}
-              alt={displayName}
-              className="h-9 w-auto max-w-[100px] object-contain rounded-lg"
+              alt={resolvedBrandName}
+              className="h-10 w-auto max-w-[130px] object-contain rounded-lg p-1 bg-white/5 border border-white/10 backdrop-blur-md"
             />
           ) : (
-            <div className="h-9 px-3.5 rounded-full border border-white/25 bg-white/10 backdrop-blur-md text-white flex items-center justify-center gap-1.5 shadow-sm group-hover:bg-white/20 transition-all">
-              <Compass className="w-3.5 h-3.5 text-white/90" />
-              <span className="font-serif font-bold text-xs tracking-wider text-white">
+            <div className="h-10 px-3.5 rounded-xl border border-[#C5A880]/30 bg-[#1E2622]/80 backdrop-blur-md text-[#E5D3B3] flex items-center justify-center gap-2 shadow-sm group-hover:bg-[#25322B] group-hover:border-[#C5A880]/50 transition-all">
+              <Compass className="w-4 h-4 text-[#C5A880]" />
+              <span className="font-serif font-bold text-xs tracking-wider text-[#FAF9F5]">
                 {shortName || initials}
               </span>
             </div>
           )}
           <div className="flex flex-col justify-center">
-            <span className="font-serif font-bold text-sm sm:text-base tracking-widest text-white block leading-none">
-              {displayName}
+            <span className="font-serif font-bold text-base sm:text-lg tracking-wider text-[#FAF9F5] block leading-tight group-hover:text-[#E5D3B3] transition-colors">
+              {resolvedBrandName}
             </span>
-            {city && (
-              <span className="text-[9px] tracking-[0.28em] text-[#D3D8DF] font-semibold block uppercase mt-1 leading-none">
-                {city}
+            {locationText && (
+              <span className="text-[10px] tracking-[0.25em] text-[#C5A880] font-medium block uppercase mt-0.5 leading-none">
+                {locationText}
               </span>
             )}
           </div>
         </Link>
       </div>
 
-      {/* Middle/Bottom Statement */}
-      <div className="relative z-10 my-auto py-8 lg:py-0">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 backdrop-blur-sm mb-4">
-          <Sparkles className="w-3.5 h-3.5 text-[#D3D8DF]" />
-          <span className="text-[11px] uppercase tracking-widest text-white/90 font-medium">
-            Signature Concierge
+      {/* Middle Statement & Trust Pillars */}
+      <div className="relative z-10 my-auto py-8 lg:py-10 max-w-lg">
+        {/* Dynamic Concierge Pill Badge */}
+        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#C5A880]/15 border border-[#C5A880]/30 backdrop-blur-md mb-5 shadow-xs">
+          <Sparkles className="w-3.5 h-3.5 text-[#E5D3B3]" />
+          <span className="text-[11px] uppercase tracking-[0.2em] text-[#E5D3B3] font-semibold">
+            {resolvedBadgeLabel}
           </span>
         </div>
-        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-bold text-white tracking-tight leading-snug">
-          {title}
+
+        {/* Editorial Serif Heading */}
+        <h2 className="text-2xl sm:text-3xl lg:text-4xl font-serif font-normal text-[#FAF9F5] tracking-tight leading-[1.2]">
+          {resolvedTitle}
         </h2>
-        <p className="mt-3 text-xs sm:text-sm text-white/70 font-light leading-relaxed max-w-sm">
-          {resolvedTagline}
+
+        {/* Dynamic Supporting Description */}
+        <p className="mt-3.5 text-xs sm:text-sm text-[#FAF9F5]/75 font-light leading-relaxed">
+          {resolvedDescription}
         </p>
+
+        {/* Luxury Trust Micro-Pillars */}
+        {showPillars && (
+          <div className="mt-8 pt-6 border-t border-white/10 hidden sm:grid grid-cols-1 gap-3.5 text-xs text-[#FAF9F5]/85">
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-[#C5A880]">
+                <Compass className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-light tracking-wide">
+                Bespoke itineraries, luxury stays & private expeditions
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-[#C5A880]">
+                <Headphones className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-light tracking-wide">
+                Dedicated travel host & 24/7 personal concierge coordination
+              </span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-7 h-7 rounded-full bg-white/5 border border-white/10 flex items-center justify-center shrink-0 text-[#C5A880]">
+                <ShieldCheck className="w-3.5 h-3.5" />
+              </div>
+              <span className="font-light tracking-wide">
+                Encrypted private member portal & verified reservation access
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Footer Accents */}
-      <div className="relative z-10 hidden lg:flex items-center justify-between pt-6 border-t border-white/10 text-[11px] text-white/60">
-        <span>© {new Date().getFullYear()} {displayName}</span>
-        <span className="flex items-center gap-1.5 text-[#D3D8DF]">
-          <Compass className="w-3.5 h-3.5" />
-          {[city, state].filter(Boolean).join(", ") || "India"}
-        </span>
+      <div className="relative z-10 hidden lg:flex flex-col gap-2 pt-6 border-t border-white/10 text-[11px] text-[#FAF9F5]/60">
+        <div className="flex items-center justify-between">
+          <span>© {new Date().getFullYear()} {resolvedBrandName}. All rights reserved.</span>
+          {locationText && (
+            <span className="flex items-center gap-1.5 text-[#E5D3B3]">
+              <MapPin className="w-3.5 h-3.5 text-[#C5A880]" />
+              {locationText}
+            </span>
+          )}
+        </div>
+        {(phone || email) && (
+          <div className="flex items-center gap-3 text-[10px] text-[#FAF9F5]/45">
+            {phone && <span>Concierge: {phone}</span>}
+            {phone && email && <span>•</span>}
+            {email && <span>{email}</span>}
+          </div>
+        )}
       </div>
-    </div>
+    </aside>
   );
 }

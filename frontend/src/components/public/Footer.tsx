@@ -3,18 +3,22 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, Compass, Mail, MapPin, MessageCircle, Phone } from "lucide-react";
-import { publicCatalogApi, type PublicSiteSettings } from "@/lib/api";
-import {
-  DEFAULT_BUSINESS_PHONE,
-  DEFAULT_WHATSAPP_NUMBER,
-  getWhatsAppClickToChatUrl,
-} from "@/lib/constants";
-
 import { useBranding } from "@/context/BrandingContext";
 
 export function Footer() {
-  const { settings, displayName, shortName, logoUrl, city, phone, email, address, getWhatsAppUrl } =
-    useBranding();
+  const {
+    settings,
+    displayName,
+    shortName,
+    logoUrl,
+    city,
+    phone,
+    email,
+    address,
+    getWhatsAppUrl,
+    whatsappEnabled,
+    whatsappShowOnFooter,
+  } = useBranding();
 
   const waUrl = getWhatsAppUrl();
   const agencyName = displayName;
@@ -44,7 +48,7 @@ export function Footer() {
               <Compass className="w-4 h-4" />
               <span>Plan Custom Trip</span>
             </Link>
-            {settings?.whatsapp_enabled !== false && (
+            {whatsappEnabled && whatsappShowOnFooter && Boolean(waUrl) && (
               <a
                 href={waUrl}
                 target="_blank"

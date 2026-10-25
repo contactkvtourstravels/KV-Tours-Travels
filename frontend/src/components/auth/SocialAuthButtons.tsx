@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import Script from "next/script";
 import { Loader2 } from "lucide-react";
-import { authApi, SafeUser } from "@/lib/api";
+import { authApi, SafeUser, setSessionToken } from "@/lib/api";
 import { signInWithGoogle, signInWithApple, isFirebaseConfigured } from "@/lib/firebase";
 
 interface SocialAuthButtonsProps {
@@ -35,6 +35,15 @@ export function SocialAuthButtons({
   const [appleLoading, setAppleLoading] = useState(false);
   const [gisLoaded, setGisLoaded] = useState(false);
   const googleBtnRef = useRef<HTMLDivElement>(null);
+  const isGisInitializedRef = useRef(false);
+
+  // Keep stable callback references to prevent infinite/repeated re-initializations
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+  });
 
   const googleClientId =
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
@@ -42,13 +51,11 @@ export function SocialAuthButtons({
 
   const isBusy = disabled || googleLoading || appleLoading;
 
-  // Initialize Google Identity Services (GIS)
-  useEffect(() => {
-    if (typeof window === "undefined" || !googleClientId) return;
-
-    const initGis = () => {
-      if (!window.google?.accounts?.id) return;
-      try {
+  // Single idempotent GIS initialization and render routine
+  const initAndRenderGis = useCallback(() => {
+    if (typeof window === "undefined" || !window.google?.accounts?.id || !googleClientId) return;
+    try {
+      if (!isGisInitializedRef.current) {
         window.google.accounts.id.initialize({
           client_id: googleClientId,
           callback: async (response: { credential?: string }) => {
@@ -59,12 +66,15 @@ export function SocialAuthButtons({
                 id_token: response.credential,
                 provider: "google.com",
               });
-              onSuccess(authResponse.user);
+              if (authResponse.access_token) {
+                setSessionToken(authResponse.access_token);
+              }
+              onSuccessRef.current(authResponse.user);
             } catch (err: unknown) {
               if (err instanceof Error) {
-                onError(err.message);
+                onErrorRef.current(err.message);
               } else {
-                onError("Failed to authenticate with Google. Please try again.");
+                onErrorRef.current("Failed to authenticate with Google. Please try again.");
               }
             } finally {
               setGoogleLoading(false);
@@ -73,41 +83,47 @@ export function SocialAuthButtons({
           auto_select: false,
           cancel_on_tap_outside: true,
         });
-
-        if (googleBtnRef.current) {
-          googleBtnRef.current.innerHTML = "";
-          window.google.accounts.id.renderButton(googleBtnRef.current, {
-            type: "standard",
-            shape: "pill",
-            theme: "outline",
-            text: "continue_with",
-            size: "large",
-            logo_alignment: "left",
-            width: googleBtnRef.current.offsetWidth || 340,
-          });
-          setGisLoaded(true);
-        }
-      } catch (err) {
-        console.warn("Google Identity Services initialization warning:", err);
+        isGisInitializedRef.current = true;
       }
-    };
+
+      if (googleBtnRef.current && googleBtnRef.current.childElementCount === 0) {
+        window.google.accounts.id.renderButton(googleBtnRef.current, {
+          type: "standard",
+          shape: "pill",
+          theme: "outline",
+          text: "continue_with",
+          size: "large",
+          logo_alignment: "left",
+          width: googleBtnRef.current.offsetWidth || 340,
+        });
+        setGisLoaded(true);
+      }
+    } catch (err) {
+      console.warn("Google Identity Services initialization warning:", err);
+    }
+  }, [googleClientId]);
+
+  // Initialize Google Identity Services (GIS) once
+  useEffect(() => {
+    if (typeof window === "undefined" || !googleClientId) return;
 
     if (window.google?.accounts?.id) {
-      initGis();
-    } else {
-      const interval = setInterval(() => {
-        if (window.google?.accounts?.id) {
-          clearInterval(interval);
-          initGis();
-        }
-      }, 200);
-      const timeout = setTimeout(() => clearInterval(interval), 5000);
-      return () => {
-        clearInterval(interval);
-        clearTimeout(timeout);
-      };
+      initAndRenderGis();
+      return;
     }
-  }, [googleClientId, onSuccess, onError]);
+
+    const interval = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        clearInterval(interval);
+        initAndRenderGis();
+      }
+    }, 200);
+    const timeout = setTimeout(() => clearInterval(interval), 5000);
+    return () => {
+      clearInterval(interval);
+      clearTimeout(timeout);
+    };
+  }, [googleClientId, initAndRenderGis]);
 
   const handleGoogleFallbackClick = async () => {
     if (isBusy) return;
@@ -128,7 +144,10 @@ export function SocialAuthButtons({
           first_name: socialResult.firstName,
           last_name: socialResult.lastName,
         });
-        onSuccess(authResponse.user);
+        if (authResponse.access_token) {
+          setSessionToken(authResponse.access_token);
+        }
+        onSuccessRef.current(authResponse.user);
         return;
       }
 
@@ -184,22 +203,7 @@ export function SocialAuthButtons({
         src="https://accounts.google.com/gsi/client"
         strategy="afterInteractive"
         onLoad={() => {
-          if (window.google?.accounts?.id && googleBtnRef.current) {
-            try {
-              window.google.accounts.id.renderButton(googleBtnRef.current, {
-                type: "standard",
-                shape: "pill",
-                theme: "outline",
-                text: "continue_with",
-                size: "large",
-                logo_alignment: "left",
-                width: googleBtnRef.current.offsetWidth || 340,
-              });
-              setGisLoaded(true);
-            } catch (err) {
-              console.warn("GIS render error:", err);
-            }
-          }
+          initAndRenderGis();
         }}
       />
 

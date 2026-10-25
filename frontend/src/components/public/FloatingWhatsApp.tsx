@@ -4,11 +4,24 @@ import { MessageCircle } from "lucide-react";
 import { useBranding } from "@/context/BrandingContext";
 
 export function FloatingWhatsApp() {
-  const { displayName, getWhatsAppUrl } = useBranding();
+  const {
+    displayName,
+    getWhatsAppUrl,
+    whatsappEnabled,
+    whatsappShowFloatingConcierge,
+  } = useBranding();
+
+  if (!whatsappEnabled || !whatsappShowFloatingConcierge) {
+    return null;
+  }
 
   const waUrl = getWhatsAppUrl(
     `Hi ${displayName}! I would like to enquire about your international and domestic tour packages.`
   );
+
+  if (!waUrl) {
+    return null;
+  }
 
   return (
     <aside aria-label="WhatsApp quick chat" className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 group print:hidden">

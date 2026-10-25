@@ -24,7 +24,7 @@ export function QuickInquiryModal({
   destinationName,
   initialMessage,
 }: QuickInquiryModalProps) {
-  const { displayName, shortName, city, getWhatsAppUrl } = useBranding();
+  const { displayName, shortName, city, getWhatsAppUrl, whatsappEnabled } = useBranding();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -101,15 +101,17 @@ export function QuickInquiryModal({
               {successMessage}
             </p>
             <div className="pt-4 flex flex-col sm:flex-row gap-3 justify-center">
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] transition-all"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>Follow up on WhatsApp</span>
-              </a>
+              {whatsappEnabled && Boolean(waUrl) && (
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] transition-all"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>Follow up on WhatsApp</span>
+                </a>
+              )}
               <button
                 type="button"
                 onClick={onClose}
@@ -220,15 +222,17 @@ export function QuickInquiryModal({
                   )}
                 </button>
 
-                <a
-                  href={waUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto px-5 h-11 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] flex items-center justify-center gap-2 transition-all"
-                >
-                  <MessageCircle className="w-4 h-4" />
-                  <span>WhatsApp Instead</span>
-                </a>
+                {whatsappEnabled && Boolean(waUrl) && (
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto px-5 h-11 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] flex items-center justify-center gap-2 transition-all"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    <span>WhatsApp Instead</span>
+                  </a>
+                )}
               </div>
             </form>
           </div>

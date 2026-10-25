@@ -70,7 +70,15 @@ function AboutPageContent() {
     settings?.public_office_address ||
     "The Wild Root Lounge, Fort Maidan Road, Near Palakkad Fort, Palakkad, Kerala 678001";
   const whatsappNumber =
-    branding.whatsapp_number || settings?.whatsapp_number || DEFAULT_WHATSAPP_NUMBER;
+    branding.whatsapp_number ||
+    settings?.whatsapp_number ||
+    settings?.support_whatsapp ||
+    DEFAULT_WHATSAPP_NUMBER;
+  const whatsappCountryCode =
+    (typeof branding.whatsapp_country_code === "string" ? branding.whatsapp_country_code : undefined) ||
+    settings?.whatsapp_country_code ||
+    "+91";
+  const whatsappEnabled = settings?.whatsapp_enabled !== false;
 
   const content = pageData?.content;
 
@@ -90,10 +98,14 @@ function AboutPageContent() {
   };
 
   // WhatsApp click-to-chat URL
-  const waUrl = getWhatsAppClickToChatUrl(
-    whatsappNumber,
-    `Hi ${agencyName} ${city}, I would like to learn more about your bespoke travel planning.`
-  );
+  const waUrl = whatsappEnabled
+    ? getWhatsAppClickToChatUrl(
+        whatsappNumber,
+        settings?.whatsapp_prefilled_message ||
+          `Hi ${agencyName} ${city}, I would like to learn more about your bespoke travel planning.`,
+        whatsappCountryCode
+      )
+    : "";
 
   // Agency initials for avatar badge (e.g. "WR")
   const agencyInitials = agencyName
@@ -448,7 +460,7 @@ function AboutPageContent() {
                 >
                   {content?.cta?.primary_button_text || "Plan Your Trip"}
                 </Link>
-                {settings?.whatsapp_enabled !== false && (
+                {whatsappEnabled && Boolean(waUrl) && (
                   <a
                     href={content?.cta?.secondary_button_link || waUrl}
                     target="_blank"

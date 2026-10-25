@@ -891,7 +891,7 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
         currency=str(overrides.get("currency", "INR")),
         contact_phone=str(overrides.get("contact_phone", settings.contact_phone)),
         secondary_phone=str(overrides.get("secondary_phone")) if overrides.get("secondary_phone") else None,
-        support_whatsapp=str(overrides.get("support_whatsapp")) if overrides.get("support_whatsapp") else str(overrides.get("whatsapp_number", settings.whatsapp_number)),
+        support_whatsapp=str(overrides.get("whatsapp_number")) if overrides.get("whatsapp_number") else str(overrides.get("support_whatsapp", settings.whatsapp_number)),
         emergency_phone=str(overrides.get("emergency_phone")) if overrides.get("emergency_phone") else None,
         contact_email=str(overrides.get("contact_email", settings.contact_email)),
         customer_support_email=str(overrides.get("customer_support_email")) if overrides.get("customer_support_email") else str(overrides.get("contact_email", settings.contact_email)),
@@ -906,7 +906,7 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
         business_hours=str(overrides.get("business_hours", overrides.get("operating_hours", "Mon - Sat: 9:00 AM - 7:00 PM"))),
         holiday_notice=str(overrides.get("holiday_notice")) if overrides.get("holiday_notice") else None,
         office_contact_instructions=str(overrides.get("office_contact_instructions")) if overrides.get("office_contact_instructions") else None,
-        whatsapp_number=str(overrides.get("whatsapp_number", settings.whatsapp_number)),
+        whatsapp_number=str(overrides.get("whatsapp_number", overrides.get("support_whatsapp", settings.whatsapp_number))),
         whatsapp_country_code=str(overrides.get("whatsapp_country_code", "+91")),
         whatsapp_prefilled_message=str(
             overrides.get(
@@ -919,7 +919,8 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
         whatsapp_custom_trip_message=str(overrides.get("whatsapp_custom_trip_message", f"Hi {public_display_name_val}, I would like to plan a custom holiday.")),
         whatsapp_booking_support_message=str(overrides.get("whatsapp_booking_support_message", f"Hi {public_display_name_val}, I need assistance with my booking.")),
         whatsapp_enabled=_bool(overrides.get("whatsapp_enabled"), True),
-        whatsapp_show_floating_concierge=_bool(overrides.get("whatsapp_show_floating_concierge"), True),
+        whatsapp_show_floating_concierge=_bool(overrides.get("whatsapp_show_floating_concierge", overrides.get("whatsapp_concierge_floating")), True),
+        whatsapp_concierge_floating=_bool(overrides.get("whatsapp_concierge_floating", overrides.get("whatsapp_show_floating_concierge")), True),
         whatsapp_show_header_button=_bool(overrides.get("whatsapp_show_header_button"), True),
         whatsapp_show_on_homepage=_bool(
             overrides.get("whatsapp_show_on_homepage"), True

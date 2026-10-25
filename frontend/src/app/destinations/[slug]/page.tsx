@@ -59,6 +59,10 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
   let packages: PublicPackageListItem[] = [];
   let agencyName = "Travel Agency";
   let whatsappNumber: string | undefined;
+  let whatsappCountryCode = "+91";
+  let agencyCity = "India";
+  let whatsappEnabled = true;
+  let waUrl = "";
 
   try {
     const [destData, packagesData, settingsData] = await Promise.all([
@@ -69,17 +73,22 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
     destination = destData;
     packages = packagesData;
     agencyName = settingsData?.public_display_name || settingsData?.agency_name || "Travel Agency";
-    whatsappNumber = settingsData?.support_whatsapp || settingsData?.whatsapp_number;
+    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || undefined;
+    whatsappCountryCode = settingsData?.whatsapp_country_code || "+91";
+    agencyCity = settingsData?.city || "India";
+    whatsappEnabled = settingsData?.whatsapp_enabled !== false;
+
+    waUrl = whatsappEnabled
+      ? getWhatsAppClickToChatUrl(
+          whatsappNumber,
+          settingsData?.whatsapp_destination_message?.replace("{destination_name}", destination.name) ||
+            `Hi ${agencyName}, I am interested in traveling to ${destination.name}. Please share customized package options.`,
+          whatsappCountryCode
+        )
+      : "";
   } catch {
     notFound();
   }
-
-  const agencyCity = "Palakkad";
-
-  const waUrl = getWhatsAppClickToChatUrl(
-    whatsappNumber,
-    `Hi ${agencyName}, I am interested in traveling to ${destination.name}. Please share customized package options.`
-  );
 
   const rawHero =
     destination.cover_image_url ||
@@ -501,15 +510,17 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     <span>Plan Custom Itinerary</span>
                   </Link>
 
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full h-11 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold flex items-center justify-center gap-2 hover:bg-[#DCF3EA] transition-all"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>WhatsApp Concierge</span>
-                  </a>
+                  {Boolean(waUrl) && (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-11 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold flex items-center justify-center gap-2 hover:bg-[#DCF3EA] transition-all"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>WhatsApp Concierge</span>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

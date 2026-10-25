@@ -114,12 +114,26 @@ function ContactPageContent() {
   const whatsappNumber =
     branding.whatsapp_number ||
     settings?.whatsapp_number ||
+    settings?.support_whatsapp ||
     DEFAULT_WHATSAPP_NUMBER;
 
-  const waUrl = getWhatsAppClickToChatUrl(
-    whatsappNumber,
-    `Hi ${agencyName} ${city}, I am reaching out through your website contact page.`
-  );
+  const whatsappCountryCode =
+    (typeof branding.whatsapp_country_code === "string" ? branding.whatsapp_country_code : undefined) ||
+    settings?.whatsapp_country_code ||
+    "+91";
+
+  const whatsappEnabled =
+    settings?.whatsapp_enabled !== false &&
+    settings?.whatsapp_show_on_contact_page !== false;
+
+  const waUrl = whatsappEnabled
+    ? getWhatsAppClickToChatUrl(
+        whatsappNumber,
+        settings?.whatsapp_prefilled_message ||
+          `Hi ${agencyName} ${city}, I am reaching out through your website contact page.`,
+        whatsappCountryCode
+      )
+    : "";
 
   const topicsList =
     content?.form?.topics && content.form.topics.length > 0
@@ -298,27 +312,29 @@ function ContactPageContent() {
                 </div>
 
                 {/* WhatsApp Fast Concierge */}
-                <div className="p-8 rounded-3xl bg-[#EBF7F2] border border-[#A7E2CB] shadow-sm space-y-4">
-                  <div className="w-12 h-12 rounded-2xl bg-white text-[#0D7A53] flex items-center justify-center shadow-sm">
-                    <MessageCircle className="w-6 h-6" />
+                {whatsappEnabled && Boolean(waUrl) && (
+                  <div className="p-8 rounded-3xl bg-[#EBF7F2] border border-[#A7E2CB] shadow-sm space-y-4">
+                    <div className="w-12 h-12 rounded-2xl bg-white text-[#0D7A53] flex items-center justify-center shadow-sm">
+                      <MessageCircle className="w-6 h-6" />
+                    </div>
+                    <h3 className="text-lg font-serif font-bold text-[#0D7A53]">
+                      {content?.cards?.whatsapp_card_title || "Fast WhatsApp Assistance"}
+                    </h3>
+                    <p className="text-xs text-[#0D7A53]/80 leading-relaxed font-light">
+                      {content?.cards?.whatsapp_card_description ||
+                        `Need quick departure availability, brochure PDFs, or urgent quotes? Our ${city} team is active on WhatsApp daily.`}
+                    </p>
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full h-11 rounded-full bg-[#0D7A53] hover:bg-[#0B6343] text-white text-xs uppercase tracking-widest font-bold shadow-md shadow-[#0D7A53]/20 transition-all flex items-center justify-center gap-2"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>{content?.cards?.whatsapp_button_text || "Chat on WhatsApp"}</span>
+                    </a>
                   </div>
-                  <h3 className="text-lg font-serif font-bold text-[#0D7A53]">
-                    {content?.cards?.whatsapp_card_title || "Fast WhatsApp Assistance"}
-                  </h3>
-                  <p className="text-xs text-[#0D7A53]/80 leading-relaxed font-light">
-                    {content?.cards?.whatsapp_card_description ||
-                      `Need quick departure availability, brochure PDFs, or urgent quotes? Our ${city} team is active on WhatsApp daily.`}
-                  </p>
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full h-11 rounded-full bg-[#0D7A53] hover:bg-[#0B6343] text-white text-xs uppercase tracking-widest font-bold shadow-md shadow-[#0D7A53]/20 transition-all flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>{content?.cards?.whatsapp_button_text || "Chat on WhatsApp"}</span>
-                  </a>
-                </div>
+                )}
               </div>
             )}
 

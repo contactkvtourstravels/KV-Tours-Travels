@@ -145,6 +145,26 @@ def get_current_user(
     )
     session_record = db.execute(stmt).unique().scalar_one_or_none()
     if session_record is None or session_record.user is None:
+        # Fallback for direct Firebase / Google ID token in Authorization header
+        if token.count(".") == 2:
+            try:
+                from app.services.firebase_auth_service import verify_firebase_id_token
+                claims = verify_firebase_id_token(token)
+                email = claims.get("email")
+                if email:
+                    from app.core.security import normalize_email
+                    jwt_user = db.execute(
+                        select(User)
+                        .options(
+                            joinedload(User.role_assignments).joinedload(UserRole.role)
+                        )
+                        .where(User.email_normalized == normalize_email(email))
+                    ).unique().scalar_one_or_none()
+                    if jwt_user and not jwt_user.is_deleted and jwt_user.status == "active":
+                        return jwt_user
+            except Exception:
+                pass
+
         raise ApiError(
             status_code=401,
             code="INVALID_SESSION",

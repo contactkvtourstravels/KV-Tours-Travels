@@ -307,7 +307,12 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         whatsapp_custom_trip_message=str(overrides.get("whatsapp_custom_trip_message", "Hi Wild Root, I would like to plan a custom holiday.")),
         whatsapp_booking_support_message=str(overrides.get("whatsapp_booking_support_message", "Hi Wild Root, I need assistance with my booking.")),
         whatsapp_enabled=_parse_bool(overrides.get("whatsapp_enabled"), True),
-        whatsapp_show_floating_concierge=_parse_bool(overrides.get("whatsapp_show_floating_concierge"), True),
+        whatsapp_show_floating_concierge=_parse_bool(
+            overrides.get("whatsapp_show_floating_concierge", overrides.get("whatsapp_concierge_floating")), True
+        ),
+        whatsapp_concierge_floating=_parse_bool(
+            overrides.get("whatsapp_concierge_floating", overrides.get("whatsapp_show_floating_concierge")), True
+        ),
         whatsapp_show_header_button=_parse_bool(overrides.get("whatsapp_show_header_button"), True),
         whatsapp_show_on_homepage=_parse_bool(
             overrides.get("whatsapp_show_on_homepage"), True
@@ -502,6 +507,7 @@ def update_admin_settings(
         "whatsapp_booking_support_message",
         "whatsapp_enabled",
         "whatsapp_show_floating_concierge",
+        "whatsapp_concierge_floating",
         "whatsapp_show_header_button",
         "whatsapp_show_on_homepage",
         "whatsapp_show_on_footer",
@@ -583,10 +589,17 @@ def update_admin_settings(
     elif payload.business_hours is not None and payload.operating_hours is None:
         payload.operating_hours = payload.business_hours
 
-    if payload.support_whatsapp is not None and payload.whatsapp_number is None:
-        payload.whatsapp_number = payload.support_whatsapp
-    elif payload.whatsapp_number is not None and payload.support_whatsapp is None:
-        payload.support_whatsapp = payload.whatsapp_number
+    if payload.whatsapp_concierge_floating is not None and payload.whatsapp_show_floating_concierge is None:
+        payload.whatsapp_show_floating_concierge = payload.whatsapp_concierge_floating
+    elif payload.whatsapp_show_floating_concierge is not None and payload.whatsapp_concierge_floating is None:
+        payload.whatsapp_concierge_floating = payload.whatsapp_show_floating_concierge
+
+    if payload.whatsapp_number is not None:
+        clean_num = payload.whatsapp_number.strip()
+        payload.whatsapp_number = clean_num
+        payload.support_whatsapp = clean_num
+    elif payload.support_whatsapp is not None and payload.whatsapp_number is None:
+        payload.whatsapp_number = payload.support_whatsapp.strip()
 
     if payload.agency_name is not None and payload.public_display_name is None:
         payload.public_display_name = payload.agency_name

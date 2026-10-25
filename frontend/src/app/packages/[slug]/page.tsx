@@ -20,10 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { publicCatalogApi, type PublicPackageDetail } from "@/lib/api";
-import {
-  DEFAULT_WHATSAPP_NUMBER,
-  getWhatsAppClickToChatUrl,
-} from "@/lib/constants";
+import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { PackageDetailClientActions } from "./PackageDetailClientActions";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
@@ -80,6 +77,8 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
   let maintenanceMsg: string | undefined;
   let agencyName = "Travel Agency";
   let whatsappNumber: string | undefined;
+  let whatsappCountryCode = "+91";
+  let whatsappEnabled = true;
 
   try {
     const [pkgData, settingsData] = await Promise.all([
@@ -90,15 +89,20 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
     onlinePaymentsEnabled = Boolean(settingsData?.online_payments_enabled);
     maintenanceMsg = settingsData?.online_payments_maintenance_message;
     agencyName = settingsData?.public_display_name || settingsData?.agency_name || "Travel Agency";
-    whatsappNumber = settingsData?.support_whatsapp || settingsData?.whatsapp_number;
+    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || undefined;
+    whatsappCountryCode = settingsData?.whatsapp_country_code || "+91";
+    whatsappEnabled = settingsData?.whatsapp_enabled !== false && settingsData?.whatsapp_show_on_package_pages !== false;
   } catch {
     notFound();
   }
 
-  const waUrl = getWhatsAppClickToChatUrl(
-    whatsappNumber,
-    `Hi ${agencyName}, I am interested in booking the "${pkg.name}" (${pkg.duration_days}D/${pkg.duration_nights}N) package. Please share availability and payment details.`
-  );
+  const waUrl = whatsappEnabled
+    ? getWhatsAppClickToChatUrl(
+        whatsappNumber,
+        `Hi ${agencyName}, I am interested in booking the "${pkg.name}" (${pkg.duration_days}D/${pkg.duration_nights}N) package. Please share availability and payment details.`,
+        whatsappCountryCode
+      )
+    : "";
 
   const rawHero =
     pkg.cover_image_url ||
@@ -609,11 +613,12 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
                                   >
                                     Book Date
                                   </Link>
-                                ) : (
+                                ) : whatsappEnabled ? (
                                   <a
                                     href={getWhatsAppClickToChatUrl(
-                                      whatsappNumber || DEFAULT_WHATSAPP_NUMBER,
-                                      `Hi ${agencyName}, I would like to inquire about the "${pkg.name}" departure on ${depDate} (₹${Number(price).toLocaleString("en-IN")}). Please share itinerary and payment details.`
+                                      whatsappNumber,
+                                      `Hi ${agencyName}, I would like to inquire about the "${pkg.name}" departure on ${depDate} (₹${Number(price).toLocaleString("en-IN")}). Please share itinerary and payment details.`,
+                                      whatsappCountryCode
                                     )}
                                     target="_blank"
                                     rel="noopener noreferrer"
@@ -621,24 +626,34 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
                                   >
                                     Enquire Date
                                   </a>
+                                ) : (
+                                  <Link
+                                    href="/contact"
+                                    className="h-9 px-4 rounded-full bg-[#24292F] hover:bg-[#3D4450] text-white text-xs uppercase tracking-wider font-bold transition-all shadow-xs flex items-center justify-center"
+                                  >
+                                    Enquire Date
+                                  </Link>
                                 )
                               ) : (
                                 <span className="h-9 px-3 rounded-full bg-[#F3F4F4] text-[#70757A] text-xs uppercase tracking-wider font-semibold flex items-center justify-center">
                                   Sold Out
                                 </span>
                               )}
-                              <a
-                                href={getWhatsAppClickToChatUrl(
-                                  whatsappNumber || DEFAULT_WHATSAPP_NUMBER,
-                                  `Hi ${agencyName}, I want to inquire about the ${pkg.name} departure on ${depDate}.`
-                                )}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="h-9 px-3.5 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-wider font-semibold hover:bg-[#DCF3EA] transition-all flex items-center justify-center"
-                                title="Enquire on WhatsApp"
-                              >
-                                Enquire
-                              </a>
+                              {whatsappEnabled && (
+                                <a
+                                  href={getWhatsAppClickToChatUrl(
+                                    whatsappNumber,
+                                    `Hi ${agencyName}, I want to inquire about the ${pkg.name} departure on ${depDate}.`,
+                                    whatsappCountryCode
+                                  )}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="h-9 px-3.5 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-wider font-semibold hover:bg-[#DCF3EA] transition-all flex items-center justify-center"
+                                  title="Enquire on WhatsApp"
+                                >
+                                  Enquire
+                                </a>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -791,6 +806,7 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
                   waUrl={waUrl}
                   onlinePaymentsEnabled={onlinePaymentsEnabled}
                   maintenanceMessage={maintenanceMsg}
+                  whatsappEnabled={whatsappEnabled}
                 />
               </div>
             </div>

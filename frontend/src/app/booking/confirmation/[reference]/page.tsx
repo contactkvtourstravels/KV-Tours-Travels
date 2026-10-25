@@ -401,15 +401,17 @@ function ConfirmationContent() {
 
         {/* Section 6: Screen Concierge Actions (Hidden in Print) */}
         <div className="pt-6 border-t border-[#E4E5E7] flex flex-col sm:flex-row items-center justify-between gap-4 print:hidden">
-          <a
-            href={waUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#0D7A53] hover:bg-[#0A6242] text-white text-xs uppercase tracking-widest font-semibold shadow-md shadow-emerald-700/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <MessageCircle className="w-4 h-4" />
-            <span>Connect with {branding.city || branding.shortName} Concierge</span>
-          </a>
+          {branding.whatsappEnabled && Boolean(waUrl) && (
+            <a
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto px-8 py-3.5 rounded-full bg-[#0D7A53] hover:bg-[#0A6242] text-white text-xs uppercase tracking-widest font-semibold shadow-md shadow-emerald-700/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <MessageCircle className="w-4 h-4" />
+              <span>Connect with {branding.city || branding.shortName} Concierge</span>
+            </a>
+          )}
 
           <Link
             href="/"

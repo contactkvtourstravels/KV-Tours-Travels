@@ -1350,6 +1350,8 @@ export interface AgencyBrandingContext {
   contact_email?: string;
   support_whatsapp?: string;
   whatsapp_number?: string;
+  whatsapp_country_code?: string;
+  whatsapp_enabled?: boolean;
   operating_hours?: string;
   brand_primary_color?: string;
   brand_secondary_color?: string;

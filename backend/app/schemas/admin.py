@@ -911,6 +911,7 @@ class AdminSiteSettingsResponse(BaseModel):
     whatsapp_booking_support_message: str = "Hi Wild Root, I need assistance with my booking."
     whatsapp_enabled: bool = True
     whatsapp_show_floating_concierge: bool = True
+    whatsapp_concierge_floating: bool = True
     whatsapp_show_header_button: bool = True
     whatsapp_show_on_homepage: bool = True
     whatsapp_show_on_footer: bool = True
@@ -1160,6 +1161,7 @@ class AdminSiteSettingsUpdateRequest(BaseModel):
     whatsapp_booking_support_message: str | None = None
     whatsapp_enabled: bool | None = None
     whatsapp_show_floating_concierge: bool | None = None
+    whatsapp_concierge_floating: bool | None = None
     whatsapp_show_header_button: bool | None = None
     whatsapp_show_on_homepage: bool | None = None
     whatsapp_show_on_footer: bool | None = None

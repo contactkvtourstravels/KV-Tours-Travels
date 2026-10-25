@@ -104,10 +104,15 @@ function HomeContent() {
     }
   }, [pageContent, settings]);
 
-  const waUrl = getWhatsAppClickToChatUrl(
-    settings?.whatsapp_number,
-    `Hi ${settings?.public_display_name || "The Wild Root"} ${settings?.city || "Palakkad"}, I am looking to plan a holiday journey. Please assist me.`
-  );
+  const waUrl =
+    settings?.whatsapp_enabled !== false
+      ? getWhatsAppClickToChatUrl(
+          settings?.whatsapp_number || settings?.support_whatsapp,
+          settings?.whatsapp_prefilled_message ||
+            `Hi ${settings?.public_display_name || settings?.agency_name || "The Wild Root"} ${settings?.city || "Palakkad"}, I am looking to plan a holiday journey. Please assist me.`,
+          settings?.whatsapp_country_code || "+91"
+        )
+      : "";
 
   const getDestinationImg = (dest: PublicDestinationListItem) => {
     let raw = "";
@@ -259,7 +264,11 @@ function HomeContent() {
   const whatsappCtaText = pageContent?.hero?.whatsapp_cta_text?.trim();
   const hasPrimaryCta = Boolean(primaryCtaText);
   const hasSecondaryCta = Boolean(secondaryCtaText);
-  const hasWhatsappCta = Boolean(whatsappCtaText) && settings?.whatsapp_enabled !== false;
+  const hasWhatsappCta =
+    Boolean(whatsappCtaText) &&
+    settings?.whatsapp_enabled !== false &&
+    settings?.whatsapp_show_on_homepage !== false &&
+    Boolean(waUrl);
   const hasAnyCta = hasPrimaryCta || hasSecondaryCta || hasWhatsappCta;
 
   const activeTrustBadges = useMemo(() => {
@@ -1175,15 +1184,19 @@ function HomeContent() {
                   >
                     Plan My Custom Trip
                   </Link>
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto h-12 px-6 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] transition-all text-center flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Discuss on WhatsApp</span>
-                  </a>
+                  {settings?.whatsapp_enabled !== false &&
+                    settings?.whatsapp_show_on_homepage !== false &&
+                    Boolean(waUrl) && (
+                      <a
+                        href={waUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full sm:w-auto h-12 px-6 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] transition-all text-center flex items-center justify-center gap-2"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        <span>Discuss on WhatsApp</span>
+                      </a>
+                    )}
                 </div>
               </div>
             </div>

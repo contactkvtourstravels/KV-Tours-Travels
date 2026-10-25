@@ -15,22 +15,59 @@ export const DEFAULT_WHATSAPP_NUMBER =
   process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+919442000000";
 
 /**
- * Returns digits-only telephone string suitable for WhatsApp wa.me links.
+ * Safely normalizes phone number to E.164 digits without leading '+'.
+ * Prevents duplicated country codes, strips whitespace, leading zeros, and invalid characters.
  */
-export function getCleanWhatsAppNumber(rawPhone?: string | null): string {
-  const target = rawPhone || DEFAULT_WHATSAPP_NUMBER;
-  const digits = target.replace(/[^0-9]/g, "");
-  return digits || "919442000000";
+export function normalizeWhatsAppNumber(
+  rawPhone?: string | null,
+  rawCountryCode: string = "+91"
+): string {
+  const target = (rawPhone || "").trim();
+  if (!target) return "";
+  const isExplicitIntl = target.startsWith("+");
+  const cleanCode = (rawCountryCode || "+91").replace(/\D/g, "");
+  let digits = target.replace(/\D/g, "");
+
+  if (!digits) return "";
+
+  if (isExplicitIntl) {
+    return digits;
+  }
+
+  // Strip leading 0 trunk prefix
+  digits = digits.replace(/^0+/, "");
+  if (!digits) return "";
+
+  if (cleanCode) {
+    // If digits already starts with cleanCode and length indicates full intl number (e.g. 11+ digits)
+    if (digits.startsWith(cleanCode) && digits.length > cleanCode.length && digits.length >= 11) {
+      return digits;
+    }
+    return `${cleanCode}${digits}`;
+  }
+  return digits;
 }
 
 /**
- * Constructs a click-to-chat WhatsApp URL with optional message.
+ * Returns digits-only telephone string suitable for WhatsApp wa.me links.
+ */
+export function getCleanWhatsAppNumber(
+  rawPhone?: string | null,
+  rawCountryCode: string = "+91"
+): string {
+  const normalized = normalizeWhatsAppNumber(rawPhone, rawCountryCode);
+  return normalized || "919442000000";
+}
+
+/**
+ * Constructs a click-to-chat WhatsApp URL with optional message and country code.
  */
 export function getWhatsAppClickToChatUrl(
   phone?: string | null,
-  message?: string
+  message?: string,
+  countryCode: string = "+91"
 ): string {
-  const clean = getCleanWhatsAppNumber(phone);
+  const clean = getCleanWhatsAppNumber(phone, countryCode);
   const encodedMsg = message ? encodeURIComponent(message) : "";
   return `https://wa.me/${clean}${encodedMsg ? `?text=${encodedMsg}` : ""}`;
 }

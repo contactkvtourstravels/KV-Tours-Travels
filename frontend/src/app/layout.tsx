@@ -86,9 +86,9 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const phone = settings?.contact_phone || DEFAULT_BUSINESS_PHONE;
   const email = settings?.contact_email || "contact@travelagency.com";
   const street = settings?.office_address || "Main Road";
-  const city = settings?.city || "Coimbatore";
-  const state = settings?.state || "Tamil Nadu";
-  const postalCode = settings?.postal_code || "641012";
+  const city = settings?.city || "";
+  const state = settings?.state || "";
+  const postalCode = settings?.postal_code || "";
   const country = settings?.country || "India";
   const logo = settings?.logo_url || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80";
 

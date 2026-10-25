@@ -4,13 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Compass, Menu, MessageCircle, Phone, X, User } from "lucide-react";
-import { publicCatalogApi, type PublicSiteSettings } from "@/lib/api";
-import {
-  DEFAULT_BUSINESS_PHONE,
-  DEFAULT_WHATSAPP_NUMBER,
-  getWhatsAppClickToChatUrl,
-} from "@/lib/constants";
-
 import { useBranding } from "@/context/BrandingContext";
 
 const NAV_LINKS = [
@@ -26,7 +19,16 @@ export function Navbar() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { displayName, shortName, logoUrl, city, phone, getWhatsAppUrl } = useBranding();
+  const {
+    displayName,
+    shortName,
+    logoUrl,
+    city,
+    phone,
+    getWhatsAppUrl,
+    whatsappEnabled,
+    whatsappShowHeaderButton,
+  } = useBranding();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -162,17 +164,19 @@ export function Navbar() {
 
             {/* Mobile & Tablet Actions & Three-Bar Menu Toggle */}
             <div className="flex items-center gap-1.5 sm:gap-2 xl:hidden shrink-0">
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="h-9 px-2.5 sm:px-3 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] hover:bg-[#D5F0E5] inline-flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap shrink-0 shadow-2xs"
-                aria-label="WhatsApp Concierge"
-                title="Chat on WhatsApp"
-              >
-                <MessageCircle className="w-4 h-4 text-[#0D7A53] shrink-0" />
-                <span className="hidden sm:inline">WhatsApp</span>
-              </a>
+              {whatsappEnabled && whatsappShowHeaderButton && Boolean(waUrl) && (
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="h-9 px-2.5 sm:px-3 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] hover:bg-[#D5F0E5] inline-flex items-center justify-center gap-1.5 text-xs font-semibold uppercase tracking-wider whitespace-nowrap shrink-0 shadow-2xs"
+                  aria-label="WhatsApp Concierge"
+                  title="Chat on WhatsApp"
+                >
+                  <MessageCircle className="w-4 h-4 text-[#0D7A53] shrink-0" />
+                  <span className="hidden sm:inline">WhatsApp</span>
+                </a>
+              )}
 
               <Link
                 href="/custom-trip"
@@ -302,15 +306,17 @@ export function Navbar() {
                 <span>Plan Your Trip</span>
               </Link>
 
-              <a
-                href={waUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full h-11 flex items-center justify-center gap-2 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] hover:bg-[#D5F0E5] text-xs uppercase tracking-wider font-semibold transition-colors"
-              >
-                <MessageCircle className="w-4 h-4 text-[#0D7A53]" />
-                <span>WhatsApp Concierge</span>
-              </a>
+              {whatsappEnabled && whatsappShowHeaderButton && Boolean(waUrl) && (
+                <a
+                  href={waUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full h-11 flex items-center justify-center gap-2 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] hover:bg-[#D5F0E5] text-xs uppercase tracking-wider font-semibold transition-colors"
+                >
+                  <MessageCircle className="w-4 h-4 text-[#0D7A53]" />
+                  <span>WhatsApp Concierge</span>
+                </a>
+              )}
 
               {phone && (
                 <div className="flex items-center justify-center gap-1.5 text-xs text-[#5F6368] pt-1">

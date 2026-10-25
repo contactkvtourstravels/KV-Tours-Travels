@@ -33,7 +33,7 @@ export default function BookingDetailPage({
 }: {
   params: Promise<{ reference: string }>;
 }) {
-  const { displayName, getWhatsAppUrl } = useBranding();
+  const { displayName, getWhatsAppUrl, whatsappEnabled } = useBranding();
   const resolvedParams = use(params);
   const reference = resolvedParams.reference;
 
@@ -147,15 +147,17 @@ export default function BookingDetailPage({
           <span>Back to All Bookings</span>
         </Link>
 
-        <a
-          href={waHelpUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs font-semibold hover:bg-[#DCF3EA] transition-all"
-        >
-          <MessageCircle className="w-3.5 h-3.5" />
-          <span>Ask About My Booking</span>
-        </a>
+        {whatsappEnabled && Boolean(waHelpUrl) && (
+          <a
+            href={waHelpUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs font-semibold hover:bg-[#DCF3EA] transition-all"
+          >
+            <MessageCircle className="w-3.5 h-3.5" />
+            <span>Ask About My Booking</span>
+          </a>
+        )}
       </div>
 
       {/* Hero Header Card */}

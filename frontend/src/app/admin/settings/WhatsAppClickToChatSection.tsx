@@ -18,6 +18,7 @@ import {
   Info,
 } from "lucide-react";
 import { adminApi, AdminSiteSettings } from "@/lib/api";
+import { normalizeWhatsAppNumber } from "@/lib/constants";
 
 interface WhatsAppClickToChatSectionProps {
   settings: AdminSiteSettings;
@@ -64,7 +65,11 @@ export default function WhatsAppClickToChatSection({
   const [waShowOnFooter, setWaShowOnFooter] = useState(settings.whatsapp_show_on_footer ?? true);
   const [waShowOnPackagePages, setWaShowOnPackagePages] = useState(settings.whatsapp_show_on_package_pages ?? true);
   const [waShowOnContactPage, setWaShowOnContactPage] = useState(settings.whatsapp_show_on_contact_page ?? true);
-  const [waConciergeFloating, setWaConciergeFloating] = useState(settings.whatsapp_concierge_floating ?? true);
+  const [waConciergeFloating, setWaConciergeFloating] = useState(
+    settings.whatsapp_concierge_floating ??
+    settings.whatsapp_show_floating_concierge ??
+    true
+  );
 
   // UI States
   const [saving, setSaving] = useState(false);
@@ -98,7 +103,10 @@ export default function WhatsAppClickToChatSection({
       waShowOnFooter !== (settings.whatsapp_show_on_footer ?? true) ||
       waShowOnPackagePages !== (settings.whatsapp_show_on_package_pages ?? true) ||
       waShowOnContactPage !== (settings.whatsapp_show_on_contact_page ?? true) ||
-      waConciergeFloating !== (settings.whatsapp_concierge_floating ?? true);
+      waConciergeFloating !==
+        (settings.whatsapp_concierge_floating ??
+          settings.whatsapp_show_floating_concierge ??
+          true);
 
     onDirtyChange(isDirty);
   }, [
@@ -119,29 +127,35 @@ export default function WhatsAppClickToChatSection({
     onDirtyChange,
   ]);
 
-  // Clean formatted phone for wa.me link
-  const cleanCountryCode = waCountryCode.replace(/\D/g, "");
-  const cleanDigits = waNumber.replace(/\D/g, "");
-  const fullIntlDigits = cleanCountryCode + cleanDigits;
-  const generatedWaUrl = `https://wa.me/${fullIntlDigits}?text=${encodeURIComponent(waPrefilledMessage)}`;
+  // Clean formatted phone for wa.me link with safe deduplicated normalization
+  const fullIntlDigits = normalizeWhatsAppNumber(waNumber, waCountryCode);
+  const generatedWaUrl = fullIntlDigits
+    ? `https://wa.me/${fullIntlDigits}${waPrefilledMessage ? `?text=${encodeURIComponent(waPrefilledMessage)}` : ""}`
+    : "";
 
   const validatePhoneNumber = () => {
     if (!waNumber.trim()) {
       setNumberValidationResult("Error: WhatsApp number cannot be empty.");
       return;
     }
-    if (cleanDigits.length < 7 || cleanDigits.length > 15) {
+    const cleanOnly = waNumber.replace(/\D/g, "");
+    if (cleanOnly.length < 7 || cleanOnly.length > 15) {
       setNumberValidationResult(
-        `Invalid length: Phone number contains ${cleanDigits.length} digits. Standard numbers have 7-15 digits.`
+        `Invalid length: Phone number contains ${cleanOnly.length} digits. Standard numbers have 7-15 digits.`
       );
       return;
     }
+    if (!fullIntlDigits || fullIntlDigits.length < 8) {
+      setNumberValidationResult("Error: Could not parse a valid international phone number.");
+      return;
+    }
     setNumberValidationResult(
-      `✓ Valid International E.164: +${cleanCountryCode} ${cleanDigits} (Total: ${fullIntlDigits.length} digits)`
+      `✓ Valid International E.164: +${fullIntlDigits} (Ready for WhatsApp links)`
     );
   };
 
   const handleCopyLink = () => {
+    if (!generatedWaUrl) return;
     navigator.clipboard.writeText(generatedWaUrl);
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
@@ -175,7 +189,11 @@ export default function WhatsAppClickToChatSection({
     setWaShowOnFooter(settings.whatsapp_show_on_footer ?? true);
     setWaShowOnPackagePages(settings.whatsapp_show_on_package_pages ?? true);
     setWaShowOnContactPage(settings.whatsapp_show_on_contact_page ?? true);
-    setWaConciergeFloating(settings.whatsapp_concierge_floating ?? true);
+    setWaConciergeFloating(
+      settings.whatsapp_concierge_floating ??
+      settings.whatsapp_show_floating_concierge ??
+      true
+    );
     setErrors({});
     setNumberValidationResult(null);
   };
@@ -185,10 +203,13 @@ export default function WhatsAppClickToChatSection({
     if (!canEdit) return;
 
     const validationErrors: Record<string, string> = {};
+    const cleanOnly = waNumber.replace(/\D/g, "");
     if (!waNumber.trim()) {
       validationErrors.whatsapp_number = "WhatsApp number is required.";
-    } else if (cleanDigits.length < 7 || cleanDigits.length > 15) {
+    } else if (cleanOnly.length < 7 || cleanOnly.length > 15) {
       validationErrors.whatsapp_number = "WhatsApp number must be 7 to 15 digits.";
+    } else if (!fullIntlDigits) {
+      validationErrors.whatsapp_number = "Invalid WhatsApp number format.";
     }
 
     if (Object.keys(validationErrors).length > 0) {
@@ -213,7 +234,7 @@ export default function WhatsAppClickToChatSection({
         whatsapp_show_on_footer: waShowOnFooter,
         whatsapp_show_on_package_pages: waShowOnPackagePages,
         whatsapp_show_on_contact_page: waShowOnContactPage,
-        whatsapp_concierge_floating: waConciergeFloating,
+        whatsapp_show_floating_concierge: waConciergeFloating,
       };
 
       const updated = await adminApi.updateSettings(payload);
@@ -392,10 +413,18 @@ export default function WhatsAppClickToChatSection({
                 <span>{copiedLink ? "Copied Link" : "Copy URL"}</span>
               </button>
               <a
-                href={generatedWaUrl}
+                href={generatedWaUrl || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 transition-colors"
+                onClick={(e) => {
+                  if (!generatedWaUrl) e.preventDefault();
+                }}
+                className={`text-[11px] font-semibold flex items-center gap-1 transition-colors ${
+                  generatedWaUrl
+                    ? "text-emerald-700 hover:text-emerald-800 cursor-pointer"
+                    : "text-stone-400 pointer-events-none"
+                }`}
+                aria-disabled={!generatedWaUrl}
               >
                 <ExternalLink className="w-3.5 h-3.5" />
                 <span>Open Test Chat</span>

@@ -34,7 +34,7 @@ const TRIP_TYPES = [
 ];
 
 function CustomTripPlanner() {
-  const { displayName, city, getWhatsAppUrl } = useBranding();
+  const { displayName, city, getWhatsAppUrl, whatsappEnabled } = useBranding();
   const searchParams = useSearchParams();
   const prefilledDest = searchParams?.get("destination") || "";
   const isPreview = searchParams?.get("preview") === "true";
@@ -451,15 +451,17 @@ Special Preferences: ${preferences || "None specified"}
                     )}
                   </button>
 
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto px-6 h-12 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] transition-all flex items-center justify-center gap-2"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>{whatsappButtonLabel}</span>
-                  </a>
+                  {whatsappEnabled && Boolean(waUrl) && (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto px-6 h-12 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] transition-all flex items-center justify-center gap-2"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>{whatsappButtonLabel}</span>
+                    </a>
+                  )}
                 </div>
               </form>
             </div>

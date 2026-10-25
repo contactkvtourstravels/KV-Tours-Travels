@@ -14,7 +14,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
-  const { displayName, city, getWhatsAppUrl } = useBranding();
+  const { displayName, city, getWhatsAppUrl, whatsappEnabled } = useBranding();
 
   useEffect(() => {
     // Log safe error locally without customer-facing details
@@ -42,7 +42,7 @@ export default function GlobalError({
           </h1>
 
           <p className="text-[#70757A] text-sm leading-relaxed">
-            We encountered a temporary connection issue while retrieving this itinerary. You can reload the page or reach our {city || "concierge"} team directly on WhatsApp.
+            We encountered a temporary connection issue while retrieving this itinerary. You can reload the page{whatsappEnabled && Boolean(waUrl) ? ` or reach our ${city || "concierge"} team directly on WhatsApp.` : " or return to the home page."}
           </p>
 
           <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-3">
@@ -55,15 +55,17 @@ export default function GlobalError({
               <span>Retry Page</span>
             </button>
 
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto px-6 py-3 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs uppercase tracking-widest font-semibold hover:bg-emerald-100 transition-all flex items-center justify-center gap-2"
-            >
-              <MessageCircle className="w-4 h-4 text-emerald-600" />
-              <span>WhatsApp Concierge</span>
-            </a>
+            {whatsappEnabled && Boolean(waUrl) && (
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-6 py-3 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs uppercase tracking-widest font-semibold hover:bg-emerald-100 transition-all flex items-center justify-center gap-2"
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                <span>WhatsApp Concierge</span>
+              </a>
+            )}
 
             <Link
               href="/"

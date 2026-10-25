@@ -33,10 +33,6 @@ import {
   PublicSiteSettings,
   BankSettingsPublicResponse,
 } from "@/lib/api";
-import {
-  DEFAULT_WHATSAPP_NUMBER,
-  getWhatsAppClickToChatUrl,
-} from "@/lib/constants";
 import { useBranding } from "@/context/BrandingContext";
 
 interface RazorpayInstance {
@@ -54,7 +50,7 @@ declare global {
 }
 
 function PaymentContent() {
-  const { displayName, shortName, city, getWhatsAppUrl } = useBranding();
+  const { displayName, shortName, city, getWhatsAppUrl, whatsappEnabled } = useBranding();
   const params = useParams();
   const router = useRouter();
   const reference = params?.reference as string;
@@ -1139,21 +1135,25 @@ function PaymentContent() {
                     </div>
                     <p className="leading-relaxed">
                       {siteSettings.online_payments_maintenance_message ||
-                        "Online card/UPI checkout is temporarily paused for routine maintenance. Please choose Bank Transfer or contact our Coimbatore concierge desk directly."}
+                        `Online card/UPI checkout is temporarily paused for routine maintenance. Please choose Bank Transfer or contact our ${city || "concierge"} desk directly.`}
                     </p>
                   </div>
 
-                  <a
-                    href={getWhatsAppUrl(
-                      `Hello ${displayName}! My booking reference is ${booking.booking_reference} for "${booking.package_title}" (Total: ₹${Number(booking.total).toLocaleString("en-IN")}). Please assist me with payment confirmation.`
-                    )}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-4 rounded-full bg-[#0D7A53] hover:bg-[#0A6242] text-white text-xs uppercase tracking-widest font-semibold shadow-lg shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    <span>Confirm on WhatsApp Concierge</span>
-                  </a>
+                  {whatsappEnabled && getWhatsAppUrl(
+                    `Hello ${displayName}! My booking reference is ${booking.booking_reference} for "${booking.package_title}" (Total: ₹${Number(booking.total).toLocaleString("en-IN")}). Please assist me with payment confirmation.`
+                  ) ? (
+                    <a
+                      href={getWhatsAppUrl(
+                        `Hello ${displayName}! My booking reference is ${booking.booking_reference} for "${booking.package_title}" (Total: ₹${Number(booking.total).toLocaleString("en-IN")}). Please assist me with payment confirmation.`
+                      )}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-4 rounded-full bg-[#0D7A53] hover:bg-[#0A6242] text-white text-xs uppercase tracking-widest font-semibold shadow-lg shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                      <span>Confirm on WhatsApp Concierge</span>
+                    </a>
+                  ) : null}
                 </div>
               ) : (
                 <button

@@ -13,6 +13,7 @@ interface PackageDetailClientActionsProps {
   waUrl: string;
   onlinePaymentsEnabled?: boolean;
   maintenanceMessage?: string;
+  whatsappEnabled?: boolean;
 }
 
 export function PackageDetailClientActions({
@@ -23,6 +24,7 @@ export function PackageDetailClientActions({
   waUrl,
   onlinePaymentsEnabled = false,
   maintenanceMessage,
+  whatsappEnabled = true,
 }: PackageDetailClientActionsProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -49,19 +51,21 @@ export function PackageDetailClientActions({
 
       {!onlinePaymentsEnabled && (
         <div className="p-2.5 rounded-xl bg-[#F7F7F5] border border-[#E4E5E7] text-[11px] text-[#5F6368] leading-tight text-center">
-          {maintenanceMessage || "Online checkout is paused for routine maintenance. Submit your booking request above or reach our Coimbatore concierge on WhatsApp."}
+          {maintenanceMessage || "Online checkout is paused for routine maintenance. Submit your booking request above or reach our concierge desk."}
         </div>
       )}
 
-      <a
-        href={waUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="w-full h-11 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] transition-all flex items-center justify-center gap-2"
-      >
-        <MessageCircle className="w-4 h-4" />
-        <span>Enquire on WhatsApp</span>
-      </a>
+      {whatsappEnabled && Boolean(waUrl) && (
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full h-11 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs uppercase tracking-widest font-semibold hover:bg-[#DCF3EA] transition-all flex items-center justify-center gap-2"
+        >
+          <MessageCircle className="w-4 h-4" />
+          <span>Enquire on WhatsApp</span>
+        </a>
+      )}
 
       <QuickInquiryModal
         isOpen={modalOpen}

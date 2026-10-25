@@ -34,7 +34,7 @@ const CUSTOMER_NAV: NavItem[] = [
 
 function CustomerPortalShell({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useCustomer();
-  const { displayName, shortName, logoUrl, initials: agencyInitials, city, state, getWhatsAppUrl } = useBranding();
+  const { displayName, shortName, logoUrl, initials: agencyInitials, city, state, getWhatsAppUrl, whatsappEnabled } = useBranding();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -112,16 +112,18 @@ function CustomerPortalShell({ children }: { children: React.ReactNode }) {
           {/* Right Header Actions */}
           <div className="flex items-center gap-3">
             {/* Direct WhatsApp Concierge Link */}
-            <a
-              href={getWhatsAppUrl(`Hi ${displayName}, I need assistance with my customer account.`)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs font-semibold hover:bg-[#DCF3EA] transition-all"
-              title="Concierge WhatsApp Support"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>Concierge</span>
-            </a>
+            {whatsappEnabled && getWhatsAppUrl(`Hi ${displayName}, I need assistance with my customer account.`) ? (
+              <a
+                href={getWhatsAppUrl(`Hi ${displayName}, I need assistance with my customer account.`)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden lg:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-[#A7E2CB] bg-[#EBF7F2] text-[#0D7A53] text-xs font-semibold hover:bg-[#DCF3EA] transition-all"
+                title="Concierge WhatsApp Support"
+              >
+                <MessageCircle className="w-3.5 h-3.5" />
+                <span>Concierge</span>
+              </a>
+            ) : null}
 
             {/* Public Catalog Link */}
             <Link
@@ -200,16 +202,18 @@ function CustomerPortalShell({ children }: { children: React.ReactNode }) {
                 <Compass className="w-4 h-4 text-[#24292F]" />
                 <span>Explore Packages</span>
               </Link>
-              <a
-                href={getWhatsAppUrl(`Hi ${displayName}, I need concierge assistance with my account.`)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3 py-2 text-xs text-[#0D7A53] font-medium"
-              >
-                <MessageCircle className="w-4 h-4" />
-                <span>WhatsApp Concierge</span>
-                <ExternalLink className="w-3 h-3 ml-auto opacity-70" />
-              </a>
+              {whatsappEnabled && getWhatsAppUrl(`Hi ${displayName}, I need concierge assistance with my account.`) ? (
+                <a
+                  href={getWhatsAppUrl(`Hi ${displayName}, I need concierge assistance with my account.`)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 text-xs text-[#0D7A53] font-medium"
+                >
+                  <MessageCircle className="w-4 h-4" />
+                  <span>WhatsApp Concierge</span>
+                  <ExternalLink className="w-3 h-3 ml-auto opacity-70" />
+                </a>
+              ) : null}
             </div>
           </div>
         )}

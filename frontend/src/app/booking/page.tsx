@@ -29,14 +29,10 @@ import {
   type PublicSiteSettings,
 } from "@/lib/api";
 import { PublicLayout } from "@/components/public/PublicLayout";
-import {
-  DEFAULT_WHATSAPP_NUMBER,
-  getWhatsAppClickToChatUrl,
-} from "@/lib/constants";
 import { useBranding } from "@/context/BrandingContext";
 
 function BookingFlow() {
-  const { displayName, shortName, city, getWhatsAppUrl } = useBranding();
+  const { displayName, shortName, city, getWhatsAppUrl, whatsappEnabled } = useBranding();
   const searchParams = useSearchParams();
   const router = useRouter();
   const packageSlug = searchParams.get("package") || "";
@@ -428,15 +424,17 @@ function BookingFlow() {
               <CreditCard className="w-4 h-4" />
               <span>Proceed to Secure Payment (Razorpay)</span>
             </Link>
-            <a
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full sm:w-auto px-6 py-4 rounded-full border border-[#E4E5E7] bg-white text-[#202124] text-xs uppercase tracking-widest font-semibold hover:bg-[#F3F4F4] transition-all flex items-center justify-center gap-2"
-            >
-              <MessageCircle className="w-4 h-4 text-emerald-600" />
-              <span>WhatsApp Support</span>
-            </a>
+            {whatsappEnabled && Boolean(waUrl) && (
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-6 py-4 rounded-full border border-[#E4E5E7] bg-white text-[#202124] text-xs uppercase tracking-widest font-semibold hover:bg-[#F3F4F4] transition-all flex items-center justify-center gap-2"
+              >
+                <MessageCircle className="w-4 h-4 text-emerald-600" />
+                <span>WhatsApp Support</span>
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -959,7 +957,7 @@ function BookingFlow() {
               </div>
               <p className="leading-relaxed">
                 {siteSettings && !siteSettings.online_payments_enabled
-                  ? (siteSettings.online_payments_maintenance_message || "Online card checkout is temporarily paused for routine maintenance. Submitting this form registers your official Booking Request with our Coimbatore concierge desk, who will contact you to confirm details.")
+                  ? (siteSettings.online_payments_maintenance_message || `Online card checkout is temporarily paused for routine maintenance. Submitting this form registers your official Booking Request with our ${city || "concierge"} desk, who will contact you to confirm details.`)
                   : "Your reservation will be created in Payment Pending status. No immediate online charge is made at this step."}
               </p>
             </div>

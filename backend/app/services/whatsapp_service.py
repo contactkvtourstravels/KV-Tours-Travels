@@ -21,11 +21,40 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 
 
-def _sanitize_phone(phone: str) -> str:
-    """Strip all non-numeric characters except leading '+' for international standard."""
-    cleaned = re.sub(r"[^\d+]", "", phone.strip())
-    # wa.me format expects digits only without leading '+'
-    return cleaned.lstrip("+")
+def normalize_whatsapp_number(phone: str, country_code: str = "+91") -> str:
+    """Safely normalize phone number to E.164 digits without leading '+'.
+
+    Prevents duplicated country codes, strips whitespace, leading zeros, and invalid characters.
+    """
+    if not phone:
+        return ""
+    raw = phone.strip()
+    is_explicit_intl = raw.startswith("+")
+    clean_code = re.sub(r"\D", "", country_code or "+91")
+    digits = re.sub(r"\D", "", raw)
+
+    if not digits:
+        return ""
+
+    if is_explicit_intl:
+        return digits
+
+    # Strip trunk prefix (e.g. 0...)
+    digits = digits.lstrip("0")
+    if not digits:
+        return ""
+
+    if clean_code:
+        # If already prefixed with country code (e.g. 91 followed by 10 digits = 12 digits)
+        if digits.startswith(clean_code) and len(digits) > len(clean_code) and len(digits) >= 11:
+            return digits
+        return f"{clean_code}{digits}"
+    return digits
+
+
+def _sanitize_phone(phone: str, country_code: str = "+91") -> str:
+    """Strip all non-numeric characters and return normalized E.164 digits."""
+    return normalize_whatsapp_number(phone, country_code)
 
 
 class WhatsAppService:
@@ -43,10 +72,43 @@ class WhatsAppService:
                     val = str(setting.value).strip()
                     if val:
                         return val
+                support_setting = db.get(SiteSetting, "support_whatsapp")
+                if support_setting and support_setting.value:
+                    val = str(support_setting.value).strip()
+                    if val:
+                        return val
             except Exception as exc:  # noqa: BLE001
                 logger.warning("Could not read whatsapp_number site setting: %s", exc)
 
         return self.settings.whatsapp_number
+
+    def get_configured_country_code(self, db: Session | None = None) -> str:
+        """Resolve WhatsApp country calling code from SiteSetting or fallback to +91."""
+        if db is not None:
+            try:
+                setting = db.get(SiteSetting, "whatsapp_country_code")
+                if setting and setting.value:
+                    val = str(setting.value).strip()
+                    if val:
+                        return val
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Could not read whatsapp_country_code site setting: %s", exc)
+        return "+91"
+
+    def is_whatsapp_enabled(self, db: Session | None = None) -> bool:
+        """Check if public WhatsApp click-to-chat is enabled."""
+        if db is not None:
+            try:
+                setting = db.get(SiteSetting, "whatsapp_enabled")
+                if setting and setting.value is not None:
+                    val = setting.value
+                    if isinstance(val, bool):
+                        return val
+                    if isinstance(val, str):
+                        return val.lower() in ("true", "1", "yes")
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Could not read whatsapp_enabled site setting: %s", exc)
+        return True
 
     def get_configured_agency_name(self, db: Session | None = None) -> str:
         """Resolve public agency display name from SiteSetting or fallback."""
@@ -63,11 +125,16 @@ class WhatsAppService:
         return self.settings.agency_name
 
     def generate_click_to_chat_url(
-        self, message: str, db: Session | None = None
+        self,
+        message: str,
+        db: Session | None = None,
+        phone: str | None = None,
+        country_code: str | None = None,
     ) -> str:
         """Build direct wa.me click-to-chat URL with prefilled URL-encoded message."""
-        phone = self.get_configured_phone(db)
-        clean_phone = _sanitize_phone(phone)
+        target_phone = phone or self.get_configured_phone(db)
+        target_code = country_code or self.get_configured_country_code(db)
+        clean_phone = normalize_whatsapp_number(target_phone, target_code)
         encoded_msg = urllib.parse.quote(message)
         return f"https://wa.me/{clean_phone}?text={encoded_msg}"
 

@@ -49,25 +49,37 @@ export interface BrandingContextValue {
   pdfFooterDeclaration: string;
   pdfBadgeLabel: string;
   pdfLogoUrl: string | null;
+  heroHeadline: string;
+  heroSubtitle: string;
+  businessDescription: string;
+  conciergeLabel: string;
+  whatsappEnabled: boolean;
+  whatsappCountryCode: string;
+  whatsappShowFloatingConcierge: boolean;
+  whatsappShowHeaderButton: boolean;
+  whatsappShowOnHomepage: boolean;
+  whatsappShowOnFooter: boolean;
+  whatsappShowOnPackagePages: boolean;
+  whatsappShowOnContactPage: boolean;
   getWhatsAppUrl: (prefilledMessage?: string) => string;
   updateBranding: (partial: Partial<PublicSiteSettings>) => void;
   refresh: () => Promise<PublicSiteSettings | null>;
 }
 
 const DEFAULT_SETTINGS: PublicSiteSettings = {
-  agency_name: "The Wild Root",
-  public_display_name: "The Wild Root",
-  short_name: "Wild Root",
-  tagline: "Palakkad • Luxury & Adventure Journeys",
-  agency_location: "Palakkad, Kerala, India",
-  office_address: "The Wild Root Lounge, Fort Maidan Road, Near Palakkad Fort, Palakkad, Kerala 678001",
-  city: "Palakkad",
-  state: "Kerala",
-  contact_email: "concierge@thewildroot.in",
-  contact_phone: DEFAULT_BUSINESS_PHONE,
-  whatsapp_number: DEFAULT_WHATSAPP_NUMBER,
+  agency_name: "Luxury Travel Concierge",
+  public_display_name: "Luxury Travel Concierge",
+  short_name: "Travel Concierge",
+  tagline: "Curated Journeys & Bespoke Expeditions",
+  agency_location: "Private Client Lounge",
+  office_address: "",
+  city: "",
+  state: "",
+  contact_email: "",
+  contact_phone: "",
+  whatsapp_number: "",
   currency: "INR",
-  instagram_handle: "thewildroot",
+  instagram_handle: "",
 };
 
 const BROADCAST_CHANNEL_NAME = "agency_branding_sync_channel";
@@ -347,11 +359,47 @@ export function BrandingProvider({
 
   const whatsapp = useMemo(() => {
     return (
-      settings?.support_whatsapp ||
       settings?.whatsapp_number ||
+      settings?.support_whatsapp ||
       DEFAULT_WHATSAPP_NUMBER
     );
-  }, [settings?.support_whatsapp, settings?.whatsapp_number]);
+  }, [settings?.whatsapp_number, settings?.support_whatsapp]);
+
+  const whatsappCountryCode = useMemo(() => {
+    return settings?.whatsapp_country_code || "+91";
+  }, [settings?.whatsapp_country_code]);
+
+  const whatsappEnabled = useMemo(() => {
+    return settings?.whatsapp_enabled !== false;
+  }, [settings?.whatsapp_enabled]);
+
+  const whatsappShowFloatingConcierge = useMemo(() => {
+    return (
+      settings?.whatsapp_show_floating_concierge ??
+      settings?.whatsapp_concierge_floating ??
+      true
+    );
+  }, [settings?.whatsapp_show_floating_concierge, settings?.whatsapp_concierge_floating]);
+
+  const whatsappShowHeaderButton = useMemo(() => {
+    return settings?.whatsapp_show_header_button !== false;
+  }, [settings?.whatsapp_show_header_button]);
+
+  const whatsappShowOnHomepage = useMemo(() => {
+    return settings?.whatsapp_show_on_homepage !== false;
+  }, [settings?.whatsapp_show_on_homepage]);
+
+  const whatsappShowOnFooter = useMemo(() => {
+    return settings?.whatsapp_show_on_footer !== false;
+  }, [settings?.whatsapp_show_on_footer]);
+
+  const whatsappShowOnPackagePages = useMemo(() => {
+    return settings?.whatsapp_show_on_package_pages !== false;
+  }, [settings?.whatsapp_show_on_package_pages]);
+
+  const whatsappShowOnContactPage = useMemo(() => {
+    return settings?.whatsapp_show_on_contact_page !== false;
+  }, [settings?.whatsapp_show_on_contact_page]);
 
   const email = useMemo(() => {
     return settings?.contact_email || "contact@travelagency.com";
@@ -460,15 +508,43 @@ export function BrandingProvider({
     return settings?.pdf_logo_url?.trim() || logoUrl || null;
   }, [settings?.pdf_logo_url, logoUrl]);
 
+  const heroHeadline = useMemo(() => {
+    return settings?.hero_headline?.trim() || "Every journey, thoughtfully designed.";
+  }, [settings?.hero_headline]);
+
+  const heroSubtitle = useMemo(() => {
+    return (
+      settings?.hero_subtitle?.trim() ||
+      settings?.business_description?.trim() ||
+      tagline ||
+      "Sign in to manage your bookings, download luxury travel itineraries, and contact your dedicated concierge."
+    );
+  }, [settings?.hero_subtitle, settings?.business_description, tagline]);
+
+  const businessDescription = useMemo(() => {
+    return settings?.business_description?.trim() || "";
+  }, [settings?.business_description]);
+
+  const conciergeLabel = useMemo(() => {
+    return (
+      settings?.pdf_badge_label?.trim() ||
+      settings?.contact_cta_text?.trim() ||
+      "Signature Concierge"
+    );
+  }, [settings?.pdf_badge_label, settings?.contact_cta_text]);
+
   const getWhatsAppUrl = useCallback(
     (prefilledMessage?: string) => {
+      if (settings?.whatsapp_enabled === false) {
+        return "";
+      }
       const msg =
         prefilledMessage ||
         settings?.whatsapp_prefilled_message ||
         `Hi ${displayName}, I would like to enquire about your travel packages.`;
-      return getWhatsAppClickToChatUrl(whatsapp, msg);
+      return getWhatsAppClickToChatUrl(whatsapp, msg, whatsappCountryCode);
     },
-    [whatsapp, settings?.whatsapp_prefilled_message, displayName]
+    [whatsapp, whatsappCountryCode, settings?.whatsapp_enabled, settings?.whatsapp_prefilled_message, displayName]
   );
 
   const value = useMemo<BrandingContextValue>(
@@ -504,6 +580,18 @@ export function BrandingProvider({
       pdfFooterDeclaration,
       pdfBadgeLabel,
       pdfLogoUrl,
+      heroHeadline,
+      heroSubtitle,
+      businessDescription,
+      conciergeLabel,
+      whatsappEnabled,
+      whatsappCountryCode,
+      whatsappShowFloatingConcierge,
+      whatsappShowHeaderButton,
+      whatsappShowOnHomepage,
+      whatsappShowOnFooter,
+      whatsappShowOnPackagePages,
+      whatsappShowOnContactPage,
       getWhatsAppUrl,
       updateBranding,
       refresh: fetchBranding,
@@ -540,6 +628,18 @@ export function BrandingProvider({
       pdfFooterDeclaration,
       pdfBadgeLabel,
       pdfLogoUrl,
+      heroHeadline,
+      heroSubtitle,
+      businessDescription,
+      conciergeLabel,
+      whatsappEnabled,
+      whatsappCountryCode,
+      whatsappShowFloatingConcierge,
+      whatsappShowHeaderButton,
+      whatsappShowOnHomepage,
+      whatsappShowOnFooter,
+      whatsappShowOnPackagePages,
+      whatsappShowOnContactPage,
       getWhatsAppUrl,
       updateBranding,
       fetchBranding,
@@ -560,42 +660,55 @@ export function useBranding(): BrandingContextValue {
     return {
       settings: DEFAULT_SETTINGS,
       loading: false,
-      displayName: DEFAULT_SETTINGS.public_display_name || "Travel Agency",
+      displayName: DEFAULT_SETTINGS.public_display_name || "Luxury Travel Concierge",
       agencyName: DEFAULT_SETTINGS.agency_name,
-      shortName: DEFAULT_SETTINGS.short_name || "Agency",
+      shortName: DEFAULT_SETTINGS.short_name || "Concierge",
       legalName: DEFAULT_SETTINGS.agency_name,
       tagline: DEFAULT_SETTINGS.tagline,
       logoUrl: null,
       secondaryLogoUrl: null,
       faviconUrl: null,
-      initials: "TA",
+      initials: "TC",
       phone: DEFAULT_BUSINESS_PHONE,
       whatsapp: DEFAULT_WHATSAPP_NUMBER,
       email: DEFAULT_SETTINGS.contact_email,
       address: DEFAULT_SETTINGS.office_address,
-      city: "Palakkad",
-      state: "Kerala",
+      city: "",
+      state: "",
       country: "India",
-      primaryColor: "#24292F",
+      primaryColor: "#1C2420",
       secondaryColor: "#C5A880",
       accentColor: "#D4AF37",
-      pdfHeaderTitle: DEFAULT_SETTINGS.public_display_name || "THE WILD ROOT",
-      pdfHeaderSubtitle: "BESPOKE LUXURY & ADVENTURE JOURNEYS • PALAKKAD OPERATIONS HUB",
-      pdfOfficeAddress: "The Wild Root Lounge, Fort Maidan Road, Near Palakkad Fort, Palakkad, Kerala 678001, India",
-      pdfContactInfo: `Concierge Desk: ${DEFAULT_BUSINESS_PHONE} | ${DEFAULT_SETTINGS.contact_email} | www.thewildroot.in`,
+      pdfHeaderTitle: DEFAULT_SETTINGS.public_display_name || "LUXURY TRAVEL CONCIERGE",
+      pdfHeaderSubtitle: "BESPOKE LUXURY & ADVENTURE JOURNEYS",
+      pdfOfficeAddress: "",
+      pdfContactInfo: "",
       pdfCheckinInstructions:
-        "Please present this official electronic voucher along with original government photo identification (or passport for international travel) during hotel check-in and departure assembly.",
+        "Please present this official electronic voucher along with original government photo identification during check-in.",
       pdfLogisticsNotice:
-        "Scheduled chauffeured transfers and curated excursions are confirmed as per the booked itinerary. Your travel host details will be notified 24 hours prior to departure.",
-      pdfHelplineInfo: `Palakkad Operations Desk: ${DEFAULT_BUSINESS_PHONE} | Priority WhatsApp Desk: ${DEFAULT_WHATSAPP_NUMBER} | ${DEFAULT_SETTINGS.contact_email}`,
+        "Scheduled transfers and curated excursions are confirmed as per the booked itinerary.",
+      pdfHelplineInfo: "Operations Desk & Concierge Support",
       pdfFooterDeclaration:
-        "The Wild Root Operations • Palakkad Portal\nComputer-generated authoritative travel document • Valid without physical signature",
-      pdfBadgeLabel: "Official Travel Voucher & Receipt",
+        "Computer-generated authoritative travel document • Valid without physical signature",
+      pdfBadgeLabel: "Signature Concierge",
       pdfLogoUrl: null,
+      heroHeadline: "Every journey, thoughtfully designed.",
+      heroSubtitle: "Sign in to manage your bookings, download luxury travel itineraries, and contact your dedicated concierge.",
+      businessDescription: "",
+      conciergeLabel: "Signature Concierge",
+      whatsappEnabled: true,
+      whatsappCountryCode: "+91",
+      whatsappShowFloatingConcierge: true,
+      whatsappShowHeaderButton: true,
+      whatsappShowOnHomepage: true,
+      whatsappShowOnFooter: true,
+      whatsappShowOnPackagePages: true,
+      whatsappShowOnContactPage: true,
       getWhatsAppUrl: (msg?: string) =>
         getWhatsAppClickToChatUrl(
           DEFAULT_WHATSAPP_NUMBER,
-          msg || "Hi, I would like to enquire about your travel packages."
+          msg || "Hi, I would like to enquire about your travel packages.",
+          "+91"
         ),
       updateBranding: () => {},
       refresh: async () => DEFAULT_SETTINGS,

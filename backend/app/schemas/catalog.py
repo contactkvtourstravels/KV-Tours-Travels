@@ -309,6 +309,7 @@ class PublicSiteSettings(BaseModel):
     whatsapp_booking_support_message: str = "Hi KV Tours, I need assistance with my booking."
     whatsapp_enabled: bool = True
     whatsapp_show_floating_concierge: bool = True
+    whatsapp_concierge_floating: bool = True
     whatsapp_show_header_button: bool = True
     whatsapp_show_on_homepage: bool = True
     whatsapp_show_on_footer: bool = True

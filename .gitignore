@@ -29,6 +29,7 @@ htmlcov/
 # Local databases and logs
 *.sqlite3
 *.db
+!backend/travelagency.db
 *.db-shm
 *.db-wal
 *.db.bak*

@@ -110,11 +110,16 @@ def migrate_data(
 
                 logger.info("Migrating table '%s': %d records found in SQLite...", table_name, len(rows))
 
-                # Identify boolean columns from target table
+                # Identify boolean and JSON columns from target table
                 boolean_cols = {
                     col.name
                     for col in pg_table.columns
                     if str(col.type).lower().startswith("bool")
+                }
+                json_cols = {
+                    col.name
+                    for col in pg_table.columns
+                    if "json" in str(col.type).lower()
                 }
 
                 records_to_insert = []
@@ -124,6 +129,13 @@ def migrate_data(
                     for b_col in boolean_cols:
                         if b_col in record and record[b_col] is not None:
                             record[b_col] = bool(record[b_col])
+                    # Parse JSON strings into Python dict/list structures for PostgreSQL JSON/JSONB
+                    for j_col in json_cols:
+                        if j_col in record and isinstance(record[j_col], str):
+                            try:
+                                record[j_col] = json.loads(record[j_col])
+                            except (ValueError, TypeError):
+                                pass
                     records_to_insert.append(record)
 
                 if not dry_run and records_to_insert:
@@ -156,15 +168,25 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Perform dry-run without committing")
     args = parser.parse_args()
 
-    sqlite_file = Path(args.sqlite_path)
-    if not sqlite_file.exists():
-        # Check backend/travelagency.db
-        candidate = Path("backend") / args.sqlite_path
-        if candidate.exists():
-            sqlite_file = candidate
-        else:
-            logger.error("Source SQLite database not found at %s", sqlite_file)
-            sys.exit(1)
+    candidates = [
+        Path(args.sqlite_path),
+        Path("backend") / args.sqlite_path,
+        Path(__file__).resolve().parent.parent / "travelagency.db",
+        Path(__file__).resolve().parent.parent / args.sqlite_path,
+    ]
+    sqlite_file = None
+    for cand in candidates:
+        if cand.exists():
+            sqlite_file = cand
+            break
+
+    if sqlite_file is None:
+        logger.error(
+            "Source SQLite database not found at %s. Tried: %s",
+            args.sqlite_path,
+            [str(c) for c in candidates],
+        )
+        sys.exit(1)
 
     from app.core.config import get_settings
     from app.db.session import get_engine

@@ -53,6 +53,16 @@ TABLE_ORDER = [
 ]
 
 
+# Explicit remapping for legacy destination IDs found in SQLite seed data
+DESTINATION_REMAP = {
+    "590e12cfddcc4d069119ac1f4de19092": "ec4cd28790e044f4b63ce3517d5610c9",  # Varanasi
+    "a716615a2db241809efe0bded52efece": "335406249bcb4905af610814891cffbd",  # Andaman
+    "00597677dc954190946d4551117800ea": "aef50ed12ad345c7a3cdec82dd82066f",  # Bali
+    "c1d05dc8df0b472bb14f41c691114ad2": "6f106211a8b84726878d9aa153df3211",  # Maldives
+    "21251ef46f834065ba410c6eca5f64ee": "7f342be32ec643bca9800c763595b20e",  # Japan
+}
+
+
 def get_sqlite_tables_and_counts(sqlite_path: Path) -> dict[str, int]:
     """Inspect SQLite database and return table row counts."""
     conn = sqlite3.connect(sqlite_path)
@@ -128,6 +138,25 @@ def migrate_data(
                     if "uuid" in str(col.type).lower()
                 }
 
+                # Query target IDs for foreign keys to validate constraints
+                fks_to_validate = []
+                for fk in pg_table.foreign_keys:
+                    tgt_tname = fk.column.table.name
+                    if tgt_tname in metadata.tables:
+                        tgt_col = fk.column.name
+                        src_col = fk.parent.name
+                        try:
+                            valid_target_ids = {
+                                str(r[0]).replace("-", "").strip().lower()
+                                for r in pg_conn.execute(
+                                    select(metadata.tables[tgt_tname].c[tgt_col])
+                                ).fetchall()
+                                if r[0] is not None
+                            }
+                            fks_to_validate.append((src_col, valid_target_ids, fk.parent.nullable, tgt_tname))
+                        except Exception:
+                            pass
+
                 records_to_insert = []
                 for row in rows:
                     record = dict(row)
@@ -142,6 +171,41 @@ def migrate_data(
                                 record[j_col] = json.loads(record[j_col])
                             except (ValueError, TypeError):
                                 pass
+
+                    # Remap legacy destination IDs if present
+                    if "destination_id" in record and record["destination_id"] is not None:
+                        clean_did = str(record["destination_id"]).replace("-", "").strip().lower()
+                        if clean_did in DESTINATION_REMAP:
+                            record["destination_id"] = DESTINATION_REMAP[clean_did]
+
+                    # Foreign key safety validation
+                    skip_row = False
+                    for src_col, valid_ids, is_nullable, tgt_tname in fks_to_validate:
+                        val = record.get(src_col)
+                        if val is not None and valid_ids:
+                            clean_val = str(val).replace("-", "").strip().lower()
+                            if clean_val not in valid_ids:
+                                if is_nullable:
+                                    logger.warning(
+                                        "Nullifying orphaned FK in %s.%s (%s -> %s)",
+                                        table_name,
+                                        src_col,
+                                        val,
+                                        tgt_tname,
+                                    )
+                                    record[src_col] = None
+                                else:
+                                    logger.warning(
+                                        "Skipping orphaned record in %s: %s points to non-existent %s",
+                                        table_name,
+                                        src_col,
+                                        tgt_tname,
+                                    )
+                                    skip_row = True
+                                    break
+                    if skip_row:
+                        continue
+
                     # Coerce UUID fields to valid UUID strings
                     for u_col in uuid_cols:
                         if u_col in record and record[u_col] is not None:

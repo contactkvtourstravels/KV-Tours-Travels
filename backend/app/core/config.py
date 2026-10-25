@@ -107,9 +107,16 @@ class Settings(BaseSettings):
     @property
     def cookie_secure(self) -> bool:
         """Enforce Secure cookies in production even if auth_cookie_secure is not explicitly set."""
-        if self.is_production:
+        if self.is_production or "onrender.com" in self.backend_url or "https://" in self.backend_url:
             return True
         return self.auth_cookie_secure
+
+    @property
+    def cookie_samesite(self) -> Literal["lax", "strict", "none"]:
+        """Enforce SameSite=none for cross-domain auth between Vercel and Render."""
+        if self.is_production or "vercel.app" in self.frontend_origins or "onrender.com" in self.backend_url:
+            return "none"
+        return self.auth_cookie_samesite
 
     @property
     def cors_origins(self) -> list[str]:
@@ -119,6 +126,11 @@ class Settings(BaseSettings):
             for origin in self.frontend_origins.split(",")
             if origin.strip()
         ]
+        # Always allow production Vercel frontend domain
+        vercel_domain = "https://the-wild-root.vercel.app"
+        if vercel_domain not in origins:
+            origins.append(vercel_domain)
+
         # In non-production, ensure standard local development origins are permitted
         if not self.is_production:
             dev_defaults = [

@@ -57,7 +57,7 @@ def set_auth_cookie(response: Response, raw_token: str) -> None:
         domain=settings.auth_cookie_domain,
         secure=settings.cookie_secure,
         httponly=True,  # Mandatory: inaccessible to client-side scripts
-        samesite=settings.auth_cookie_samesite,
+        samesite=settings.cookie_samesite,
     )
 
 
@@ -70,7 +70,7 @@ def clear_auth_cookie(response: Response) -> None:
         domain=settings.auth_cookie_domain,
         secure=settings.cookie_secure,
         httponly=True,
-        samesite=settings.auth_cookie_samesite,
+        samesite=settings.cookie_samesite,
     )
 
 

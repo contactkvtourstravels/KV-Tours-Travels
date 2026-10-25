@@ -28,7 +28,7 @@ def set_csrf_cookie(response: Response, token: str) -> None:
         domain=settings.auth_cookie_domain,
         secure=settings.cookie_secure,
         httponly=False,  # Intentionally readable by frontend JS for header attachment
-        samesite=settings.auth_cookie_samesite,
+        samesite=settings.cookie_samesite,
     )
 
 
@@ -41,7 +41,7 @@ def clear_csrf_cookie(response: Response) -> None:
         domain=settings.auth_cookie_domain,
         secure=settings.cookie_secure,
         httponly=False,
-        samesite=settings.auth_cookie_samesite,
+        samesite=settings.cookie_samesite,
     )
 
 

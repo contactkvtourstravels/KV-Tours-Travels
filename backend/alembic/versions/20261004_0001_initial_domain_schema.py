@@ -30,6 +30,7 @@ INITIAL_TABLE_NAMES = [
     "package_activities",
     "package_day_activities",
     "package_departures",
+    "best_offers",
     "bookings",
     "booking_travellers",
     "add_ons",

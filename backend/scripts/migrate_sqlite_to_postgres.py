@@ -24,6 +24,7 @@ TABLE_ORDER = [
     "roles",
     "users",
     "user_roles",
+    "user_sessions",
     "site_settings",
     "destinations",
     "destination_images",

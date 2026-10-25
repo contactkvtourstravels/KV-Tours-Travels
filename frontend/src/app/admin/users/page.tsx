@@ -468,7 +468,9 @@ export default function UsersAdminPage() {
                 {ALL_ROLES.map((role) => {
                   const isRoleSuperAdmin = role === "super_admin";
                   const isEligibleForSuperAdmin =
-                    roleModalUser.email.toLowerCase().trim() === "athulsuresh446@gmail.com";
+                    ["athulsuresh4466@gmail.com", "athulsuresh446@gmail.com"].includes(
+                      roleModalUser.email.toLowerCase().trim()
+                    );
                   const isDisabled = isRoleSuperAdmin && !isEligibleForSuperAdmin;
 
                   return (
@@ -484,7 +486,7 @@ export default function UsersAdminPage() {
                         <span className="capitalize text-slate-200">{role.replace("_", " ")}</span>
                         {isDisabled && (
                           <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-medium">
-                            Locked to athulsuresh446@gmail.com
+                            Authorized Super Admin Only
                           </span>
                         )}
                       </div>

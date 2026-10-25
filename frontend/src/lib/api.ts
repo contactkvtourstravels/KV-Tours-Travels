@@ -19,6 +19,8 @@ export interface SafeUser {
 export interface AuthResponse {
   user: SafeUser;
   message: string;
+  access_token?: string | null;
+  token_type?: string | null;
 }
 
 export interface MessageResponse {
@@ -1390,6 +1392,30 @@ export interface PublicPageResponse<T = Record<string, unknown>> {
 }
 
 
+const SESSION_TOKEN_KEY = "travel_session_token";
+
+export function getSessionToken(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return localStorage.getItem(SESSION_TOKEN_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export function setSessionToken(token: string | null): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (token) {
+      localStorage.setItem(SESSION_TOKEN_KEY, token);
+    } else {
+      localStorage.removeItem(SESSION_TOKEN_KEY);
+    }
+  } catch {
+    // Ignore restricted localStorage context errors
+  }
+}
+
 let cachedCsrfToken: string | null = null;
 let csrfPromise: Promise<string> | null = null;
 
@@ -1482,6 +1508,11 @@ export async function apiRequest<T>(
     Accept: "application/json",
     ...(options.headers as Record<string, string> | undefined),
   };
+
+  const sessionToken = getSessionToken();
+  if (sessionToken && !headers["Authorization"]) {
+    headers["Authorization"] = `Bearer ${sessionToken}`;
+  }
 
   if (options.body && typeof options.body === "string" && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
@@ -1590,6 +1621,9 @@ export const authApi = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    if (res.access_token) {
+      setSessionToken(res.access_token);
+    }
     clearCachedCsrfToken();
     return res;
   },
@@ -1602,6 +1636,9 @@ export const authApi = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    if (res.access_token) {
+      setSessionToken(res.access_token);
+    }
     clearCachedCsrfToken();
     return res;
   },
@@ -1616,16 +1653,23 @@ export const authApi = {
       method: "POST",
       body: JSON.stringify(payload),
     });
+    if (res.access_token) {
+      setSessionToken(res.access_token);
+    }
     clearCachedCsrfToken();
     return res;
   },
 
   logout: async (): Promise<MessageResponse> => {
-    const res = await apiRequest<MessageResponse>("/auth/logout", {
-      method: "POST",
-    });
-    clearCachedCsrfToken();
-    return res;
+    try {
+      const res = await apiRequest<MessageResponse>("/auth/logout", {
+        method: "POST",
+      });
+      return res;
+    } finally {
+      setSessionToken(null);
+      clearCachedCsrfToken();
+    }
   },
 
   getMe: async (): Promise<SafeUser> => {

@@ -18,7 +18,12 @@ from uuid import uuid4
 from sqlalchemy import inspect, select, text
 from sqlalchemy.orm import Session
 
-from app.core.permissions import AUTHORIZED_SUPER_ADMIN_EMAIL, ROLE_ADMIN, ROLE_SUPER_ADMIN
+from app.core.permissions import (
+    AUTHORIZED_SUPER_ADMIN_EMAIL,
+    AUTHORIZED_SUPER_ADMIN_EMAILS,
+    ROLE_ADMIN,
+    ROLE_SUPER_ADMIN,
+)
 from app.db.session import get_session_factory
 from app.models.content import AuditLog
 from app.models.user import Role, User, UserRole, UserSession
@@ -51,7 +56,7 @@ def run_super_admin_audit(db: Session) -> dict:
 
     for role_assignment, user in assignments:
         norm_email = (user.email_normalized or user.email or "").strip().lower()
-        if norm_email == AUTHORIZED_SUPER_ADMIN_EMAIL:
+        if norm_email in AUTHORIZED_SUPER_ADMIN_EMAILS:
             authorized_found = True
             logger.info("Verified authorized Super Admin account: %s (id=%s)", user.email, user.id)
         else:
@@ -74,7 +79,7 @@ def run_super_admin_audit(db: Session) -> dict:
                 metadata_json={
                     "previous_role": ROLE_SUPER_ADMIN,
                     "new_role": ROLE_ADMIN,
-                    "reason": f"Super Admin restricted exclusively to {AUTHORIZED_SUPER_ADMIN_EMAIL}",
+                    "reason": f"Super Admin restricted exclusively to {AUTHORIZED_SUPER_ADMIN_EMAILS}",
                     "target_email": user.email,
                 },
             )
@@ -86,12 +91,25 @@ def run_super_admin_audit(db: Session) -> dict:
                 "new_role": ROLE_ADMIN,
             })
 
-    # Check if authorized account exists in DB
-    target_user = db.execute(
-        select(User).where(User.email_normalized == AUTHORIZED_SUPER_ADMIN_EMAIL)
-    ).scalar_one_or_none()
+    # 3. Check and provision super_admin for any existing authorized super admin accounts
+    for auth_email in sorted(AUTHORIZED_SUPER_ADMIN_EMAILS):
+        target_user = db.execute(
+            select(User).where(User.email_normalized == auth_email)
+        ).scalar_one_or_none()
+        if target_user:
+            target_user.is_email_verified = True
+            has_super = db.execute(
+                select(UserRole).where(
+                    UserRole.user_id == target_user.id,
+                    UserRole.role_id == super_admin_role.id,
+                )
+            ).scalar_one_or_none()
+            if not has_super:
+                db.add(UserRole(user_id=target_user.id, role_id=super_admin_role.id))
+                logger.info("Provisioned super_admin role for authorized account: %s", target_user.email)
+            authorized_found = True
 
-    target_exists = target_user is not None
+    target_exists = authorized_found
     target_has_super = authorized_found
 
     db.commit()

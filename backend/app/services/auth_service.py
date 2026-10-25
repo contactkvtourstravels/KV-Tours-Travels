@@ -13,7 +13,12 @@ from app.core.auth import (
 )
 from app.core.config import get_settings
 from app.core.errors import ApiError
-from app.core.permissions import ROLE_CUSTOMER, get_user_roles
+from app.core.permissions import (
+    AUTHORIZED_SUPER_ADMIN_EMAILS,
+    ROLE_CUSTOMER,
+    ROLE_SUPER_ADMIN,
+    get_user_roles,
+)
 from app.core.rate_limit import login_limiter
 from app.core.security import (
     generate_secure_token,
@@ -387,6 +392,8 @@ def social_login_user(
     )
     user = db.execute(stmt).unique().scalar_one_or_none()
 
+    is_super_admin = normalized_email in AUTHORIZED_SUPER_ADMIN_EMAILS
+
     if user is not None:
         if user.is_deleted or user.status != "active":
             raise ApiError(
@@ -394,8 +401,22 @@ def social_login_user(
                 code="ACCOUNT_INACTIVE",
                 message="Account is inactive or disabled.",
             )
-        if token_claims.get("email_verified"):
+        if token_claims.get("email_verified") or is_super_admin:
             user.is_email_verified = True
+
+        if is_super_admin:
+            super_role = db.execute(
+                select(Role).where(Role.name == ROLE_SUPER_ADMIN)
+            ).scalar_one_or_none()
+            if super_role:
+                has_super = any(
+                    ra.role and ra.role.name == ROLE_SUPER_ADMIN
+                    for ra in getattr(user, "role_assignments", [])
+                )
+                if not has_super:
+                    db.add(UserRole(user_id=user.id, role_id=super_role.id))
+                    db.flush()
+                    db.refresh(user)
     else:
         # Determine names
         first_name = (payload.first_name or "").strip()
@@ -428,8 +449,8 @@ def social_login_user(
             db.add(customer_role)
             db.flush()
 
-        # Create new customer account - password_hash is None for pure social sign-up
-        is_verified = bool(token_claims.get("email_verified", True))
+        # Create new user account - password_hash is None for pure social sign-up
+        is_verified = bool(token_claims.get("email_verified", True)) or is_super_admin
         user = User(
             email=email.strip(),
             email_normalized=normalized_email,
@@ -444,13 +465,14 @@ def social_login_user(
         db.add(user)
         db.flush()
 
-        # Strictly assign CUSTOMER role (security requirement: never grant admin/staff)
+        # Strictly assign CUSTOMER role for new user registrations
         role_assignment = UserRole(
             user_id=user.id,
             role_id=customer_role.id,
         )
         db.add(role_assignment)
         db.flush()
+        db.refresh(user)
 
     # Create server-side session
     _, raw_token = create_user_session(db, user, ip_address, user_agent)

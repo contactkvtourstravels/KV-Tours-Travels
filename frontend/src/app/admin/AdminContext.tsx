@@ -6,7 +6,11 @@ import { authApi, SafeUser } from "@/lib/api";
 
 export type AdminRole = "customer" | "staff" | "manager" | "admin" | "super_admin";
 
-export const AUTHORIZED_SUPER_ADMIN_EMAIL = "athulsuresh446@gmail.com";
+export const AUTHORIZED_SUPER_ADMIN_EMAILS = [
+  "athulsuresh4466@gmail.com",
+  "athulsuresh446@gmail.com",
+];
+export const AUTHORIZED_SUPER_ADMIN_EMAIL = "athulsuresh4466@gmail.com";
 
 interface AdminContextType {
   user: SafeUser | null;
@@ -55,7 +59,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const isSuperAdmin = Boolean(
     user &&
     user.email &&
-    user.email.toLowerCase().trim() === AUTHORIZED_SUPER_ADMIN_EMAIL &&
+    AUTHORIZED_SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase().trim()) &&
     user.roles.includes("super_admin") &&
     Boolean(user.is_email_verified)
   );

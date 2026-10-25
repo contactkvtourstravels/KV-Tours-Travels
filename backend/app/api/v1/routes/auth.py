@@ -115,6 +115,8 @@ def register(
     return AuthResponse(
         user=to_safe_user_response(user),
         message="Registration successful.",
+        access_token=raw_token,
+        token_type="bearer",
     )
 
 
@@ -147,6 +149,8 @@ def login(
     return AuthResponse(
         user=to_safe_user_response(user),
         message="Login successful.",
+        access_token=raw_token,
+        token_type="bearer",
     )
 
 
@@ -181,6 +185,8 @@ def social_login(
     return AuthResponse(
         user=to_safe_user_response(user),
         message=f"Signed in successfully with {provider_label}.",
+        access_token=raw_token,
+        token_type="bearer",
     )
 
 

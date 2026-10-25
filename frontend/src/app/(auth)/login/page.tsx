@@ -35,12 +35,12 @@ function LoginForm() {
         ["staff", "manager", "admin", "super_admin"].includes(r)
       );
 
-      if (redirectTarget) {
+      if (redirectTarget && redirectTarget !== "/dashboard") {
         router.push(redirectTarget);
       } else if (isStaffOrAdmin) {
         router.push("/admin");
       } else {
-        router.push("/dashboard");
+        router.push(redirectTarget || "/dashboard");
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -59,12 +59,12 @@ function LoginForm() {
       ["staff", "manager", "admin", "super_admin"].includes(r)
     );
 
-    if (redirectTarget) {
+    if (redirectTarget && redirectTarget !== "/dashboard") {
       router.push(redirectTarget);
     } else if (isStaffOrAdmin) {
       router.push("/admin");
     } else {
-      router.push("/dashboard");
+      router.push(redirectTarget || "/dashboard");
     }
   };
 

@@ -13,6 +13,7 @@ from sqlalchemy import select
 from app.core.permissions import (
     ALL_ROLES,
     AUTHORIZED_SUPER_ADMIN_EMAIL,
+    AUTHORIZED_SUPER_ADMIN_EMAILS,
     ROLE_SUPER_ADMIN,
     has_role,
 )
@@ -84,10 +85,10 @@ def _perform_bootstrap(
     password: str,
     reset_password: bool = False,
 ) -> None:
-    if normalized_email != AUTHORIZED_SUPER_ADMIN_EMAIL:
+    if normalized_email not in AUTHORIZED_SUPER_ADMIN_EMAILS:
         raise ValueError(
-            f"Security policy violation: Only the designated authorized Super Admin account "
-            f"({AUTHORIZED_SUPER_ADMIN_EMAIL}) is permitted to hold the super_admin role. "
+            f"Security policy violation: Only the designated authorized Super Admin accounts "
+            f"({AUTHORIZED_SUPER_ADMIN_EMAILS}) are permitted to hold the super_admin role. "
             f"Attempted email: '{email}'."
         )
 

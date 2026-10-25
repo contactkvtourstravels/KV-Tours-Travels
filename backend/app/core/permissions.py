@@ -12,8 +12,12 @@ ROLE_MANAGER: Final[str] = "manager"
 ROLE_ADMIN: Final[str] = "admin"
 ROLE_SUPER_ADMIN: Final[str] = "super_admin"
 
-# Single Authorized Super Administrator for the entire agency platform
-AUTHORIZED_SUPER_ADMIN_EMAIL: Final[str] = "athulsuresh446@gmail.com"
+# Authorized Super Administrator emails for the agency platform
+AUTHORIZED_SUPER_ADMIN_EMAILS: Final[set[str]] = {
+    "athulsuresh446@gmail.com",
+    "athulsuresh4466@gmail.com",
+}
+AUTHORIZED_SUPER_ADMIN_EMAIL: Final[str] = "athulsuresh4466@gmail.com"
 
 ALL_ROLES: Final[list[str]] = [
     ROLE_CUSTOMER,
@@ -41,18 +45,18 @@ def normalize_admin_email(email: str | None) -> str:
 
 
 def is_authorized_super_admin(user: User) -> bool:
-    """Validate if user is the sole authorized super admin account with verified email.
+    """Validate if user is the authorized super admin account with verified email.
 
     Strict Invariants:
     1. Account must be active and not soft-deleted.
-    2. Email must exactly match 'athulsuresh446@gmail.com' when normalized.
+    2. Email must match authorized super admin emails when normalized.
     3. Email ownership must be verified (is_email_verified).
     """
     if not user or getattr(user, "is_deleted", False) or getattr(user, "status", "") != "active":
         return False
 
     email = normalize_admin_email(getattr(user, "email_normalized", None) or getattr(user, "email", None))
-    if email != AUTHORIZED_SUPER_ADMIN_EMAIL:
+    if email not in AUTHORIZED_SUPER_ADMIN_EMAILS:
         return False
 
     # Email verification check
@@ -67,9 +71,9 @@ def get_user_roles(user: User) -> list[str]:
     """Extract list of role names assigned to a user.
 
     Strict Security Invariant:
-    'super_admin' is EXCLUSIVELY permitted for the single authorized email:
-    'athulsuresh446@gmail.com'. Under NO circumstances will super_admin be
-    acknowledged for any other user, regardless of database records or request payloads.
+    'super_admin' is EXCLUSIVELY permitted for the authorized super admin emails.
+    Under NO circumstances will super_admin be acknowledged for any other user,
+    regardless of database records or request payloads.
     """
     roles = []
     authorized_super = is_authorized_super_admin(user)

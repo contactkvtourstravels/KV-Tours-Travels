@@ -40,6 +40,10 @@ def get_engine():
         return engine
 
     # Production-grade PostgreSQL pooling configuration
+    connect_args: dict[str, object] = {}
+    if "-pooler" in settings.database_url:
+        connect_args["prepare_threshold"] = None
+
     return create_engine(
         settings.database_url,
         pool_pre_ping=True,
@@ -47,6 +51,7 @@ def get_engine():
         max_overflow=settings.db_max_overflow,
         pool_timeout=30,
         pool_recycle=1800,  # Recycle connection every 30 minutes to mitigate cloud firewall drops
+        connect_args=connect_args,
     )
 
 

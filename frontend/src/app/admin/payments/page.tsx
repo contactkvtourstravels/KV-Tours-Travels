@@ -32,6 +32,7 @@ import {
   Eye,
   EyeOff,
   Building,
+  Edit3,
 } from "lucide-react";
 import {
   adminPaymentApi,
@@ -1775,6 +1776,16 @@ export default function AdminPaymentControlCenterPage() {
                   </div>
 
                   <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                    {isElevated && (
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditCredentials(selectedConfigEnv)}
+                        className="px-4 py-2 bg-[#24292F] hover:bg-[#3D4450] text-[#E8DCC4] rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+                      >
+                        <Key className="w-3.5 h-3.5 text-[#C5A880]" />
+                        <span>Change API Credentials</span>
+                      </button>
+                    )}
                     <a
                       href="https://dashboard.render.com"
                       target="_blank"
@@ -1835,6 +1846,17 @@ export default function AdminPaymentControlCenterPage() {
                   <div className="flex items-center gap-2.5 flex-wrap">
                     {!isEditingCredentials ? (
                       <>
+                        {isElevated && (
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditCredentials(selectedConfigEnv)}
+                            className="px-4 py-2 bg-[#24292F] hover:bg-[#3D4450] text-[#E8DCC4] rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-2 shadow-xs cursor-pointer"
+                          >
+                            <Key className="w-3.5 h-3.5 text-[#C5A880]" />
+                            <span>Change API Credentials</span>
+                          </button>
+                        )}
+
                         <button
                           type="button"
                           onClick={() => handleRunDiagnosticForEnv(selectedConfigEnv)}
@@ -1901,7 +1923,7 @@ export default function AdminPaymentControlCenterPage() {
                 {/* Credential Fields Card */}
                 <div className="border border-[#E4E5E7] rounded-3xl p-6 bg-[#FAFAF8] space-y-6">
                   <div className="flex items-center justify-between border-b border-[#E4E5E7] pb-3 flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2.5 flex-wrap">
                       <span className="text-xs font-bold uppercase tracking-wider text-[#202124]">
                         {selectedConfigEnv === "live" ? "Live Production" : "Test Sandbox"} Credential Store
                       </span>
@@ -1914,6 +1936,16 @@ export default function AdminPaymentControlCenterPage() {
                       >
                         {currentEnvData?.is_configured ? "Configured" : "Incomplete"}
                       </span>
+                      {isElevated && !isEditingCredentials && (
+                        <button
+                          type="button"
+                          onClick={() => handleStartEditCredentials(selectedConfigEnv)}
+                          className="px-3 py-1 bg-[#24292F] hover:bg-[#3D4450] text-[#E8DCC4] rounded-lg text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-xs transition-all"
+                        >
+                          <Edit3 className="w-3 h-3 text-[#C5A880]" />
+                          <span>Edit Credentials</span>
+                        </button>
+                      )}
                     </div>
 
                     <span className="text-xs font-medium text-[#70757A]">
@@ -1948,12 +1980,16 @@ export default function AdminPaymentControlCenterPage() {
                       </div>
 
                       {!isEditingCredentials ? (
-                        <div className="flex items-center gap-2">
+                        <div
+                          className="flex items-center gap-2 cursor-pointer group"
+                          onClick={() => isElevated && handleStartEditCredentials(selectedConfigEnv)}
+                          title="Click to edit credentials"
+                        >
                           <input
                             type="text"
                             readOnly
                             value={currentEnvData?.key_id_masked || (selectedConfigEnv === "test" ? settings?.razorpay_key_id_masked : "None")}
-                            className="w-full px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-xs font-mono text-[#202124]"
+                            className="w-full px-3.5 py-2.5 bg-white group-hover:border-[#C5A880] border border-[#D3D8DF] rounded-xl text-xs font-mono text-[#202124] cursor-pointer transition-colors"
                           />
                           <span className={`text-[11px] px-2.5 py-1 rounded-lg font-bold uppercase shrink-0 border ${
                             currentEnvData?.key_id ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-600 border-slate-200"
@@ -1990,12 +2026,16 @@ export default function AdminPaymentControlCenterPage() {
                       </div>
 
                       {!isEditingCredentials ? (
-                        <div className="flex items-center gap-2">
+                        <div
+                          className="flex items-center gap-2 cursor-pointer group"
+                          onClick={() => isElevated && handleStartEditCredentials(selectedConfigEnv)}
+                          title="Click to edit credentials"
+                        >
                           <input
                             type="password"
                             readOnly
                             value="••••••••••••••••••••••••"
-                            className="w-full px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-xs font-mono text-[#202124]"
+                            className="w-full px-3.5 py-2.5 bg-white group-hover:border-[#C5A880] border border-[#D3D8DF] rounded-xl text-xs font-mono text-[#202124] cursor-pointer transition-colors"
                           />
                           <span className={`text-[11px] px-2.5 py-1 rounded-lg font-bold uppercase shrink-0 border ${
                             currentEnvData?.key_secret_configured
@@ -2046,12 +2086,16 @@ export default function AdminPaymentControlCenterPage() {
                       </div>
 
                       {!isEditingCredentials ? (
-                        <div className="flex items-center gap-2">
+                        <div
+                          className="flex items-center gap-2 cursor-pointer group"
+                          onClick={() => isElevated && handleStartEditCredentials(selectedConfigEnv)}
+                          title="Click to edit credentials"
+                        >
                           <input
                             type="password"
                             readOnly
                             value="••••••••••••••••••••••••"
-                            className="w-full px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-xs font-mono text-[#202124]"
+                            className="w-full px-3.5 py-2.5 bg-white group-hover:border-[#C5A880] border border-[#D3D8DF] rounded-xl text-xs font-mono text-[#202124] cursor-pointer transition-colors"
                           />
                           <span className={`text-[11px] px-2.5 py-1 rounded-lg font-bold uppercase shrink-0 border ${
                             currentEnvData?.webhook_secret_configured
@@ -2110,6 +2154,54 @@ export default function AdminPaymentControlCenterPage() {
                       </label>
                     </div>
                   )}
+
+                  {/* Card Footer Actions */}
+                  <div className="pt-4 border-t border-[#E4E5E7] flex items-center justify-between flex-wrap gap-3">
+                    {!isEditingCredentials ? (
+                      <>
+                        <p className="text-xs text-[#5F6368]">
+                          {currentEnvData?.is_configured
+                            ? `Razorpay ${selectedConfigEnv.toUpperCase()} credentials are saved and encrypted with AES-256-GCM.`
+                            : `Razorpay ${selectedConfigEnv.toUpperCase()} credentials are incomplete. Click "Edit Credentials" to enter your Razorpay keys.`}
+                        </p>
+                        {isElevated && (
+                          <button
+                            type="button"
+                            onClick={() => handleStartEditCredentials(selectedConfigEnv)}
+                            className="px-4 py-2 bg-[#24292F] hover:bg-[#3D4450] text-[#E8DCC4] rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-xs cursor-pointer transition-all"
+                          >
+                            <Edit3 className="w-3.5 h-3.5 text-[#C5A880]" />
+                            <span>Edit {selectedConfigEnv === "live" ? "Live Production" : "Test Sandbox"} Credentials</span>
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-xs text-[#5F6368]">
+                          Enter your Razorpay Key ID, Secret, and Webhook Signing Secret. Secrets are encrypted with AES-256-GCM before saving.
+                        </p>
+                        <div className="flex items-center gap-2.5">
+                          <button
+                            type="button"
+                            onClick={handleCancelEditCredentials}
+                            disabled={savingCredentials}
+                            className="px-4 py-2 bg-white hover:bg-[#F7F7F5] text-[#202124] border border-[#D3D8DF] rounded-xl text-xs font-bold uppercase tracking-wider cursor-pointer"
+                          >
+                            Cancel Changes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleSaveCredentialsSecurely()}
+                            disabled={savingCredentials}
+                            className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider flex items-center gap-2 shadow-xs cursor-pointer"
+                          >
+                            {savingCredentials ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
+                            <span>{savingCredentials ? "Encrypting & Saving..." : "Save Securely"}</span>
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
 

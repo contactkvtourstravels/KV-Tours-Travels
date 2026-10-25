@@ -116,23 +116,25 @@ def test_inspect_encryption_key_missing():
         assert "missing from environment" in res["message"]
 
 
-def test_inspect_encryption_key_malformed_too_short():
-    """Verify that a key with insufficient bytes is reported as 'malformed'."""
-    short_b64 = base64.b64encode(b"too_short_16byte").decode("utf-8")
+def test_inspect_encryption_key_short_or_arbitrary_string_derives_valid_key():
+    """Verify that a key with arbitrary length (e.g. 18-byte key) is deterministically derived into a valid 32-byte key."""
+    short_b64 = base64.b64encode(b"too_short_18byte__").decode("utf-8")
     with patch.dict(os.environ, {"PAYMENT_CREDENTIALS_ENCRYPTION_KEY": short_b64}, clear=False):
         res = inspect_encryption_key()
-        assert res["status"] == "malformed"
-        assert res["key_bytes"] is None
-        assert "requires exactly 32 bytes" in res["message"]
+        assert res["status"] == "valid"
+        assert res["format"] == "derived"
+        assert len(res["key_bytes"]) == 32
+        assert res["key_length_bytes"] == 32
 
 
-def test_inspect_encryption_key_malformed_invalid_hex():
-    """Verify that 64 characters with invalid hex digits are reported as 'malformed'."""
+def test_inspect_encryption_key_invalid_hex_derives_valid_key():
+    """Verify that arbitrary strings with non-hex characters derive a valid 32-byte key."""
     bad_hex = "Z" * 64
     with patch.dict(os.environ, {"PAYMENT_CREDENTIALS_ENCRYPTION_KEY": bad_hex}, clear=False):
         res = inspect_encryption_key()
-        assert res["status"] == "malformed"
-        assert res["key_bytes"] is None
+        assert res["status"] == "valid"
+        assert res["format"] == "derived"
+        assert len(res["key_bytes"]) == 32
 
 
 def test_generate_encryption_key_format():

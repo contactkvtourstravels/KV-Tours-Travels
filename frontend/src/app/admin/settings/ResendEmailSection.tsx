@@ -804,17 +804,27 @@ export default function ResendEmailSection({
             <p className="text-[11px] text-[#5F6368]">Shown as the sender name in the customer&apos;s email client.</p>
           </div>
 
-          {/* Outbound Sender Email */}
-          <div className="space-y-1.5">
-            <label className="block text-xs font-bold text-[#202124]">
-              Outbound Sender Email Address <span className="text-rose-500">*</span>
-            </label>
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-bold text-[#202124]">
+                Outbound Sender Email Address <span className="text-rose-500">*</span>
+              </label>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => setSenderEmail("onboarding@resend.dev")}
+                  className="text-[11px] font-semibold text-[#0D7A53] hover:underline cursor-pointer"
+                  title="Use Resend Sandbox (no DNS required)"
+                >
+                  Use onboarding@resend.dev (No DNS)
+                </button>
+              )}
+            </div>
             <input
               type="email"
               value={senderEmail}
               onChange={(e) => setSenderEmail(e.target.value)}
               disabled={!canEdit}
-              placeholder="bookings@thewildroute.in"
+              placeholder="onboarding@resend.dev"
               className={`w-full text-xs px-3.5 py-2.5 bg-white border rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden ${
                 errors.email_sender_email ? "border-rose-400 bg-rose-50/20" : "border-[#D3D8DF]"
               }`}
@@ -822,8 +832,9 @@ export default function ResendEmailSection({
             {errors.email_sender_email && (
               <p className="text-[11px] text-rose-600">{errors.email_sender_email}</p>
             )}
-            <p className="text-[11px] text-[#5F6368]">Must belong to a domain verified in your Resend account.</p>
-          </div>
+            <p className="text-[11px] text-[#5F6368]">
+              Verified custom domain address or <code className="font-mono text-[#202124]">onboarding@resend.dev</code> for testing without DNS.
+            </p>
 
           {/* Customer Reply-To */}
           <div className="space-y-1.5">

@@ -52,7 +52,7 @@ def test_whatsapp_concierge_floating_validation_and_persistence(client, db_sessi
         payload = {
             "whatsapp_country_code": "+91",
             "whatsapp_number": "+91 98765 43210",
-            "whatsapp_prefilled_message": "Namaste The Wild Root Concierge",
+            "whatsapp_prefilled_message": "Namaste The Wild Route Concierge",
             "whatsapp_enabled": True,
             "whatsapp_concierge_floating": True,
             "whatsapp_show_floating_concierge": True,

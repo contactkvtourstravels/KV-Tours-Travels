@@ -597,7 +597,7 @@ export default function AdminPackagesContentPage() {
                   })
                 }
                 disabled={!canEdit}
-                placeholder="Extraordinary Itineraries | KV Tours & Travels"
+                placeholder="Extraordinary Itineraries | The Wild Route"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>

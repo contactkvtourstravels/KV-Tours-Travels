@@ -3620,7 +3620,7 @@ export default function AdminPaymentControlCenterPage() {
                   className="w-full px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl font-bold text-[#202124] focus:outline-none focus:border-[#C5A880]"
                 />
                 <p className="text-[11px] text-[#70757A] mt-1">
-                  Amount verified as credited to the KV Tours bank account.
+                  Amount verified as credited to the agency bank account.
                 </p>
               </div>
 

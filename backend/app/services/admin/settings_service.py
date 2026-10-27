@@ -319,15 +319,15 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         emergency_phone=str(overrides.get("emergency_phone")) if overrides.get("emergency_phone") else None,
         contact_email=str(overrides.get("contact_email", settings.contact_email)),
         customer_support_email=str(overrides.get("customer_support_email")) if overrides.get("customer_support_email") else str(overrides.get("contact_email", settings.contact_email)),
-        booking_email=str(overrides.get("booking_email")) if overrides.get("booking_email") else "bookings@wildroot.in",
+        booking_email=str(overrides.get("booking_email")) if overrides.get("booking_email") else "bookings@thewildroute.in",
         general_inquiry_email=str(overrides.get("general_inquiry_email")) if overrides.get("general_inquiry_email") else str(overrides.get("contact_email", settings.contact_email)),
-        reply_to_email=str(overrides.get("reply_to_email")) if overrides.get("reply_to_email") else "concierge@wildroot.in",
+        reply_to_email=str(overrides.get("reply_to_email")) if overrides.get("reply_to_email") else "concierge@thewildroute.in",
 
         # Social and Online
-        instagram_handle=str(overrides.get("instagram_handle", "@wildroot")),
-        instagram_url=str(overrides.get("instagram_url")) if overrides.get("instagram_url") else "https://instagram.com/wildroot",
+        instagram_handle=str(overrides.get("instagram_handle", "@thewildroute")),
+        instagram_url=str(overrides.get("instagram_url")) if overrides.get("instagram_url") else "https://instagram.com/thewildroute",
         facebook_url=str(overrides.get("facebook_url")) if overrides.get("facebook_url") else None,
-        website_url=str(overrides.get("website_url")) if overrides.get("website_url") else "https://wildroot.in",
+        website_url=str(overrides.get("website_url")) if overrides.get("website_url") else "https://thewildroute.in",
         google_maps_url=str(overrides.get("google_maps_url")) if overrides.get("google_maps_url") else None,
 
         # Business Information
@@ -342,13 +342,13 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         whatsapp_prefilled_message=str(
             overrides.get(
                 "whatsapp_prefilled_message",
-                "Hi Wild Root, I am interested in planning a trip.",
+                "Hi The Wild Route, I am interested in planning a trip.",
             )
         ),
-        whatsapp_package_message=str(overrides.get("whatsapp_package_message", "Hi Wild Root, I am interested in this package.")),
-        whatsapp_destination_message=str(overrides.get("whatsapp_destination_message", "Hi Wild Root, I would like to know more about this destination.")),
-        whatsapp_custom_trip_message=str(overrides.get("whatsapp_custom_trip_message", "Hi Wild Root, I would like to plan a custom holiday.")),
-        whatsapp_booking_support_message=str(overrides.get("whatsapp_booking_support_message", "Hi Wild Root, I need assistance with my booking.")),
+        whatsapp_package_message=str(overrides.get("whatsapp_package_message", "Hi The Wild Route, I am interested in this package.")),
+        whatsapp_destination_message=str(overrides.get("whatsapp_destination_message", "Hi The Wild Route, I would like to know more about this destination.")),
+        whatsapp_custom_trip_message=str(overrides.get("whatsapp_custom_trip_message", "Hi The Wild Route, I would like to plan a custom holiday.")),
+        whatsapp_booking_support_message=str(overrides.get("whatsapp_booking_support_message", "Hi The Wild Route, I need assistance with my booking.")),
         whatsapp_enabled=_parse_bool(overrides.get("whatsapp_enabled"), True),
         whatsapp_show_floating_concierge=_parse_bool(
             overrides.get("whatsapp_show_floating_concierge", overrides.get("whatsapp_concierge_floating")), True
@@ -395,10 +395,10 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         resend_webhook_signing_secret_masked=resend_webhook_masked,
         resend_webhook_url=resend_webhook_url,
         resend_webhook_tunnel_url=str(overrides.get("resend_webhook_tunnel_url")).strip() if overrides.get("resend_webhook_tunnel_url") else None,
-        email_sender_name=str(overrides.get("email_sender_name", "The Wild Root")),
-        email_sender_email=str(overrides.get("email_sender_email", "bookings@thewildroot.in")),
-        email_reply_to=str(overrides.get("email_reply_to", "concierge@thewildroot.in")),
-        admin_notification_email=str(overrides.get("admin_notification_email", "admin@thewildroot.in")),
+        email_sender_name=str(overrides.get("email_sender_name", "The Wild Route")),
+        email_sender_email=str(overrides.get("email_sender_email", "bookings@thewildroute.in")),
+        email_reply_to=str(overrides.get("email_reply_to", "concierge@thewildroute.in")),
+        admin_notification_email=str(overrides.get("admin_notification_email", "admin@thewildroute.in")),
         email_enabled=_parse_bool(overrides.get("email_enabled"), True),
         email_booking_confirmation_enabled=_parse_bool(
             overrides.get("email_booking_confirmation_enabled"), True
@@ -415,10 +415,10 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         email_trip_reminders_enabled=_parse_bool(
             overrides.get("email_trip_reminders_enabled"), True
         ),
-        email_subject_booking_confirmation=str(overrides.get("email_subject_booking_confirmation", "Your Booking Confirmation — Wild Root")),
-        email_subject_payment_receipt=str(overrides.get("email_subject_payment_receipt", "Payment Receipt — Wild Root")),
-        email_subject_inquiry_ack=str(overrides.get("email_subject_inquiry_ack", "Inquiry Received — Wild Root")),
-        email_subject_trip_reminder=str(overrides.get("email_subject_trip_reminder", "Your Upcoming Journey with Wild Root")),
+        email_subject_booking_confirmation=str(overrides.get("email_subject_booking_confirmation", "Your Booking Confirmation — The Wild Route")),
+        email_subject_payment_receipt=str(overrides.get("email_subject_payment_receipt", "Payment Receipt — The Wild Route")),
+        email_subject_inquiry_ack=str(overrides.get("email_subject_inquiry_ack", "Inquiry Received — The Wild Route")),
+        email_subject_trip_reminder=str(overrides.get("email_subject_trip_reminder", "Your Upcoming Journey with The Wild Route")),
 
         # Homepage Content & Visibility
         hero_headline=str(overrides.get("hero_headline", "Handcrafted Journeys Beyond the Ordinary")),
@@ -831,7 +831,7 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
     if "<" in sender_email and ">" in sender_email:
         sender_email = sender_email.split("<")[1].split(">")[0].strip()
 
-    domain = sender_email.split("@")[-1] if "@" in sender_email else "thewildroot.in"
+    domain = sender_email.split("@")[-1] if "@" in sender_email else "thewildroute.in"
 
     api_key = get_resend_api_key(db)
     if not api_key:
@@ -871,7 +871,7 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
             status="unverified",
             message=(
                 "Resend sandbox sender (onboarding@resend.dev) detected. Production customer emails cannot be sent from resend.dev. "
-                "Please configure a sender address on your verified domain (e.g. bookings@thewildroot.in) and verify the domain at resend.com/domains."
+                "Please configure a sender address on your verified domain (e.g. bookings@thewildroute.in) and verify the domain at resend.com/domains."
             ),
             provider="resend",
             api_key_configured=True,
@@ -989,7 +989,7 @@ def send_test_email(
     settings = get_settings()
     from app.services.catalog_service import get_public_settings
     pub = get_public_settings(db)
-    agency_name = pub.public_display_name or pub.agency_name or settings.agency_name or "The Wild Root"
+    agency_name = pub.public_display_name or pub.agency_name or settings.agency_name or "The Wild Route"
     accent_color = pub.brand_accent_color or "#D4AF37"
 
     sender_name_row = db.get(SiteSetting, "email_sender_name")
@@ -999,13 +999,13 @@ def send_test_email(
     if sender_email_row and sender_email_row.value:
         sender_email = str(sender_email_row.value).strip()
     else:
-        sender_email = "bookings@thewildroot.in"
+        sender_email = "bookings@thewildroute.in"
 
     reply_to_row = db.get(SiteSetting, "email_reply_to")
     if reply_to_row and reply_to_row.value:
         reply_to = str(reply_to_row.value).strip()
     else:
-        reply_to = pub.customer_support_email or pub.contact_email or "concierge@thewildroot.in"
+        reply_to = pub.customer_support_email or pub.contact_email or "concierge@thewildroute.in"
 
     from_header = f"{sender_name} <{sender_email}>"
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")

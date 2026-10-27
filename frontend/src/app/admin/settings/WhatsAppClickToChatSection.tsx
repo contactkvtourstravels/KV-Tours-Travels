@@ -40,23 +40,23 @@ export default function WhatsAppClickToChatSection({
   );
   const [waPrefilledMessage, setWaPrefilledMessage] = useState(
     settings.whatsapp_prefilled_message ||
-      "Namaste KV Tours & Travels Coimbatore, please assist me with holiday packages."
+      "Namaste The Wild Route Palakkad, please assist me with holiday packages."
   );
   const [packageInquiryMessage, setPackageInquiryMessage] = useState(
     settings.whatsapp_package_message ||
-      "Hello KV Tours, I am interested in booking the {package_name} package. Please share details and availability."
+      "Hello The Wild Route, I am interested in booking the {package_name} package. Please share details and availability."
   );
   const [destinationInquiryMessage, setDestinationInquiryMessage] = useState(
     settings.whatsapp_destination_message ||
-      "Hi KV Tours, I would like to explore custom itineraries for {destination_name}."
+      "Hi The Wild Route, I would like to explore custom itineraries for {destination_name}."
   );
   const [customTripMessage, setCustomTripMessage] = useState(
     settings.whatsapp_custom_trip_message ||
-      "Namaste, I would like to plan a bespoke luxury holiday with KV Tours & Travels."
+      "Namaste, I would like to plan a bespoke luxury holiday with The Wild Route."
   );
   const [bookingSupportMessage, setBookingSupportMessage] = useState(
     settings.whatsapp_booking_support_message ||
-      "Hello KV Tours Concierge, I need assistance with my booking {booking_reference}."
+      "Hello The Wild Route Concierge, I need assistance with my booking {booking_reference}."
   );
 
   // Visibility & Feature Toggles
@@ -85,19 +85,19 @@ export default function WhatsAppClickToChatSection({
       waNumber !== (settings.whatsapp_number || settings.support_whatsapp || "9842212345") ||
       waPrefilledMessage !==
         (settings.whatsapp_prefilled_message ||
-          "Namaste KV Tours & Travels Coimbatore, please assist me with holiday packages.") ||
+          "Namaste The Wild Route Palakkad, please assist me with holiday packages.") ||
       packageInquiryMessage !==
         (settings.whatsapp_package_message ||
-          "Hello KV Tours, I am interested in booking the {package_name} package. Please share details and availability.") ||
+          "Hello The Wild Route, I am interested in booking the {package_name} package. Please share details and availability.") ||
       destinationInquiryMessage !==
         (settings.whatsapp_destination_message ||
-          "Hi KV Tours, I would like to explore custom itineraries for {destination_name}.") ||
+          "Hi The Wild Route, I would like to explore custom itineraries for {destination_name}.") ||
       customTripMessage !==
         (settings.whatsapp_custom_trip_message ||
-          "Namaste, I would like to plan a bespoke luxury holiday with KV Tours & Travels.") ||
+          "Namaste, I would like to plan a bespoke luxury holiday with The Wild Route.") ||
       bookingSupportMessage !==
         (settings.whatsapp_booking_support_message ||
-          "Hello KV Tours Concierge, I need assistance with my booking {booking_reference}.") ||
+          "Hello The Wild Route Concierge, I need assistance with my booking {booking_reference}.") ||
       waEnabled !== (settings.whatsapp_enabled ?? true) ||
       waShowOnHomepage !== (settings.whatsapp_show_on_homepage ?? true) ||
       waShowOnFooter !== (settings.whatsapp_show_on_footer ?? true) ||
@@ -166,23 +166,23 @@ export default function WhatsAppClickToChatSection({
     setWaNumber(settings.whatsapp_number || settings.support_whatsapp || "9842212345");
     setWaPrefilledMessage(
       settings.whatsapp_prefilled_message ||
-        "Namaste KV Tours & Travels Coimbatore, please assist me with holiday packages."
+        "Namaste The Wild Route Palakkad, please assist me with holiday packages."
     );
     setPackageInquiryMessage(
       settings.whatsapp_package_message ||
-        "Hello KV Tours, I am interested in booking the {package_name} package. Please share details and availability."
+        "Hello The Wild Route, I am interested in booking the {package_name} package. Please share details and availability."
     );
     setDestinationInquiryMessage(
       settings.whatsapp_destination_message ||
-        "Hi KV Tours, I would like to explore custom itineraries for {destination_name}."
+        "Hi The Wild Route, I would like to explore custom itineraries for {destination_name}."
     );
     setCustomTripMessage(
       settings.whatsapp_custom_trip_message ||
-        "Namaste, I would like to plan a bespoke luxury holiday with KV Tours & Travels."
+        "Namaste, I would like to plan a bespoke luxury holiday with The Wild Route."
     );
     setBookingSupportMessage(
       settings.whatsapp_booking_support_message ||
-        "Hello KV Tours Concierge, I need assistance with my booking {booking_reference}."
+        "Hello The Wild Route Concierge, I need assistance with my booking {booking_reference}."
     );
     setWaEnabled(settings.whatsapp_enabled ?? true);
     setWaShowOnHomepage(settings.whatsapp_show_on_homepage ?? true);

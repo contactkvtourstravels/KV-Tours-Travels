@@ -60,17 +60,17 @@ export default function ResendEmailSection({
   onDirtyChange,
   onViewLogs,
 }: ResendEmailSectionProps) {
-  const defaultAgencyName = settings.public_display_name || settings.agency_name || "The Wild Root";
+  const defaultAgencyName = settings.public_display_name || settings.agency_name || "The Wild Route";
 
   // Master Toggle & Sender Configuration
   const [emailEnabled, setEmailEnabled] = useState(settings.email_enabled ?? true);
   const [senderName, setSenderName] = useState(settings.email_sender_name || defaultAgencyName);
-  const [senderEmail, setSenderEmail] = useState(settings.email_sender_email || "bookings@thewildroot.in");
+  const [senderEmail, setSenderEmail] = useState(settings.email_sender_email || "bookings@thewildroute.in");
   const [replyToEmail, setReplyToEmail] = useState(
-    settings.email_reply_to || settings.reply_to_email || "concierge@thewildroot.in"
+    settings.email_reply_to || settings.reply_to_email || "concierge@thewildroute.in"
   );
   const [adminNotificationEmail, setAdminNotificationEmail] = useState(
-    settings.admin_notification_email || "admin@thewildroot.in"
+    settings.admin_notification_email || "admin@thewildroute.in"
   );
 
   // Protected Resend API Key
@@ -81,7 +81,7 @@ export default function ResendEmailSection({
   const [showApiKey, setShowApiKey] = useState(false);
 
   // Test Email State
-  const [testRecipient, setTestRecipient] = useState(settings.admin_notification_email || "admin@thewildroot.in");
+  const [testRecipient, setTestRecipient] = useState(settings.admin_notification_email || "admin@thewildroute.in");
   const [sendingTest, setSendingTest] = useState(false);
   const [testResult, setTestResult] = useState<EmailSendTestResponse | null>(null);
   const [lastTestStatus, setLastTestStatus] = useState<"success" | "failed" | "not_tested">("not_tested");
@@ -114,7 +114,7 @@ export default function ResendEmailSection({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Derive target sender domain
-  const senderDomain = senderEmail.includes("@") ? senderEmail.split("@")[1].trim() : "thewildroot.in";
+  const senderDomain = senderEmail.includes("@") ? senderEmail.split("@")[1].trim() : "thewildroute.in";
 
   // Production Webhook URL
   const productionWebhookUrl =
@@ -144,9 +144,9 @@ export default function ResendEmailSection({
     const isDirty =
       emailEnabled !== (settings.email_enabled ?? true) ||
       senderName !== (settings.email_sender_name || defaultAgencyName) ||
-      senderEmail !== (settings.email_sender_email || "bookings@thewildroot.in") ||
-      replyToEmail !== (settings.email_reply_to || settings.reply_to_email || "concierge@thewildroot.in") ||
-      adminNotificationEmail !== (settings.admin_notification_email || "admin@thewildroot.in") ||
+      senderEmail !== (settings.email_sender_email || "bookings@thewildroute.in") ||
+      replyToEmail !== (settings.email_reply_to || settings.reply_to_email || "concierge@thewildroute.in") ||
+      adminNotificationEmail !== (settings.admin_notification_email || "admin@thewildroute.in") ||
       apiKey.trim().length > 0 ||
       webhookSecret.trim().length > 0;
 
@@ -173,9 +173,9 @@ export default function ResendEmailSection({
   const handleReset = () => {
     setEmailEnabled(settings.email_enabled ?? true);
     setSenderName(settings.email_sender_name || defaultAgencyName);
-    setSenderEmail(settings.email_sender_email || "bookings@thewildroot.in");
-    setReplyToEmail(settings.email_reply_to || settings.reply_to_email || "concierge@thewildroot.in");
-    setAdminNotificationEmail(settings.admin_notification_email || "admin@thewildroot.in");
+    setSenderEmail(settings.email_sender_email || "bookings@thewildroute.in");
+    setReplyToEmail(settings.email_reply_to || settings.reply_to_email || "concierge@thewildroute.in");
+    setAdminNotificationEmail(settings.admin_notification_email || "admin@thewildroute.in");
     setApiKey("");
     setIsReplacingKey(!keyConfigured);
     setShowApiKey(false);
@@ -238,7 +238,7 @@ export default function ResendEmailSection({
         success: false,
         provider: "resend",
         recipient: testRecipient,
-        message: "Please enter a valid recipient email address (e.g. admin@thewildroot.in).",
+        message: "Please enter a valid recipient email address (e.g. admin@thewildroute.in).",
         timestamp: new Date().toISOString(),
       });
       setLastTestStatus("failed");
@@ -814,7 +814,7 @@ export default function ResendEmailSection({
               value={senderEmail}
               onChange={(e) => setSenderEmail(e.target.value)}
               disabled={!canEdit}
-              placeholder="bookings@thewildroot.in"
+              placeholder="bookings@thewildroute.in"
               className={`w-full text-xs px-3.5 py-2.5 bg-white border rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden ${
                 errors.email_sender_email ? "border-rose-400 bg-rose-50/20" : "border-[#D3D8DF]"
               }`}
@@ -835,7 +835,7 @@ export default function ResendEmailSection({
               value={replyToEmail}
               onChange={(e) => setReplyToEmail(e.target.value)}
               disabled={!canEdit}
-              placeholder="concierge@thewildroot.in"
+              placeholder="concierge@thewildroute.in"
               className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
             />
             <p className="text-[11px] text-[#5F6368]">Where customer replies are delivered when they hit &apos;Reply&apos;.</p>
@@ -851,7 +851,7 @@ export default function ResendEmailSection({
               value={adminNotificationEmail}
               onChange={(e) => setAdminNotificationEmail(e.target.value)}
               disabled={!canEdit}
-              placeholder="admin@thewildroot.in"
+              placeholder="admin@thewildroute.in"
               className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
             />
             <p className="text-[11px] text-[#5F6368]">Receives automated internal alerts for bookings and customer inquiries.</p>
@@ -898,7 +898,7 @@ export default function ResendEmailSection({
               type="email"
               value={testRecipient}
               onChange={(e) => setTestRecipient(e.target.value)}
-              placeholder="Recipient email address (e.g. admin@thewildroot.in)..."
+              placeholder="Recipient email address (e.g. admin@thewildroute.in)..."
               disabled={sendingTest}
               className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden disabled:bg-stone-50"
             />

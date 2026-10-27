@@ -65,10 +65,10 @@ class Settings(BaseSettings):
     cloudinary_api_secret: str = "wildroot_api_secret_dev"
 
     # Public Agency & WhatsApp Configuration
-    agency_name: str = "The Wild Root"
+    agency_name: str = "The Wild Route"
     agency_location: str = "Palakkad, Kerala, India"
     whatsapp_number: str = "+919442000000"
-    contact_email: str = "contact@wildroot.in"
+    contact_email: str = "contact@thewildroute.in"
     contact_phone: str = "+91 94420 00000"
 
     # Razorpay Payment Gateway Settings (Test / Sandbox defaults)
@@ -90,8 +90,8 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_username: str = ""
     smtp_password: SecretStr = SecretStr("")
-    email_from: str = "Wild Root <bookings@wildroot.in>"
-    email_reply_to: str = "concierge@wildroot.in"
+    email_from: str = "The Wild Route <bookings@thewildroute.in>"
+    email_reply_to: str = "concierge@thewildroute.in"
 
     # WhatsApp Communication Settings
     whatsapp_provider: str = "direct"  # 'direct', 'cloud_api', 'mock'
@@ -126,10 +126,15 @@ class Settings(BaseSettings):
             for origin in self.frontend_origins.split(",")
             if origin.strip()
         ]
-        # Always allow production Vercel frontend domain
-        vercel_domain = "https://the-wild-root.vercel.app"
-        if vercel_domain not in origins:
-            origins.append(vercel_domain)
+        # Always allow production frontend domains
+        for prod_domain in (
+            "https://the-wild-route.vercel.app",
+            "https://the-wild-root.vercel.app",
+            "https://thewildroute.in",
+            "https://www.thewildroute.in",
+        ):
+            if prod_domain not in origins:
+                origins.append(prod_domain)
 
         # In non-production, ensure standard local development origins are permitted
         if not self.is_production:

@@ -155,18 +155,18 @@ export default function InquiriesAdminPage() {
     try {
       setEmailSending(true);
       setEmailError(null);
-      await adminOperationsApi.contactCustomerEmail({
+      const res = await adminOperationsApi.contactCustomerEmail({
         inquiry_id: selectedInquiryId,
         subject: emailSubject.trim(),
         body: emailBody.trim(),
       });
-      setEmailSuccess("Email sent to lead.");
+      setEmailSuccess(res.message || "Email sent to lead.");
       setEmailSubject("");
       setEmailBody("");
       setTimeout(() => {
         setEmailModalOpen(false);
         setEmailSuccess(null);
-      }, 2000);
+      }, 4000);
     } catch (err: unknown) {
       setEmailError((err as Error).message || "Failed to dispatch email.");
     } finally {

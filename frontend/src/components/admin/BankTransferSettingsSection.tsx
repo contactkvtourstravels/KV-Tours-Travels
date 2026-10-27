@@ -362,7 +362,7 @@ export default function BankTransferSettingsSection() {
               />
             </div>
             <p className="text-[11px] text-[#70757A]">
-              Allows in-person payment at the KV Tours Coimbatore headquarters.
+              Allows in-person payment at the The Wild Route Palakkad headquarters.
             </p>
           </div>
 
@@ -409,7 +409,7 @@ export default function BankTransferSettingsSection() {
               type="text"
               value={accountHolderName}
               onChange={(e) => setAccountHolderName(e.target.value)}
-              placeholder="e.g. KV TOURS AND TRAVELS PRIVATE LIMITED"
+              placeholder="e.g. THE WILD ROUTE PRIVATE LIMITED"
               disabled={!canEdit}
               className="w-full px-3.5 py-2.5 bg-[#F7F7F5] border border-[#D3D8DF] rounded-xl text-[#202124] focus:outline-none focus:border-[#C5A880]"
             />
@@ -505,7 +505,7 @@ export default function BankTransferSettingsSection() {
               type="text"
               value={upiId}
               onChange={(e) => setUpiId(e.target.value)}
-              placeholder="e.g. kvtours@hdfcbank"
+              placeholder="e.g. thewildroute@hdfcbank"
               disabled={!canEdit}
               className="w-full px-3.5 py-2.5 bg-[#F7F7F5] border border-[#D3D8DF] rounded-xl font-mono text-[#202124] focus:outline-none focus:border-[#C5A880]"
             />
@@ -589,7 +589,7 @@ export default function BankTransferSettingsSection() {
                 type="email"
                 value={assistanceEmail}
                 onChange={(e) => setAssistanceEmail(e.target.value)}
-                placeholder="accounts@kvtours.in"
+                placeholder="accounts@thewildroute.in"
                 disabled={!canEdit}
                 className="w-full px-3.5 py-2.5 bg-[#F7F7F5] border border-[#D3D8DF] rounded-xl text-[#202124] focus:outline-none focus:border-[#C5A880]"
               />

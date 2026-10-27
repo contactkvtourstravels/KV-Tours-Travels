@@ -575,7 +575,7 @@ def test_customer_communication_whatsapp_and_email(client, db_session) -> None:
     assert resp_wa.status_code == 200
     wa_data = resp_wa.json()
     assert "wa.me" in wa_data["click_to_chat_url"]
-    assert any(b_name in wa_data["message"] for b_name in ("KV Tours", "Wild Root"))
+    assert any(b_name in wa_data["message"] for b_name in ("The Wild Route", "Wild Route", "KV Tours", "Wild Root"))
 
     # Email dispatch
     resp_email = client.post(

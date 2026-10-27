@@ -82,7 +82,7 @@ function ContactPageContent() {
     settings?.public_display_name ||
     settings?.agency_name ||
     brandDisplayName ||
-    "The Wild Root";
+    "The Wild Route";
   const city = branding.city || settings?.city || "Palakkad";
   const content = pageData?.content;
 
@@ -91,7 +91,7 @@ function ContactPageContent() {
     content?.cards?.office_address ||
     branding.office_address ||
     settings?.office_address ||
-    "The Wild Root Lounge, Fort Maidan Road, Near Palakkad Fort, Palakkad, Kerala 678001";
+    "The Wild Route Lounge, Fort Maidan Road, Near Palakkad Fort, Palakkad, Kerala 678001";
 
   const operatingHours =
     content?.cards?.operating_hours ||
@@ -109,7 +109,7 @@ function ContactPageContent() {
     content?.cards?.contact_email ||
     branding.contact_email ||
     settings?.contact_email ||
-    "concierge@thewildroot.in";
+    "concierge@thewildroute.in";
 
   const whatsappNumber =
     branding.whatsapp_number ||

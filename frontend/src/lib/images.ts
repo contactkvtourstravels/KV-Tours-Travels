@@ -1,5 +1,5 @@
 /**
- * Image resolution and fallback utility for KV Tours & Travels.
+ * Image resolution and fallback utility for The Wild Route.
  * Ensures relative admin uploads, remote CDNs, and fallbacks are handled robustly.
  */
 

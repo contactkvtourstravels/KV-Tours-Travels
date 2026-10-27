@@ -155,10 +155,10 @@ class EmailService:
             try:
                 from app.services.catalog_service import get_public_settings
                 pub = get_public_settings(db)
-                return pub.customer_support_email or pub.contact_email or "concierge@thewildroot.in"
+                return pub.customer_support_email or pub.contact_email or "concierge@thewildroute.in"
             except Exception:
                 pass
-        return self.settings.contact_email or "concierge@thewildroot.in"
+        return self.settings.contact_email or "concierge@thewildroute.in"
 
     def _send_via_mock(
         self,
@@ -197,11 +197,38 @@ class EmailService:
             agency_name = self._get_agency_name(db)
             sender_name_val = s_name.value if s_name and s_name.value else agency_name
             if s_email and s_email.value:
-                email_from = f"{sender_name_val} <{s_email.value}>"
+                raw_email = str(s_email.value).strip().strip('"').strip("'")
+                if "<" in raw_email and ">" in raw_email:
+                    raw_email = raw_email.split("<")[1].split(">")[0].strip()
+                email_from = f"{sender_name_val} <{raw_email}>"
             elif s_name and s_name.value:
-                email_from = f"{s_name.value} <{self._get_fallback_concierge_email(db)}>"
+                fallback_email = self._get_fallback_concierge_email(db).strip().strip('"').strip("'")
+                if "<" in fallback_email and ">" in fallback_email:
+                    fallback_email = fallback_email.split("<")[1].split(">")[0].strip()
+                email_from = f"{s_name.value} <{fallback_email}>"
             if s_reply and s_reply.value:
-                email_reply_to = str(s_reply.value)
+                email_reply_to = str(s_reply.value).strip().strip('"').strip("'")
+
+        # Extract raw sender address for validation
+        sender_addr = email_from
+        if "<" in sender_addr and ">" in sender_addr:
+            sender_addr = sender_addr.split("<")[1].split(">")[0].strip()
+        sender_addr = sender_addr.strip().lower()
+
+        forbidden_domains = (
+            "@gmail.com",
+            "@googlemail.com",
+            "@yahoo.com",
+            "@yahoo.co.in",
+            "@outlook.com",
+            "@hotmail.com",
+            "@icloud.com",
+        )
+        if any(sender_addr.endswith(d) for d in forbidden_domains):
+            raise ValueError(
+                f"Resend does not permit sending from '{sender_addr}'. Public webmail domains (@gmail.com, @yahoo.com, etc.) cannot be used as the From address. "
+                f"Please verify your agency domain (e.g. 'thewildroute.in') in Resend and use 'bookings@thewildroute.in', or use 'onboarding@resend.dev' for sandbox testing."
+            )
 
         # Generate a clean plain-text fallback if not explicitly passed
         if not text_body:
@@ -228,7 +255,14 @@ class EmailService:
                 },
                 json=payload,
             )
-            resp.raise_for_status()
+            if resp.status_code >= 400:
+                err_text = resp.text
+                try:
+                    err_json = resp.json()
+                    err_text = err_json.get("message") or err_json.get("error") or err_text
+                except Exception:
+                    pass
+                raise RuntimeError(f"Resend delivery error (HTTP {resp.status_code}): {err_text}")
             data = resp.json()
             return str(data.get("id") or f"resend-{uuid4().hex[:8]}")
 
@@ -1129,7 +1163,7 @@ class EmailService:
         admin_email = (
             str(admin_email_row.value).strip()
             if admin_email_row and admin_email_row.value
-            else "admin@thewildroot.in"
+            else "admin@thewildroute.in"
         )
         if not admin_email or "@" not in admin_email:
             return None
@@ -1195,7 +1229,7 @@ class EmailService:
         admin_email = (
             str(admin_email_row.value).strip()
             if admin_email_row and admin_email_row.value
-            else "admin@thewildroot.in"
+            else "admin@thewildroute.in"
         )
         if not admin_email or "@" not in admin_email:
             return None

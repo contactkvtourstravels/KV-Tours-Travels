@@ -53,7 +53,7 @@ async def lifespan(_: FastAPI):
 
 
 app = FastAPI(
-    title="KV Tours & Travels API",
+    title="The Wild Route API",
     version="1.0.0",
     docs_url=None if settings.is_production else "/docs",
     redoc_url=None if settings.is_production else "/redoc",

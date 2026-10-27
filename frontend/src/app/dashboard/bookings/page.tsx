@@ -136,7 +136,7 @@ export default function CustomerBookingsPage() {
             type="text"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by package name or KV-2026 reference..."
+            placeholder="Search by package name or booking reference..."
             className="w-full pl-10 pr-4 py-2 rounded-xl bg-[#F7F7F5] border border-[#E4E5E7] text-xs text-[#202124] placeholder-[#70757A]/60 focus:outline-none focus:border-[#24292F] transition-all"
           />
         </form>

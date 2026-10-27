@@ -858,11 +858,11 @@ class AdminSiteSettingsResponse(BaseModel):
 
     # Business Identity
     legal_business_name: str | None = None
-    agency_name: str = "Wild Root"
+    agency_name: str = "The Wild Route"
     public_display_name: str | None = None
     admin_panel_name: str | None = None
     admin_portal_subtitle: str | None = None
-    tagline: str = "Wild Root • Luxury & Adventure Journeys"
+    tagline: str = "The Wild Route • Luxury & Adventure Journeys"
     logo_url: str | None = None
     favicon_url: str | None = None
     business_description: str | None = None
@@ -882,14 +882,14 @@ class AdminSiteSettingsResponse(BaseModel):
     secondary_phone: str | None = None
     support_whatsapp: str | None = None
     emergency_phone: str | None = None
-    contact_email: str = "contact@wildroot.in"
+    contact_email: str = "contact@thewildroute.in"
     customer_support_email: str | None = None
     booking_email: str | None = None
     general_inquiry_email: str | None = None
     reply_to_email: str | None = None
 
     # Social and Online Presence
-    instagram_handle: str | None = "@wildroot"
+    instagram_handle: str | None = "@thewildroute"
     instagram_url: str | None = None
     facebook_url: str | None = None
     website_url: str | None = None
@@ -904,11 +904,11 @@ class AdminSiteSettingsResponse(BaseModel):
     # WhatsApp Click-to-Chat
     whatsapp_number: str = "+919442000000"
     whatsapp_country_code: str = "+91"
-    whatsapp_prefilled_message: str = "Hi Wild Root, I am interested in planning a trip."
-    whatsapp_package_message: str = "Hi Wild Root, I am interested in this package."
-    whatsapp_destination_message: str = "Hi Wild Root, I would like to know more about this destination."
-    whatsapp_custom_trip_message: str = "Hi Wild Root, I would like to plan a custom holiday."
-    whatsapp_booking_support_message: str = "Hi Wild Root, I need assistance with my booking."
+    whatsapp_prefilled_message: str = "Hi The Wild Route, I am interested in planning a trip."
+    whatsapp_package_message: str = "Hi The Wild Route, I am interested in this package."
+    whatsapp_destination_message: str = "Hi The Wild Route, I would like to know more about this destination."
+    whatsapp_custom_trip_message: str = "Hi The Wild Route, I would like to plan a custom holiday."
+    whatsapp_booking_support_message: str = "Hi The Wild Route, I need assistance with my booking."
     whatsapp_enabled: bool = True
     whatsapp_show_floating_concierge: bool = True
     whatsapp_concierge_floating: bool = True
@@ -939,20 +939,20 @@ class AdminSiteSettingsResponse(BaseModel):
     resend_webhook_signing_secret_masked: str | None = None
     resend_webhook_url: str | None = None
     resend_webhook_tunnel_url: str | None = None
-    email_sender_name: str = "The Wild Root"
-    email_sender_email: str = "bookings@thewildroot.in"
-    email_reply_to: str = "concierge@thewildroot.in"
-    admin_notification_email: str | None = "admin@thewildroot.in"
+    email_sender_name: str = "The Wild Route"
+    email_sender_email: str = "bookings@thewildroute.in"
+    email_reply_to: str = "concierge@thewildroute.in"
+    admin_notification_email: str | None = "admin@thewildroute.in"
     email_enabled: bool = True
     email_booking_confirmation_enabled: bool = True
     email_inquiry_ack_enabled: bool = True
     email_payment_receipt_enabled: bool = True
     email_cancellation_updates_enabled: bool = True
     email_trip_reminders_enabled: bool = True
-    email_subject_booking_confirmation: str = "Your Booking Confirmation — The Wild Root"
-    email_subject_payment_receipt: str = "Payment Receipt — The Wild Root"
-    email_subject_inquiry_ack: str = "Inquiry Received — The Wild Root"
-    email_subject_trip_reminder: str = "Your Upcoming Journey with The Wild Root"
+    email_subject_booking_confirmation: str = "Your Booking Confirmation — The Wild Route"
+    email_subject_payment_receipt: str = "Payment Receipt — The Wild Route"
+    email_subject_inquiry_ack: str = "Inquiry Received — The Wild Route"
+    email_subject_trip_reminder: str = "Your Upcoming Journey with The Wild Route"
 
     # Homepage Content & Visibility
     hero_headline: str = "Handcrafted Journeys Beyond the Ordinary"
@@ -1298,7 +1298,7 @@ class EmailSendTestRequest(BaseModel):
 
     recipient_email: str | None = None
     recipient: str | None = None
-    subject: str = "The Wild Root — Email Configuration Test"
+    subject: str = "The Wild Route — Email Configuration Test"
     notes: str | None = None
 
     @model_validator(mode="after")

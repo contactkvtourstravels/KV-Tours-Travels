@@ -376,7 +376,7 @@ def _canonical_slug(slug: str) -> str:
 def _get_agency_context(db: Session) -> dict[str, Any]:
     """Retrieve active agency profile variables for dynamic page templating."""
     pub = get_public_settings(db)
-    agency_display = pub.public_display_name or pub.agency_name or "Wild Root"
+    agency_display = pub.public_display_name or pub.agency_name or "The Wild Route"
     return {
         "agency_name": pub.agency_name or agency_display,
         "public_display_name": pub.public_display_name or agency_display,

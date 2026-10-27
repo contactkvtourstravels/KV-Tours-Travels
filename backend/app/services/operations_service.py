@@ -1381,7 +1381,7 @@ class OperationsService:
             ),
             db=db,
         )
-        email_service.dispatch(
+        dispatch_log = email_service.dispatch(
             db=db,
             to_email=recipient_email,
             subject=subject,
@@ -1398,12 +1398,32 @@ class OperationsService:
             entity_id=str(booking_id or inquiry_id),
             actor_user_id=admin_user_id,
             ip_address=ip_address,
-            metadata={"recipient": recipient_email, "subject": subject},
+            metadata={
+                "recipient": recipient_email,
+                "subject": subject,
+                "provider": dispatch_log.provider,
+                "status": dispatch_log.status,
+            },
         )
+
+        if dispatch_log.status == "failed":
+            error_reason = dispatch_log.error_message or "Email provider rejected the dispatch request."
+            raise ApiError(
+                status_code=502,
+                code="EMAIL_DELIVERY_FAILED",
+                message=f"Email delivery failed: {error_reason}",
+            )
+
+        if dispatch_log.provider == "mock":
+            return ContactCustomerEmailResponse(
+                status="sent",
+                message=f"Email simulated in Mock mode to {recipient_email} (no real email was sent; configure your Resend API key in Admin Settings).",
+                recipient=recipient_email,
+            )
 
         return ContactCustomerEmailResponse(
             status="sent",
-            message="Operational email dispatched successfully.",
+            message=f"Operational email dispatched successfully via {dispatch_log.provider.title()}.",
             recipient=recipient_email,
         )
 

@@ -1,4 +1,4 @@
-"""Comprehensive test suite for The Wild Root Resend Transactional Email Integration.
+"""Comprehensive test suite for The Wild Route Resend Transactional Email Integration.
 
 Covers:
 1. Resend API key resolution hierarchy (ENV var, encrypted DB secret, core config)
@@ -97,7 +97,7 @@ def test_send_test_email_missing_api_key(db_session, monkeypatch) -> None:
         db_session.delete(row)
         db_session.commit()
 
-    admin = create_user_with_role(db_session, "test_admin_nokey@thewildroot.in", ROLE_ADMIN)
+    admin = create_user_with_role(db_session, "test_admin_nokey@thewildroute.in", ROLE_ADMIN)
 
     with pytest.raises(ValueError, match="Resend API key is not configured"):
         send_test_email(
@@ -112,7 +112,7 @@ def test_send_test_email_missing_api_key(db_session, monkeypatch) -> None:
 def test_send_test_email_when_email_disabled(db_session, monkeypatch) -> None:
     """Verify that test email dispatch is refused when outgoing emails are disabled."""
     monkeypatch.setenv("RESEND_API_KEY", "re_test_key_12345")
-    admin = create_user_with_role(db_session, "test_admin_disabled@thewildroot.in", ROLE_ADMIN)
+    admin = create_user_with_role(db_session, "test_admin_disabled@thewildroute.in", ROLE_ADMIN)
 
     # Disable outgoing emails in settings
     row = db_session.get(SiteSetting, "email_enabled")
@@ -136,7 +136,7 @@ def test_send_test_email_when_email_disabled(db_session, monkeypatch) -> None:
 def test_send_test_email_invalid_recipient(db_session, monkeypatch) -> None:
     """Verify that invalid recipient email address is rejected."""
     monkeypatch.setenv("RESEND_API_KEY", "re_test_key_12345")
-    admin = create_user_with_role(db_session, "test_admin_bademail@thewildroot.in", ROLE_ADMIN)
+    admin = create_user_with_role(db_session, "test_admin_bademail@thewildroute.in", ROLE_ADMIN)
 
     row = db_session.get(SiteSetting, "email_enabled")
     if row:
@@ -161,7 +161,7 @@ def test_send_test_email_invalid_recipient(db_session, monkeypatch) -> None:
 def test_send_test_email_mocked_success(db_session, monkeypatch) -> None:
     """Verify successful Resend dispatch stores NotificationLog and returns message ID."""
     monkeypatch.setenv("RESEND_API_KEY", "re_mocked_active_key_123")
-    admin = create_user_with_role(db_session, "test_admin_success@thewildroot.in", ROLE_ADMIN)
+    admin = create_user_with_role(db_session, "test_admin_success@thewildroute.in", ROLE_ADMIN)
 
     # Ensure email is enabled
     row = db_session.get(SiteSetting, "email_enabled")
@@ -179,7 +179,7 @@ def test_send_test_email_mocked_success(db_session, monkeypatch) -> None:
         result = send_test_email(
             db=db_session,
             recipient_email="delivered@resend.dev",
-            subject="The Wild Root — Email Configuration Test",
+            subject="The Wild Route — Email Configuration Test",
             notes="Automated test note",
             admin_id=admin.id,
         )
@@ -193,8 +193,8 @@ def test_send_test_email_mocked_success(db_session, monkeypatch) -> None:
         mock_post.assert_called_once()
         sent_payload = mock_post.call_args[1]["json"]
         assert sent_payload["to"] == ["delivered@resend.dev"]
-        assert "The Wild Root" in sent_payload["html"]
-        assert "The Wild Root" in sent_payload["text"]
+        assert "The Wild Route" in sent_payload["html"]
+        assert "The Wild Route" in sent_payload["text"]
         assert "Admin Notes: Automated test note" in sent_payload["text"]
 
     # Verify NotificationLog was created
@@ -211,7 +211,7 @@ def test_send_test_email_mocked_success(db_session, monkeypatch) -> None:
 def test_send_test_email_resend_failure_and_timeout(db_session, monkeypatch) -> None:
     """Verify that Resend HTTP errors and network timeouts are handled cleanly without crashing."""
     monkeypatch.setenv("RESEND_API_KEY", "re_mocked_fail_key_123")
-    admin = create_user_with_role(db_session, "test_admin_fail@thewildroot.in", ROLE_ADMIN)
+    admin = create_user_with_role(db_session, "test_admin_fail@thewildroute.in", ROLE_ADMIN)
 
     row = db_session.get(SiteSetting, "email_enabled")
     if row:
@@ -292,9 +292,9 @@ def test_verify_resend_sender_verified_domain(db_session, monkeypatch) -> None:
 
     sender_row = db_session.get(SiteSetting, "email_sender_email")
     if sender_row:
-        sender_row.value = "bookings@thewildroot.in"
+        sender_row.value = "bookings@thewildroute.in"
     else:
-        db_session.add(SiteSetting(key="email_sender_email", value="bookings@thewildroot.in", is_public=True))
+        db_session.add(SiteSetting(key="email_sender_email", value="bookings@thewildroute.in", is_public=True))
     db_session.commit()
 
     mock_resp = MagicMock()
@@ -303,11 +303,11 @@ def test_verify_resend_sender_verified_domain(db_session, monkeypatch) -> None:
         "data": [
             {
                 "id": "domain_123",
-                "name": "thewildroot.in",
+                "name": "thewildroute.in",
                 "status": "verified",
                 "records": [
-                    {"record": "SPF", "name": "thewildroot.in", "value": "v=spf1 include:resend.com ~all", "type": "TXT", "status": "verified"},
-                    {"record": "DKIM", "name": "resend._domainkey.thewildroot.in", "value": "k=rsa; p=...", "type": "TXT", "status": "verified"},
+                    {"record": "SPF", "name": "thewildroute.in", "value": "v=spf1 include:resend.com ~all", "type": "TXT", "status": "verified"},
+                    {"record": "DKIM", "name": "resend._domainkey.thewildroute.in", "value": "k=rsa; p=...", "type": "TXT", "status": "verified"},
                 ],
             }
         ]
@@ -317,7 +317,7 @@ def test_verify_resend_sender_verified_domain(db_session, monkeypatch) -> None:
         res = verify_resend_sender(db_session)
         assert res.success is True
         assert res.status == "verified"
-        assert res.sender_domain == "thewildroot.in"
+        assert res.sender_domain == "thewildroute.in"
         assert "verified and active in Resend" in res.message
 
 
@@ -371,7 +371,7 @@ def test_unauthorized_users_blocked_from_test_endpoint(client, db_session) -> No
 def test_rate_limiting_test_email_endpoint(client, db_session, monkeypatch) -> None:
     """Verify rate limiter blocks more than 5 test email requests per minute per IP."""
     monkeypatch.setenv("RESEND_API_KEY", "re_rate_limit_test_key")
-    admin = create_user_with_role(db_session, "admin_ratelimit@thewildroot.in", ROLE_ADMIN)
+    admin = create_user_with_role(db_session, "admin_ratelimit@thewildroute.in", ROLE_ADMIN)
     headers = login_client(client, admin.email)
 
     row = db_session.get(SiteSetting, "email_enabled")
@@ -448,10 +448,10 @@ def test_inquiry_submission_triggers_notifications(client, db_session, monkeypat
 
         # Verify admin alert NotificationLog
         admin_log = db_session.execute(
-            select(NotificationLog).where(
-                NotificationLog.notification_type == "admin_inquiry_alert"
-            )
-        ).scalar_one_or_none()
+            select(NotificationLog)
+            .where(NotificationLog.notification_type == "admin_inquiry_alert")
+            .order_by(NotificationLog.created_at.desc())
+        ).scalars().first()
         assert admin_log is not None
         assert admin_log.status == "sent"
 
@@ -459,7 +459,7 @@ def test_inquiry_submission_triggers_notifications(client, db_session, monkeypat
 def test_password_reset_triggers_email(db_session, monkeypatch) -> None:
     """Verify that requesting a password reset creates a token and dispatches reset instructions email."""
     monkeypatch.setenv("RESEND_API_KEY", "re_pwreset_test_key")
-    user = create_user_with_role(db_session, "guest_pw_reset@thewildroot.in", ROLE_CUSTOMER)
+    user = create_user_with_role(db_session, "guest_pw_reset@thewildroute.in", ROLE_CUSTOMER)
 
     mock_resp = MagicMock()
     mock_resp.status_code = 200
@@ -487,7 +487,7 @@ def test_password_reset_triggers_email(db_session, monkeypatch) -> None:
 
 def test_save_resend_api_key_and_preservation(client, db_session) -> None:
     """Verify saving a new key encrypts it, and saving with blank/masked preserves it."""
-    admin = create_user_with_role(db_session, "admin_keysave@thewildroot.in", ROLE_ADMIN)
+    admin = create_user_with_role(db_session, "admin_keysave@thewildroute.in", ROLE_ADMIN)
     headers = login_client(client, admin.email)
 
     # 1. Save new API key
@@ -510,7 +510,7 @@ def test_save_resend_api_key_and_preservation(client, db_session) -> None:
     # 2. Save settings leaving key blank - existing key must be preserved!
     res_blank = client.patch(
         "/api/v1/admin/settings",
-        json={"resend_api_key": "", "email_sender_name": "The Wild Root Luxury"},
+        json={"resend_api_key": "", "email_sender_name": "The Wild Route Luxury"},
         headers=headers,
     )
     assert res_blank.status_code == 200
@@ -521,7 +521,7 @@ def test_save_resend_api_key_and_preservation(client, db_session) -> None:
     # 3. Save settings with masked placeholder - existing key must be preserved!
     res_masked = client.patch(
         "/api/v1/admin/settings",
-        json={"resend_api_key": "re_••••••••••••••••", "email_sender_name": "The Wild Root Concierge"},
+        json={"resend_api_key": "re_••••••••••••••••", "email_sender_name": "The Wild Route Concierge"},
         headers=headers,
     )
     assert res_masked.status_code == 200
@@ -530,7 +530,7 @@ def test_save_resend_api_key_and_preservation(client, db_session) -> None:
 
 def test_save_resend_api_key_invalid_format_rejected(client, db_session) -> None:
     """Verify that keys not starting with 're_' are rejected with 400 Bad Request."""
-    admin = create_user_with_role(db_session, "admin_badkey@thewildroot.in", ROLE_ADMIN)
+    admin = create_user_with_role(db_session, "admin_badkey@thewildroute.in", ROLE_ADMIN)
     headers = login_client(client, admin.email)
 
     res = client.patch(

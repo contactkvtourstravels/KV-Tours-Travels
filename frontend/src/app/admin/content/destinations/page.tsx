@@ -639,7 +639,7 @@ export default function AdminDestinationsContentPage() {
                   })
                 }
                 disabled={!canEdit}
-                placeholder="Destinations Beyond the Ordinary | KV Tours & Travels"
+                placeholder="Destinations Beyond the Ordinary | The Wild Route"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>

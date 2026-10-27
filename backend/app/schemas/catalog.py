@@ -302,11 +302,11 @@ class PublicSiteSettings(BaseModel):
     # WhatsApp
     whatsapp_number: str
     whatsapp_country_code: str = "+91"
-    whatsapp_prefilled_message: str = "Hi KV Tours, I am interested in planning a trip."
-    whatsapp_package_message: str = "Hi KV Tours, I am interested in this package."
-    whatsapp_destination_message: str = "Hi KV Tours, I would like to know more about this destination."
-    whatsapp_custom_trip_message: str = "Hi KV Tours, I would like to plan a custom holiday."
-    whatsapp_booking_support_message: str = "Hi KV Tours, I need assistance with my booking."
+    whatsapp_prefilled_message: str = "Hi The Wild Route, I am interested in planning a trip."
+    whatsapp_package_message: str = "Hi The Wild Route, I am interested in this package."
+    whatsapp_destination_message: str = "Hi The Wild Route, I would like to know more about this destination."
+    whatsapp_custom_trip_message: str = "Hi The Wild Route, I would like to plan a custom holiday."
+    whatsapp_booking_support_message: str = "Hi The Wild Route, I need assistance with my booking."
     whatsapp_enabled: bool = True
     whatsapp_show_floating_concierge: bool = True
     whatsapp_concierge_floating: bool = True

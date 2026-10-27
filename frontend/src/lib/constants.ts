@@ -1,5 +1,5 @@
 /**
- * Centralized business contact and branding constants for Wild Root.
+ * Centralized business contact and branding constants for The Wild Route.
  * Supports environment variable overrides for multi-environment deployments.
  */
 

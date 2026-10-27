@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
       publicCatalogApi.getSettings().catch(() => null),
     ]);
     const agencyName = settings?.public_display_name || settings?.agency_name || "Travel Agency";
-    const siteUrl = settings?.website_url || "https://wildroot.in";
+    const siteUrl = settings?.website_url || "https://thewildroute.in";
     const title = dest.seo_title || `${dest.name} Tour Packages | ${agencyName}`;
     const description =
       dest.seo_description ||
@@ -113,19 +113,19 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://wildroot.in",
+        item: "https://thewildroute.in",
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Destinations",
-        item: "https://wildroot.in/destinations",
+        item: "https://thewildroute.in/destinations",
       },
       {
         "@type": "ListItem",
         position: 3,
         name: destination.name,
-        item: `https://wildroot.in/destinations/${slug}`,
+        item: `https://thewildroute.in/destinations/${slug}`,
       },
     ],
   };

@@ -119,7 +119,7 @@ export default function CustomerDetailPage() {
     if (!customer?.phone) return "#";
     const clean = customer.phone.replace(/[^0-9]/g, "");
     const msg = encodeURIComponent(
-      `Hello ${customer.first_name}, this is KV Tours & Travels regarding your travel account. How can we assist you today?`
+      `Hello ${customer.first_name}, this is The Wild Route regarding your travel account. How can we assist you today?`
     );
     return `https://wa.me/${clean}?text=${msg}`;
   };

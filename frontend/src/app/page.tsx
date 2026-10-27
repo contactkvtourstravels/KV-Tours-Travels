@@ -109,7 +109,7 @@ function HomeContent() {
       ? getWhatsAppClickToChatUrl(
           settings?.whatsapp_number || settings?.support_whatsapp,
           settings?.whatsapp_prefilled_message ||
-            `Hi ${settings?.public_display_name || settings?.agency_name || "The Wild Root"} ${settings?.city || "Palakkad"}, I am looking to plan a holiday journey. Please assist me.`,
+            `Hi ${settings?.public_display_name || settings?.agency_name || "The Wild Route"} ${settings?.city || "Palakkad"}, I am looking to plan a holiday journey. Please assist me.`,
           settings?.whatsapp_country_code || "+91"
         )
       : "";
@@ -297,7 +297,7 @@ function HomeContent() {
           ) : (
             <Image
               src={getSafeImageUrl(pageContent?.hero?.image_url, "/images/hero/hero-4k.webp")}
-              alt="KV Tours & Travels luxury destination escape"
+              alt={`${settings?.public_display_name || settings?.agency_name || "The Wild Route"} luxury destination escape`}
               fill
               priority
               quality={90}
@@ -468,7 +468,7 @@ function HomeContent() {
             <div>
               <div className="inline-flex items-center gap-2 text-[#C5A880] text-xs uppercase tracking-[0.24em] font-semibold mb-2">
                 <Globe className="w-3.5 h-3.5 text-[#C5A880]" />
-                <span>Discover The World With KV Tours</span>
+                <span>Discover The World With {settings?.public_display_name || settings?.agency_name || "The Wild Route"}</span>
               </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#202124] tracking-tight">
                 Trending Destinations
@@ -1208,16 +1208,16 @@ function HomeContent() {
 
 
       {/* =========================================================================
-          7. WHY KV TOURS (Verified Business Trust Indicators)
+          7. WHY THE WILD ROUTE (Verified Business Trust Indicators)
          ========================================================================= */}
       <section className="py-24 bg-[#F7F7F5]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-[#C5A880] text-xs uppercase tracking-[0.24em] font-semibold block mb-2">
-              The KV Standard
+              The {settings?.public_display_name || settings?.agency_name || "Wild Route"} Standard
             </span>
             <h2 className="text-3xl sm:text-5xl font-serif font-bold text-[#202124] tracking-tight">
-              Why Travel With KV Tours?
+              Why Travel With {settings?.public_display_name || settings?.agency_name || "The Wild Route"}?
             </h2>
             <p className="mt-4 text-[#5F6368] text-sm font-light">
               We focus on meticulous planning, genuine human support, and extraordinary travel memories.

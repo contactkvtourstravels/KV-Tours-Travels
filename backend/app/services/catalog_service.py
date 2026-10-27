@@ -445,7 +445,7 @@ def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
             price=a.price,
             currency=a.currency,
             applicability_scope=a.applicability_scope or "all_packages",
-            price_type=a.price_type or "per_booking",
+            price_type="per_traveller" if a.price_type == "per_person" else (a.price_type or "per_booking"),
             min_quantity=a.min_quantity or 1,
             max_quantity=a.max_quantity or 10,
             is_mandatory=a.is_mandatory or False,

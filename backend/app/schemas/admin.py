@@ -733,7 +733,7 @@ class AddOnResponse(BaseModel):
         "all_packages", "selected_packages", "selected_destinations", "single_package"
     ] = "all_packages"
     price_type: Literal[
-        "per_booking", "per_traveller", "per_room_night", "per_unit"
+        "per_booking", "per_traveller", "per_person", "per_room_night", "per_unit"
     ] = "per_booking"
     min_quantity: int = 1
     max_quantity: int = 10
@@ -757,7 +757,7 @@ class AddOnCreateRequest(BaseModel):
         "all_packages", "selected_packages", "selected_destinations", "single_package"
     ] = "all_packages"
     price_type: Literal[
-        "per_booking", "per_traveller", "per_room_night", "per_unit"
+        "per_booking", "per_traveller", "per_person", "per_room_night", "per_unit"
     ] = "per_booking"
     min_quantity: int = Field(default=1, ge=1)
     max_quantity: int = Field(default=10, ge=1)
@@ -785,7 +785,7 @@ class AddOnUpdateRequest(BaseModel):
         | None
     ) = None
     price_type: (
-        Literal["per_booking", "per_traveller", "per_room_night", "per_unit"] | None
+        Literal["per_booking", "per_traveller", "per_person", "per_room_night", "per_unit"] | None
     ) = None
     min_quantity: int | None = Field(default=None, ge=1)
     max_quantity: int | None = Field(default=None, ge=1)

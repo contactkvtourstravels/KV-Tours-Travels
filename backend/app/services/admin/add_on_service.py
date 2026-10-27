@@ -27,6 +27,14 @@ def serialize_add_on(addon: AddOn) -> AddOnResponse:
         if addon.destination_links
         else []
     )
+    raw_price_type = addon.price_type or "per_booking"
+    if raw_price_type in ("per_person", "per_traveller"):
+        normalized_price_type = "per_traveller"
+    elif raw_price_type in ("per_booking", "per_room_night", "per_unit"):
+        normalized_price_type = raw_price_type
+    else:
+        normalized_price_type = "per_booking"
+
     return AddOnResponse(
         id=addon.id,
         name=addon.name,
@@ -34,7 +42,7 @@ def serialize_add_on(addon: AddOn) -> AddOnResponse:
         price=addon.price,
         currency=addon.currency,
         applicability_scope=addon.applicability_scope or "all_packages",
-        price_type=addon.price_type or "per_booking",
+        price_type=normalized_price_type,
         min_quantity=addon.min_quantity or 1,
         max_quantity=addon.max_quantity or 10,
         is_mandatory=addon.is_mandatory or False,
@@ -74,10 +82,9 @@ def list_add_ons(
             )
         )
 
-    count_query = select(func.count(AddOn.id.distinct())).select_from(
-        query.order_by(None).subquery()
-    )
-    total = db.execute(count_query).scalar_one()
+    subq = query.order_by(None).subquery()
+    count_query = select(func.count()).select_from(subq)
+    total = db.execute(count_query).scalar() or 0
 
     query = (
         query.order_by(AddOn.display_order.asc(), desc(AddOn.created_at))

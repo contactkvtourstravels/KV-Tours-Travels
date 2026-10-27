@@ -188,7 +188,7 @@ class BookingService:
                     )
 
                 item_unit_price = _quantize_money(addon.price)
-                if addon.price_type == "per_traveller":
+                if addon.price_type in ("per_traveller", "per_person"):
                     item_total_price = _quantize_money(
                         item_unit_price
                         * Decimal(item.quantity)

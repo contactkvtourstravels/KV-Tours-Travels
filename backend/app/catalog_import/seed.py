@@ -1387,7 +1387,7 @@ def run_seed():
             },
             {
                 "name": "Nilgiri Mountain Toy Train First-Class Confirmed Ticket",
-                "price_type": "per_person",
+                "price_type": "per_traveller",
                 "price": Decimal("850.00"),
                 "currency": "INR",
                 "description": "Pre-booked guaranteed first-class window seats on the UNESCO steam-engine Toy Train.",

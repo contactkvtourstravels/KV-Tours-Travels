@@ -722,7 +722,7 @@ export interface AddOn {
   price: number;
   currency: string;
   applicability_scope: "all_packages" | "selected_packages" | "selected_destinations" | "single_package";
-  price_type: "per_booking" | "per_traveller" | "per_room_night" | "per_unit";
+  price_type: "per_booking" | "per_traveller" | "per_person" | "per_room_night" | "per_unit";
   min_quantity: number;
   max_quantity: number | null;
   is_mandatory: boolean;
@@ -2381,7 +2381,7 @@ export const adminApi = {
     price: number;
     currency?: string;
     applicability_scope?: "all_packages" | "selected_packages" | "selected_destinations" | "single_package";
-    price_type?: "per_booking" | "per_traveller" | "per_room_night" | "per_unit";
+    price_type?: "per_booking" | "per_traveller" | "per_person" | "per_room_night" | "per_unit";
     min_quantity?: number;
     max_quantity?: number;
     is_mandatory?: boolean;
@@ -2404,7 +2404,7 @@ export const adminApi = {
       price: number;
       currency?: string;
       applicability_scope: "all_packages" | "selected_packages" | "selected_destinations" | "single_package";
-      price_type: "per_booking" | "per_traveller" | "per_room_night" | "per_unit";
+      price_type: "per_booking" | "per_traveller" | "per_person" | "per_room_night" | "per_unit";
       min_quantity: number;
       max_quantity: number | null;
       is_mandatory: boolean;

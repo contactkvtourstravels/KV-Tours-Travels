@@ -268,7 +268,9 @@ export default function AddOnsAdminPage() {
     setFormCurrency(addon.currency);
     setFormActive(addon.is_active);
     setFormScope(addon.applicability_scope || "all_packages");
-    setFormPriceType(addon.price_type || "per_booking");
+    const safePriceType =
+      addon.price_type === "per_person" ? "per_traveller" : (addon.price_type || "per_booking");
+    setFormPriceType(safePriceType as "per_booking" | "per_traveller" | "per_room_night" | "per_unit");
     setFormMinQuantity(addon.min_quantity ?? 1);
     setFormMaxQuantity(addon.max_quantity ?? "");
     setFormIsMandatory(addon.is_mandatory ?? false);
@@ -504,7 +506,7 @@ export default function AddOnsAdminPage() {
                       : `Single Package`;
 
                   const priceTypeLabel =
-                    addon.price_type === "per_traveller"
+                    addon.price_type === "per_traveller" || (addon.price_type as string) === "per_person"
                       ? "per traveller"
                       : addon.price_type === "per_room_night"
                       ? "per room night"

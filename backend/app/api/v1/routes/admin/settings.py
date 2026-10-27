@@ -136,13 +136,17 @@ def send_test_email_endpoint(
     """Send an explicit test email to a specified recipient. CSRF and rate-limit protected."""
     verify_csrf_token(request)
     email_test_limiter.check(get_client_ip(request))
-    return send_test_email(
-        db=db,
-        recipient_email=payload.recipient_email or payload.recipient or "",
-        subject=payload.subject,
-        notes=payload.notes,
-        admin_id=admin.id,
-    )
+    try:
+        return send_test_email(
+            db=db,
+            recipient_email=payload.recipient_email or payload.recipient or "",
+            subject=payload.subject,
+            notes=payload.notes,
+            admin_id=admin.id,
+        )
+    except ValueError as exc:
+        from app.core.errors import ApiError
+        raise ApiError(status_code=400, code="EMAIL_TEST_FAILED", message=str(exc))
 
 
 @router.post("/whatsapp/test-connection", response_model=WhatsAppTestConnectionResponse)

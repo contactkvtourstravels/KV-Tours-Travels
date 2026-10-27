@@ -449,6 +449,18 @@ export default function AddOnsAdminPage() {
             <div className="w-8 h-8 border-4 border-[#24292F] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
             <p className="text-xs font-bold uppercase tracking-wider">Loading add-ons...</p>
           </div>
+        ) : error ? (
+          <div className="p-12 text-center">
+            <AlertCircle className="w-12 h-12 text-rose-500 mx-auto mb-3" />
+            <h3 className="text-sm font-bold text-[#202124] mb-1">Failed to Load Add-Ons</h3>
+            <p className="text-xs text-rose-600 max-w-sm mx-auto mb-4">{error}</p>
+            <button
+              onClick={fetchAddOns}
+              className="px-4 py-2 bg-[#24292F] hover:bg-[#3D4450] text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all shadow-xs"
+            >
+              Retry
+            </button>
+          </div>
         ) : !addOns || addOns.items.length === 0 ? (
           <div className="p-12 text-center">
             <Tag className="w-12 h-12 text-[#D3D8DF] mx-auto mb-3" />

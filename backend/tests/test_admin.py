@@ -200,7 +200,7 @@ def test_admin_access_rules(client, db_session) -> None:
 
 def test_super_admin_full_access(client, db_session) -> None:
     super_admin = create_user_with_role(
-        db_session, "athulsuresh446@gmail.com", ROLE_SUPER_ADMIN
+        db_session, "contact.kvtourstravels@gmail.com", ROLE_SUPER_ADMIN
     )
     target_user = create_user_with_role(
         db_session, "promote_me@example.com", ROLE_CUSTOMER

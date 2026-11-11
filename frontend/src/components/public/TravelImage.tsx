@@ -66,7 +66,7 @@ export function TravelImage({
       >
         <Compass className="w-10 h-10 text-[#C5A880]/60 mb-2 animate-pulse" />
         <span className="text-[11px] uppercase tracking-widest text-white/60 font-medium">
-          {alt || "The Wild Route"}
+          {alt || "KV Tours & Travels"}
         </span>
       </div>
     );

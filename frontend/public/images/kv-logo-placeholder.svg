@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 80" width="320" height="80" fill="none">
+  <!-- Monogram Crest -->
+  <rect x="8" y="8" width="64" height="64" rx="14" fill="#24292F" stroke="#C5A880" stroke-width="2.5"/>
+  <rect x="14" y="14" width="52" height="52" rx="10" fill="none" stroke="#D4AF37" stroke-width="1" stroke-dasharray="2 2" opacity="0.6"/>
+  <!-- Gold KV Letters -->
+  <text x="40" y="49" font-family="'Cinzel', 'Playfair Display', 'Georgia', serif" font-size="28" font-weight="700" fill="#D4AF37" text-anchor="middle" letter-spacing="1">KV</text>
+  <!-- Brand Text -->
+  <text x="88" y="38" font-family="'Cinzel', 'Playfair Display', 'Georgia', serif" font-size="21" font-weight="700" fill="#24292F" letter-spacing="2">KV TOURS</text>
+  <text x="89" y="56" font-family="'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif" font-size="9" font-weight="600" fill="#C5A880" letter-spacing="4">&amp; TRAVELS</text>
+</svg>
+

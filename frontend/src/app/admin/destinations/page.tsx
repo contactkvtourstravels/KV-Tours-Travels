@@ -1850,7 +1850,7 @@ export default function DestinationsAdminPage() {
 
                     <div>
                       <label className="block text-xs font-bold text-[#202124] mb-1">
-                        Insider Advice from The Wild Route Specialists
+                        Insider Advice from KV Tours & Travels Specialists
                       </label>
                       <textarea
                         rows={2}
@@ -2017,7 +2017,7 @@ export default function DestinationsAdminPage() {
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Ooty Tour Packages & Travel Guide | The Wild Route"
+                      placeholder="e.g. Ooty Tour Packages & Travel Guide | KV Tours & Travels"
                       value={formSeoTitle}
                       onChange={(e) => setFormSeoTitle(e.target.value)}
                       className="w-full px-3 py-2 bg-[#F7F7F5] border border-[#D3D8DF] rounded-xl text-xs text-[#202124] focus:outline-none focus:border-[#C5A880] focus:bg-white"
@@ -2031,7 +2031,7 @@ export default function DestinationsAdminPage() {
                     </label>
                     <textarea
                       rows={3}
-                      placeholder="e.g. Discover luxury bespoke holiday packages to Ooty from Palakkad with The Wild Route. Chauffeur transfers, tea estate stays, and sightseeing."
+                      placeholder="e.g. Discover luxury bespoke holiday packages to Ooty with KV Tours & Travels. Chauffeur transfers, tea estate stays, and sightseeing."
                       value={formSeoDesc}
                       onChange={(e) => setFormSeoDesc(e.target.value)}
                       className="w-full px-3 py-2 bg-[#F7F7F5] border border-[#D3D8DF] rounded-xl text-xs text-[#202124] focus:outline-none focus:border-[#C5A880] focus:bg-white"

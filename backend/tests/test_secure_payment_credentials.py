@@ -687,7 +687,7 @@ def test_15_existing_payment_and_booking_behavior_remains_intact(client, db_sess
 
     traveller = BookingTraveller(
         booking_id=booking.id,
-        first_name="Athul",
+        first_name="Rohan",
         last_name="Traveler",
         is_primary=True,
         contact_email=admin.email,

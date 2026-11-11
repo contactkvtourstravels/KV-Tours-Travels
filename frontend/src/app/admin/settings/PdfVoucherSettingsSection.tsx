@@ -41,26 +41,26 @@ export default function PdfVoucherSettingsSection({
       settings.legal_business_name ||
       settings.public_display_name ||
       settings.agency_name ||
-      "THE WILD ROUTE"
+      "KV TOURS & TRAVELS"
   );
 
   const [headerSubtitle, setHeaderSubtitle] = useState(
     settings.pdf_header_subtitle ||
       (settings.tagline
-        ? `${settings.tagline} • ${settings.agency_location || "Palakkad Hub"}`
-        : "BESPOKE LUXURY & ADVENTURE JOURNEYS • PALAKKAD OPERATIONS HUB")
+        ? `${settings.tagline} • ${settings.agency_location || "OPERATIONS HUB"}`
+        : "BESPOKE LUXURY & ADVENTURE JOURNEYS • OPERATIONS HUB")
   );
 
   const [officeAddress, setOfficeAddress] = useState(
     settings.pdf_office_address ||
       settings.office_address ||
       settings.registered_office_address ||
-      "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012, India"
+      "Headquarters, India"
   );
 
   const [contactInfo, setContactInfo] = useState(
     settings.pdf_contact_info ||
-      `Concierge Desk: ${settings.contact_phone || "+91 98422 12345"} | ${settings.contact_email || "bookings@kvtours.in"} | ${settings.website_url || "www.kvtours.in"}`
+      `Concierge Desk: ${settings.contact_phone || "+91 94420 00000"} | ${settings.contact_email || "contact.kvtourstravels@gmail.com"} | ${settings.website_url || "www.kvtours.in"}`
   );
 
   const [badgeLabel, setBadgeLabel] = useState(
@@ -83,12 +83,12 @@ export default function PdfVoucherSettingsSection({
 
   const [helplineInfo, setHelplineInfo] = useState(
     settings.pdf_helpline_info ||
-      `${settings.agency_location || "Palakkad"} Operations Desk: ${settings.contact_phone || "+91 94420 00000"} | Priority WhatsApp Desk: ${settings.whatsapp_number || "+91 94420 00000"} | ${settings.contact_email || "concierge@thewildroute.in"}`
+      `${settings.agency_location || "Operations"} Desk: ${settings.contact_phone || "+91 94420 00000"} | Priority WhatsApp Desk: ${settings.whatsapp_number || "+91 94420 00000"} | ${settings.contact_email || "contact.kvtourstravels@gmail.com"}`
   );
 
   const [footerDeclaration, setFooterDeclaration] = useState(
     settings.pdf_footer_declaration ||
-      `${settings.legal_business_name || settings.public_display_name || settings.agency_name || "The Wild Route"} Operations • ${settings.agency_location || "Palakkad"} Portal\nComputer-generated authoritative travel document • Valid without physical signature`
+      `${settings.legal_business_name || settings.public_display_name || settings.agency_name || "KV Tours & Travels"} Operations • Official Travel Voucher\nComputer-generated authoritative travel document • Valid without physical signature`
   );
 
   // UI state
@@ -100,7 +100,7 @@ export default function PdfVoucherSettingsSection({
   // Track dirty changes
   useEffect(() => {
     const isDirty =
-      headerTitle !== (settings.pdf_header_title || settings.legal_business_name || settings.public_display_name || settings.agency_name || "THE WILD ROUTE") ||
+      headerTitle !== (settings.pdf_header_title || settings.legal_business_name || settings.public_display_name || settings.agency_name || "KV TOURS & TRAVELS") ||
       headerSubtitle !== (settings.pdf_header_subtitle || "") ||
       officeAddress !== (settings.pdf_office_address || settings.office_address || "") ||
       contactInfo !== (settings.pdf_contact_info || "") ||
@@ -132,24 +132,24 @@ export default function PdfVoucherSettingsSection({
       settings.legal_business_name ||
       settings.public_display_name ||
       settings.agency_name ||
-      "THE WILD ROUTE";
+      "KV TOURS & TRAVELS";
 
     setHeaderTitle(agencyName);
     setHeaderSubtitle(
       settings.tagline
         ? `${settings.tagline.toUpperCase()} • ${(settings.agency_location || "OPERATIONS HUB").toUpperCase()}`
-        : "BESPOKE LUXURY & ADVENTURE JOURNEYS • COIMBATORE OPERATIONS HUB"
+        : "BESPOKE LUXURY & ADVENTURE JOURNEYS • OPERATIONS HUB"
     );
     setOfficeAddress(
       settings.office_address ||
         settings.registered_office_address ||
         settings.public_office_address ||
-        "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012, India"
+        "Headquarters, India"
     );
 
-    const deskPhone = settings.contact_phone || "+91 98422 12345";
-    const deskEmail = settings.booking_email || settings.contact_email || "bookings@thewildroute.in";
-    const deskWeb = settings.website_url || "www.thewildroute.in";
+    const deskPhone = settings.contact_phone || "+91 94420 00000";
+    const deskEmail = settings.booking_email || settings.contact_email || "contact.kvtourstravels@gmail.com";
+    const deskWeb = settings.website_url || "www.kvtours.in";
     setContactInfo(`Concierge Desk: ${deskPhone} | ${deskEmail} | ${deskWeb}`);
 
     setBadgeLabel("Official Travel Voucher & Receipt");
@@ -163,21 +163,21 @@ export default function PdfVoucherSettingsSection({
     );
 
     const waNum = settings.whatsapp_number || settings.support_whatsapp || "+91 94420 00000";
-    const loc = settings.agency_location || "Coimbatore";
+    const loc = settings.agency_location || "Operations";
     setHelplineInfo(
-      `${loc} Operations Desk: ${deskPhone} | Priority WhatsApp Desk: ${waNum} | ${deskEmail}`
+      `${loc} Desk: ${deskPhone} | Priority WhatsApp: ${waNum} | ${deskEmail}`
     );
 
     setFooterDeclaration(
-      `${agencyName} Operations • ${loc} Portal\nComputer-generated authoritative travel document • Valid without physical signature`
+      `${agencyName} Operations • Official Travel Voucher\nComputer-generated authoritative travel document • Valid without physical signature`
     );
   };
 
   const handleResetDefaults = () => {
-    setHeaderTitle("THE WILD ROUTE");
-    setHeaderSubtitle("BESPOKE LUXURY & ADVENTURE JOURNEYS • PALAKKAD OPERATIONS HUB");
-    setOfficeAddress("Palakkad, Kerala 678001, India");
-    setContactInfo("Concierge Desk: +91 94420 00000 | bookings@thewildroute.in | www.thewildroute.in");
+    setHeaderTitle("KV TOURS & TRAVELS");
+    setHeaderSubtitle("BESPOKE LUXURY & ADVENTURE JOURNEYS • OPERATIONS HUB");
+    setOfficeAddress("Headquarters, India");
+    setContactInfo("Concierge Desk: +91 94420 00000 | contact.kvtourstravels@gmail.com | www.kvtours.in");
     setBadgeLabel("Official Travel Voucher & Receipt");
     setLogoUrl("");
     setCheckinInstructions(
@@ -187,10 +187,10 @@ export default function PdfVoucherSettingsSection({
       "Scheduled chauffeured transfers and curated excursions are confirmed as per the booked itinerary. Your travel host details will be notified 24 hours prior to departure."
     );
     setHelplineInfo(
-      "Palakkad Operations Desk: +91 94420 00000 | Priority WhatsApp Desk: +91 94420 00000 | concierge@thewildroute.in"
+      "Operations Desk: +91 94420 00000 | Priority WhatsApp: +91 94420 00000 | contact.kvtourstravels@gmail.com"
     );
     setFooterDeclaration(
-      "THE WILD ROUTE OPERATIONS • PALAKKAD PORTAL\nComputer-generated authoritative travel document • Valid without physical signature"
+      "KV TOURS & TRAVELS OPERATIONS • OFFICIAL TRAVEL VOUCHER\nComputer-generated authoritative travel document • Valid without physical signature"
     );
   };
 
@@ -310,7 +310,7 @@ export default function PdfVoucherSettingsSection({
                   type="text"
                   value={headerTitle}
                   onChange={(e) => setHeaderTitle(e.target.value)}
-                  placeholder="e.g. THE WILD ROUTE"
+                  placeholder="e.g. KV TOURS & TRAVELS"
                   disabled={!canEdit}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D3D8DF] text-xs font-semibold text-[#202124] focus:outline-hidden focus:ring-2 focus:ring-[#8C6D3B]/20 focus:border-[#8C6D3B] transition-all"
                 />
@@ -397,7 +397,7 @@ export default function PdfVoucherSettingsSection({
                   type="text"
                   value={contactInfo}
                   onChange={(e) => setContactInfo(e.target.value)}
-                  placeholder="e.g. Concierge Desk: +91 94420 00000 | bookings@thewildroute.in | www.thewildroute.in"
+                  placeholder="e.g. Concierge Desk: +91 98422 12345 | contact.kvtourstravels@gmail.com"
                   disabled={!canEdit}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D3D8DF] text-xs text-[#202124] focus:outline-hidden focus:ring-2 focus:ring-[#8C6D3B]/20 focus:border-[#8C6D3B] transition-all font-mono"
                 />
@@ -564,10 +564,10 @@ export default function PdfVoucherSettingsSection({
                     />
                   )}
                   <div className="text-base font-serif font-black tracking-tight text-[#111827] truncate">
-                    {headerTitle || "THE WILD ROUTE"}
+                    {headerTitle || "KV TOURS & TRAVELS"}
                   </div>
                   <div className="text-[8.5px] uppercase tracking-[0.2em] text-[#8C6D3B] font-bold mt-0.5 line-clamp-1">
-                    {headerSubtitle || "BESPOKE LUXURY & ADVENTURE JOURNEYS • PALAKKAD OPERATIONS HUB"}
+                    {headerSubtitle || "BESPOKE LUXURY & ADVENTURE JOURNEYS • OPERATIONS HUB"}
                   </div>
                   <div className="text-[8px] text-[#4B5563] mt-1.5 space-y-0.5 leading-tight">
                     <div className="line-clamp-1">{officeAddress}</div>

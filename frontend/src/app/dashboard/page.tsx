@@ -88,7 +88,7 @@ export default function CustomerDashboardPage() {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-[#D3D8DF] bg-white text-[#24292F] text-xs uppercase tracking-widest font-semibold mb-2 shadow-sm">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>The Wild Route Elite Member</span>
+            <span>KV Tours & Travels Elite Member</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-serif font-bold text-[#202124] tracking-tight">
             Welcome back, {user?.first_name || data.user_name || "Traveller"}

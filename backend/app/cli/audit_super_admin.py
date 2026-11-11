@@ -1,7 +1,7 @@
 """Auditable administrative CLI tool to inspect and enforce Super Admin exclusivity.
 
 Enforces:
-- Only athulsuresh446@gmail.com can hold super_admin.
+- Only contact.kvtourstravels@gmail.com can hold super_admin.
 - Any unauthorized accounts holding super_admin are demoted to admin.
 - Stale sessions for demoted users are immediately revoked.
 - Actions are recorded in the audit_logs table.

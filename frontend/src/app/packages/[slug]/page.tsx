@@ -36,8 +36,8 @@ export async function generateMetadata({ params }: PackagePageProps): Promise<Me
       publicCatalogApi.getPackage(slug),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
-    const agencyName = settings?.public_display_name || settings?.agency_name || "Travel Agency";
-    const siteUrl = settings?.website_url || "https://thewildroute.in";
+    const agencyName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
+    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
     const title = pkg.seo_title || `${pkg.name} | ${agencyName}`;
     const description =
       pkg.seo_description ||
@@ -125,6 +125,7 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
     },
   };
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
   const breadcrumbData = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -133,19 +134,19 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://thewildroute.in",
+        item: siteUrl,
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Packages",
-        item: "https://thewildroute.in/packages",
+        item: `${siteUrl}/packages`,
       },
       {
         "@type": "ListItem",
         position: 3,
         name: pkg.name,
-        item: `https://thewildroute.in/packages/${slug}`,
+        item: `${siteUrl}/packages/${slug}`,
       },
     ],
   };

@@ -1486,7 +1486,7 @@ export default function AdminMainContentPage() {
                 value={legalBusinessName}
                 onChange={(e) => setLegalBusinessName(e.target.value)}
                 disabled={!canEdit}
-                placeholder="e.g. The Wild Route Private Limited"
+                placeholder="e.g. KV Tours & Travels"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>
@@ -1500,7 +1500,7 @@ export default function AdminMainContentPage() {
                 value={shortName}
                 onChange={(e) => setShortName(e.target.value)}
                 disabled={!canEdit}
-                placeholder="e.g. The Wild Route"
+                placeholder="e.g. KV Tours"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>
@@ -2079,7 +2079,7 @@ export default function AdminMainContentPage() {
                   setContent({ ...content, seo_title: e.target.value || null })
                 }
                 disabled={!canEdit}
-                placeholder="The Wild Route | Luxury & Adventure Journeys Palakkad"
+                placeholder="KV Tours & Travels | Luxury & Bespoke Holiday Journeys"
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>
@@ -2095,7 +2095,7 @@ export default function AdminMainContentPage() {
                   setContent({ ...content, seo_meta_description: e.target.value || null })
                 }
                 disabled={!canEdit}
-                placeholder="Curated international holidays, private expeditions, and bespoke vacations by The Wild Route."
+                placeholder="Curated international holidays, private expeditions, and bespoke vacations by KV Tours & Travels."
                 className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
               />
             </div>
@@ -2128,7 +2128,7 @@ export default function AdminMainContentPage() {
                     setContent({ ...content, seo_social_title: e.target.value || null })
                   }
                   disabled={!canEdit}
-                  placeholder="The Wild Route | Bespoke Luxury Escapes"
+                  placeholder="KV Tours & Travels | Bespoke Luxury Escapes"
                   className="w-full px-4 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124]"
                 />
               </div>

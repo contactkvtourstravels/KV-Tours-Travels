@@ -383,7 +383,7 @@ def test_role_authorization_and_hierarchy(client, db_session) -> None:
     assert client.get("/api/v1/auth/verify-role-admin").status_code == 403
 
     # 3. Super Admin has unrestricted access to staff and admin routes
-    existing = db_session.execute(select(User).where(User.email_normalized == "athulsuresh446@gmail.com")).scalar_one_or_none()
+    existing = db_session.execute(select(User).where(User.email_normalized == "contact.kvtourstravels@gmail.com")).scalar_one_or_none()
     if existing:
         db_session.execute(delete(UserSession).where(UserSession.user_id == existing.id))
         db_session.execute(delete(UserRole).where(UserRole.user_id == existing.id))
@@ -391,8 +391,8 @@ def test_role_authorization_and_hierarchy(client, db_session) -> None:
         db_session.commit()
 
     super_user = User(
-        email="athulsuresh446@gmail.com",
-        email_normalized="athulsuresh446@gmail.com",
+        email="contact.kvtourstravels@gmail.com",
+        email_normalized="contact.kvtourstravels@gmail.com",
         password_hash=hash_password(VALID_PASSWORD),
         first_name="Root",
         last_name="Admin",
@@ -411,7 +411,7 @@ def test_role_authorization_and_hierarchy(client, db_session) -> None:
     client.cookies.clear()
     client.post(
         "/api/v1/auth/login",
-        json={"email": "athulsuresh446@gmail.com", "password": VALID_PASSWORD},
+        json={"email": "contact.kvtourstravels@gmail.com", "password": VALID_PASSWORD},
         headers=csrf_header(client),
     )
     assert client.get("/api/v1/auth/verify-role-admin").status_code == 200
@@ -668,7 +668,7 @@ def test_csrf_protection_on_state_mutations(client) -> None:
 
 # 22. Super Admin bootstrap CLI verification
 def test_bootstrap_super_admin_cli(db_session) -> None:
-    admin_email = "athulsuresh446@gmail.com"
+    admin_email = "contact.kvtourstravels@gmail.com"
     existing = db_session.execute(select(User).where(User.email_normalized == admin_email)).scalar_one_or_none()
     if existing:
         db_session.execute(delete(UserSession).where(UserSession.user_id == existing.id))

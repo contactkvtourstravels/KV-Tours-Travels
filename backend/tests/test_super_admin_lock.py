@@ -1,7 +1,7 @@
 """Comprehensive verification tests for Super Admin authorization lock.
 
 Validates that:
-1. Only athulsuresh446@gmail.com can hold or exercise the super_admin role.
+1. Only contact.kvtourstravels@gmail.com can hold or exercise the super_admin role.
 2. Any other user with super_admin assignment in DB is blocked by the authorization layer.
 3. Imposters cannot access Super Admin-only endpoints.
 4. The Super Admin cannot assign super_admin to unauthorized emails.
@@ -247,8 +247,8 @@ def test_bootstrap_cli_rejects_unauthorized_email(db_session):
     # Legitimate email succeeds
     bootstrap_super_admin(
         email=AUTHORIZED_SUPER_ADMIN_EMAIL,
-        first_name="Athul",
-        last_name="Suresh",
+        first_name="KV",
+        last_name="Admin",
         password=PASSWORD,
         db=db_session,
     )
@@ -267,8 +267,8 @@ def test_public_registration_never_grants_super_admin(client, db_session):
         json={
             "email": AUTHORIZED_SUPER_ADMIN_EMAIL,
             "password": PASSWORD,
-            "first_name": "Athul",
-            "last_name": "Suresh",
+            "first_name": "KV",
+            "last_name": "Admin",
         },
         headers=csrf_headers(client),
     )
@@ -286,10 +286,10 @@ def test_social_login_never_auto_promotes_to_super_admin(client, db_session):
     register_mock_social_token(
         mock_token,
         {
-            "uid": "google_sub_athul",
+            "uid": "google_sub_kvadmin",
             "email": AUTHORIZED_SUPER_ADMIN_EMAIL,
             "email_verified": True,
-            "name": "Athul Suresh",
+            "name": "KV Admin",
             "provider": "google.com",
         },
     )

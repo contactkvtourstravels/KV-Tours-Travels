@@ -7,10 +7,9 @@ import { authApi, SafeUser } from "@/lib/api";
 export type AdminRole = "customer" | "staff" | "manager" | "admin" | "super_admin";
 
 export const AUTHORIZED_SUPER_ADMIN_EMAILS = [
-  "athulsuresh4466@gmail.com",
-  "athulsuresh446@gmail.com",
+  "contact.kvtourstravels@gmail.com",
 ];
-export const AUTHORIZED_SUPER_ADMIN_EMAIL = "athulsuresh4466@gmail.com";
+export const AUTHORIZED_SUPER_ADMIN_EMAIL = "contact.kvtourstravels@gmail.com";
 
 interface AdminContextType {
   user: SafeUser | null;

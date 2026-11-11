@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
     // Graceful fallback during isolated builds or cold starts
   }
 
-  const displayName = settings?.public_display_name || settings?.agency_name || "The Wild Route";
+  const displayName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
   const tagline = settings?.tagline || "Luxury & Adventure Journeys";
   const siteTitle = `${displayName} | ${tagline}`;
   const siteDescription =
@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
     settings?.business_description ||
     `${displayName} is your premier travel curator designing bespoke international escapes, breathtaking domestic expeditions, and signature group departures.`;
 
-  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://thewildroute.in";
+  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
 
   return {
     metadataBase: new URL(siteUrl),
@@ -45,17 +45,11 @@ export async function generateMetadata(): Promise<Metadata> {
     ],
     authors: [
       { name: displayName },
-      { name: "Athul Suresh", url: "https://github.com/athulsuresh4466-coder" },
     ],
-    creator: "Athul Suresh",
-    publisher: "The Wild Root",
+    creator: displayName,
+    publisher: displayName,
     other: {
-      "designer": "Athul Suresh",
-      "developer": "Athul Suresh - Full Stack Developer | React · Next.js · TypeScript · Python · FastAPI",
-      "developer:bio": "Building modern, responsive, and scalable web applications.",
-      "developer:github": "https://github.com/athulsuresh4466-coder",
-      "developer:linkedin": "https://www.linkedin.com/in/athul-s4466",
-      "copyright": "© The Wild Root. All rights reserved.",
+      "copyright": `© ${displayName}. All rights reserved.`,
     },
     icons: settings?.favicon_url
       ? [
@@ -97,10 +91,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     // Graceful fallback during build or initial startup
   }
 
-  const displayName = settings?.public_display_name || settings?.agency_name || "The Wild Route";
-  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://thewildroute.in";
+  const displayName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
+  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
   const phone = settings?.contact_phone || DEFAULT_BUSINESS_PHONE;
-  const email = settings?.contact_email || "contact@travelagency.com";
+  const email = settings?.contact_email || "contact.kvtourstravels@gmail.com";
   const street = settings?.office_address || "Main Road";
   const city = settings?.city || "";
   const state = settings?.state || "";
@@ -175,20 +169,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         "@id": `${siteUrl}/#organization`,
       },
       creator: {
-        "@type": "Person",
-        name: "Athul Suresh",
-        jobTitle: "Full Stack Developer",
-        description:
-          "Full Stack Developer | React · Next.js · TypeScript · Python · FastAPI. Building modern, responsive, and scalable web applications.",
-        url: "https://github.com/athulsuresh4466-coder",
-        sameAs: [
-          "https://github.com/athulsuresh4466-coder",
-          "https://www.linkedin.com/in/athul-s4466",
-        ],
+        "@type": "Organization",
+        name: displayName,
+        url: siteUrl,
       },
       copyrightHolder: {
         "@type": "Organization",
-        name: "The Wild Root",
+        name: displayName,
       },
       copyrightYear: new Date().getFullYear(),
     },
@@ -197,16 +184,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en" className="h-full antialiased scroll-smooth" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
-        <meta name="author" content="Athul Suresh" />
-        <meta name="creator" content="Athul Suresh" />
-        <meta name="designer" content="Athul Suresh" />
-        <meta name="developer" content="Athul Suresh" />
-        <meta
-          name="developer:bio"
-          content="Full Stack Developer | React · Next.js · TypeScript · Python · FastAPI. Building modern, responsive, and scalable web applications."
-        />
-        <meta name="copyright" content="© The Wild Root. All rights reserved." />
-        <link rel="author" href="https://github.com/athulsuresh4466-coder" />
+        <meta name="copyright" content={`© ${displayName}. All rights reserved.`} />
         <script
           id="schema-structured-data"
           type="application/ld+json"

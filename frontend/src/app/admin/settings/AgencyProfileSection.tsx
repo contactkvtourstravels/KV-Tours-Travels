@@ -837,7 +837,7 @@ export default function AgencyProfileSection({
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                   disabled={!canEdit}
-                  placeholder="e.g. THE WILD ROUTE"
+                  placeholder="e.g. KV TOURS & TRAVELS"
                   className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-[#202124] focus:outline-none focus:ring-2 focus:ring-[#24292F] ${
                     errors.displayName ? "border-red-500 bg-red-50/20" : "border-[#D3D8DF] bg-white"
                   }`}
@@ -855,7 +855,7 @@ export default function AgencyProfileSection({
                   value={shortName}
                   onChange={(e) => setShortName(e.target.value)}
                   disabled={!canEdit}
-                  placeholder="e.g. The Wild Route"
+                  placeholder="e.g. KV Tours"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124] focus:outline-none focus:ring-2 focus:ring-[#24292F]"
                 />
                 <p className="text-[11px] text-gray-400 mt-1">Used in responsive mobile navbars and micro-cards.</p>
@@ -868,7 +868,7 @@ export default function AgencyProfileSection({
                   value={tagline}
                   onChange={(e) => setTagline(e.target.value)}
                   disabled={!canEdit}
-                  placeholder="e.g. Palakkad • Luxury & Adventure Journeys"
+                  placeholder="e.g. Luxury & Bespoke Holiday Journeys"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124] focus:outline-none focus:ring-2 focus:ring-[#24292F]"
                 />
               </div>
@@ -882,7 +882,7 @@ export default function AgencyProfileSection({
                   value={legalName}
                   onChange={(e) => setLegalName(e.target.value)}
                   disabled={!canEdit}
-                  placeholder="e.g. The Wild Route Private Limited"
+                  placeholder="e.g. KV Tours & Travels"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124] focus:outline-none focus:ring-2 focus:ring-[#24292F]"
                 />
               </div>
@@ -1921,7 +1921,7 @@ export default function AgencyProfileSection({
                   value={seoWebsiteTitle}
                   onChange={(e) => setSeoWebsiteTitle(e.target.value)}
                   disabled={!canEdit}
-                  placeholder={`e.g. ${displayName || "THE WILD ROUTE"} | Luxury Journeys & Bespoke Holidays`}
+                  placeholder={`e.g. ${displayName || "KV Tours & Travels"} | Luxury Journeys & Bespoke Holidays`}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D3D8DF] bg-white text-xs text-[#202124] focus:outline-none focus:ring-2 focus:ring-[#24292F]"
                 />
               </div>
@@ -2044,7 +2044,7 @@ export default function AgencyProfileSection({
                     <img src={logoUrl} alt="Logo" className="h-8 max-w-[140px] object-contain" />
                   ) : (
                     <span className="text-base font-bold text-[#202124]" style={{ fontFamily: primaryFont }}>
-                      {displayName || "THE WILD ROUTE"}
+                      {displayName || "KV Tours & Travels"}
                     </span>
                   )}
                   {shortName && (
@@ -2081,7 +2081,7 @@ export default function AgencyProfileSection({
                       className="font-extrabold text-xl tracking-wider uppercase"
                       style={{ color: brandSecondaryColor, fontFamily: primaryFont }}
                     >
-                      {displayName || "THE WILD ROUTE"}
+                      {displayName || "KV Tours & Travels"}
                     </h4>
                     <p className="text-xs text-white/80 mt-0.5">{tagline || "Your Journey. Our Expertise."}</p>
                     {legalName && <p className="text-[11px] text-white/60 mt-0.5">{legalName}</p>}

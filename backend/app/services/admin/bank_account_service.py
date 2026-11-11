@@ -75,10 +75,10 @@ class BankAccountService:
         acc_num = str(raw.get("account_number") or "50200012345678")
         ifsc = str(raw.get("ifsc_code") or "HDFC0001234")
         bank_name = str(raw.get("bank_name") or "HDFC Bank")
-        holder_name = str(raw.get("account_name") or "THE WILD ROUTE PVT LTD")
-        branch_name = str(raw.get("branch_name") or "Palakkad Main Branch")
+        holder_name = str(raw.get("account_name") or "KV TOURS & TRAVELS")
+        branch_name = str(raw.get("branch_name") or "Main Branch")
         acc_type = str(raw.get("account_type") or "Current")
-        upi_id = raw.get("upi_id") or "thewildroute@hdfcbank"
+        upi_id = raw.get("upi_id") or "kvtours@hdfcbank"
         instructions = str(raw.get("payment_instructions") or "Please transfer the exact amount using NEFT / RTGS / IMPS or UPI.")
 
         seeded = BankAccount(

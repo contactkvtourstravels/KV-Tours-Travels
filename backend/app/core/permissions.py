@@ -14,10 +14,9 @@ ROLE_SUPER_ADMIN: Final[str] = "super_admin"
 
 # Authorized Super Administrator emails for the agency platform
 AUTHORIZED_SUPER_ADMIN_EMAILS: Final[set[str]] = {
-    "athulsuresh446@gmail.com",
-    "athulsuresh4466@gmail.com",
+    "contact.kvtourstravels@gmail.com",
 }
-AUTHORIZED_SUPER_ADMIN_EMAIL: Final[str] = "athulsuresh4466@gmail.com"
+AUTHORIZED_SUPER_ADMIN_EMAIL: Final[str] = "contact.kvtourstravels@gmail.com"
 
 ALL_ROLES: Final[list[str]] = [
     ROLE_CUSTOMER,

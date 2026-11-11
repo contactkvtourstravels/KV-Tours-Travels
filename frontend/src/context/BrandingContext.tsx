@@ -67,15 +67,15 @@ export interface BrandingContextValue {
 }
 
 const DEFAULT_SETTINGS: PublicSiteSettings = {
-  agency_name: "Luxury Travel Concierge",
-  public_display_name: "Luxury Travel Concierge",
-  short_name: "Travel Concierge",
+  agency_name: "KV Tours & Travels",
+  public_display_name: "KV Tours & Travels",
+  short_name: "KV Tours",
   tagline: "Curated Journeys & Bespoke Expeditions",
-  agency_location: "Private Client Lounge",
+  agency_location: "India",
   office_address: "",
   city: "",
   state: "",
-  contact_email: "",
+  contact_email: "contact.kvtourstravels@gmail.com",
   contact_phone: "",
   whatsapp_number: "",
   currency: "INR",
@@ -89,7 +89,7 @@ let inFlightSettingsPromise: Promise<PublicSiteSettings> | null = null;
 let inMemoryCachedSettings: PublicSiteSettings | null = null;
 
 function computeInitials(name?: string | null): string {
-  if (!name || !name.trim()) return "TA";
+  if (!name || !name.trim()) return "KV";
   const words = name.trim().split(/\s+/).filter(Boolean);
   if (words.length === 1) {
     return words[0].slice(0, 2).toUpperCase();
@@ -313,7 +313,7 @@ export function BrandingProvider({
     return (
       settings?.public_display_name ||
       settings?.agency_name ||
-      "Travel Agency"
+      "KV Tours & Travels"
     );
   }, [settings?.public_display_name, settings?.agency_name]);
 
@@ -402,7 +402,7 @@ export function BrandingProvider({
   }, [settings?.whatsapp_show_on_contact_page]);
 
   const email = useMemo(() => {
-    return settings?.contact_email || "contact@travelagency.com";
+    return settings?.contact_email || "contact.kvtourstravels@gmail.com";
   }, [settings?.contact_email]);
 
   const address = useMemo(() => {
@@ -451,7 +451,7 @@ export function BrandingProvider({
     return (
       settings?.pdf_office_address?.trim() ||
       address ||
-      "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012, India"
+      "Headquarters, India"
     );
   }, [settings?.pdf_office_address, address]);
 

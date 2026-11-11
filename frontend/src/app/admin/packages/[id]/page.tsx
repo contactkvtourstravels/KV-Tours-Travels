@@ -2466,7 +2466,7 @@ export default function PackageEditorPage() {
                 maxLength={180}
                 value={formSeoTitle}
                 onChange={(e) => setFormSeoTitle(e.target.value)}
-                placeholder="e.g. 5-Day Luxury Ooty & Nilgiri Tour Package | The Wild Route Palakkad"
+                placeholder="e.g. 5-Day Luxury Ooty & Nilgiri Tour Package | KV Tours & Travels"
                 className="w-full px-3 py-2 bg-[#F7F7F5] border border-[#D3D8DF] rounded-xl text-xs text-[#202124] focus:outline-none focus:border-[#C5A880] focus:bg-white"
               />
             </div>
@@ -2485,7 +2485,7 @@ export default function PackageEditorPage() {
                 maxLength={320}
                 value={formSeoDesc}
                 onChange={(e) => setFormSeoDesc(e.target.value)}
-                placeholder="Experience bespoke holiday packages to Ooty with The Wild Route..."
+                placeholder="Experience bespoke holiday packages to Ooty with KV Tours & Travels..."
                 className="w-full px-3 py-2 bg-[#F7F7F5] border border-[#D3D8DF] rounded-xl text-xs text-[#202124] focus:outline-none focus:border-[#C5A880] focus:bg-white"
               />
             </div>
@@ -2493,15 +2493,15 @@ export default function PackageEditorPage() {
             <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7] space-y-1">
               <div className="text-[10px] uppercase font-bold text-[#70757A]">Search Snippet Preview</div>
               <div className="text-sm font-bold text-blue-700 truncate">
-                {formSeoTitle || `${pkg.name} | The Wild Route`}
+                {formSeoTitle || `${pkg.name} | KV Tours & Travels`}
               </div>
               <div className="text-xs text-emerald-700 font-mono">
-                https://thewildroute.in/packages/{formSlug || pkg.slug}
+                https://the-wild-root.vercel.app/packages/{formSlug || pkg.slug}
               </div>
               <div className="text-xs text-[#5F6368] line-clamp-2">
                 {formSeoDesc ||
                   pkg.short_description ||
-                  "Book curated luxury travel packages with The Wild Route."}
+                  "Book curated luxury travel packages with KV Tours & Travels."}
               </div>
             </div>
 

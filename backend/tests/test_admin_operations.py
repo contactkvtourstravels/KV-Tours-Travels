@@ -339,7 +339,7 @@ def test_departures_and_passenger_manifest(client, db_session) -> None:
 
     traveller = BookingTraveller(
         booking_id=b.id,
-        first_name="Athul",
+        first_name="Rohan",
         last_name="Traveler",
         date_of_birth=date(1995, 5, 12),
         gender="male",

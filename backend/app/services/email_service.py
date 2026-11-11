@@ -155,10 +155,10 @@ class EmailService:
             try:
                 from app.services.catalog_service import get_public_settings
                 pub = get_public_settings(db)
-                return pub.customer_support_email or pub.contact_email or "concierge@thewildroute.in"
+                return pub.customer_support_email or pub.contact_email or "contact.kvtourstravels@gmail.com"
             except Exception:
                 pass
-        return self.settings.contact_email or "concierge@thewildroute.in"
+        return self.settings.contact_email or "contact.kvtourstravels@gmail.com"
 
     def _send_via_mock(
         self,
@@ -227,7 +227,7 @@ class EmailService:
         if any(sender_addr.endswith(d) for d in forbidden_domains):
             raise ValueError(
                 f"Resend does not permit sending from '{sender_addr}'. Public webmail domains (@gmail.com, @yahoo.com, etc.) cannot be used as the From address. "
-                f"Please verify your agency domain (e.g. 'thewildroute.in') in Resend and use 'bookings@thewildroute.in', or use 'onboarding@resend.dev' for sandbox testing."
+                f"Please verify your agency domain (e.g. 'kvtours.in') in Resend and use 'bookings@kvtours.in', or use 'onboarding@resend.dev' for sandbox testing."
             )
 
         # Generate a clean plain-text fallback if not explicitly passed
@@ -1163,7 +1163,7 @@ class EmailService:
         admin_email = (
             str(admin_email_row.value).strip()
             if admin_email_row and admin_email_row.value
-            else "admin@thewildroute.in"
+            else "contact.kvtourstravels@gmail.com"
         )
         if not admin_email or "@" not in admin_email:
             return None
@@ -1229,7 +1229,7 @@ class EmailService:
         admin_email = (
             str(admin_email_row.value).strip()
             if admin_email_row and admin_email_row.value
-            else "admin@thewildroute.in"
+            else "contact.kvtourstravels@gmail.com"
         )
         if not admin_email or "@" not in admin_email:
             return None

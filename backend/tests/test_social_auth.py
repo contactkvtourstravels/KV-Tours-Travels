@@ -163,7 +163,7 @@ def test_social_login_links_existing_email_account(client, db_session):
 def test_social_login_preserves_admin_role_for_existing_admin(client, db_session):
     """Test that an existing admin linking via social keeps their admin privileges."""
     seed_standard_roles(db_session)
-    existing = db_session.execute(select(User).where(User.email_normalized == "athulsuresh446@gmail.com")).scalar_one_or_none()
+    existing = db_session.execute(select(User).where(User.email_normalized == "contact.kvtourstravels@gmail.com")).scalar_one_or_none()
     if existing:
         db_session.execute(delete(UserSession).where(UserSession.user_id == existing.id))
         db_session.execute(delete(UserRole).where(UserRole.user_id == existing.id))
@@ -171,7 +171,7 @@ def test_social_login_preserves_admin_role_for_existing_admin(client, db_session
         db_session.commit()
 
     bootstrap_super_admin(
-        email="athulsuresh446@gmail.com",
+        email="contact.kvtourstravels@gmail.com",
         first_name="Admin",
         last_name="Director",
         password="AdminP@ssw0rd!2026",
@@ -183,7 +183,7 @@ def test_social_login_preserves_admin_role_for_existing_admin(client, db_session
         mock_token,
         {
             "uid": "google_admin_uid",
-            "email": "athulsuresh446@gmail.com",
+            "email": "contact.kvtourstravels@gmail.com",
             "email_verified": True,
             "name": "Admin Director",
             "provider": "google.com",

@@ -131,7 +131,7 @@ def setup_booking(
 
     traveller = BookingTraveller(
         booking_id=booking.id,
-        first_name="Athul",
+        first_name="Rohan",
         last_name="Traveler",
         is_primary=True,
         contact_email=user.email,

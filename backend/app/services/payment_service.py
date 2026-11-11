@@ -66,13 +66,13 @@ SETTING_KEY_BANK_SETTINGS = "bank_transfer_settings"
 DEFAULT_BANK_SETTINGS: dict[str, Any] = {
     "bank_transfer_enabled": False,
     "branch_payment_enabled": False,
-    "account_name": "THE WILD ROUTE PVT LTD",
+    "account_name": "KV TOURS & TRAVELS",
     "bank_name": "HDFC Bank",
     "account_number": "50200012345678",
     "ifsc_code": "HDFC0001234",
-    "branch_name": "Palakkad Main Branch",
+    "branch_name": "Main Branch",
     "account_type": "Current",
-    "upi_id": "thewildroute@hdfcbank",
+    "upi_id": "kvtours@hdfcbank",
     "payment_instructions": (
         "Please transfer the exact amount using NEFT / RTGS / IMPS or UPI. "
         "Include your Booking Reference in the transfer remarks/notes. "
@@ -382,11 +382,11 @@ class PaymentService:
             ).scalars().first()
             if not def_acc:
                 def_acc = BankAccount(
-                    account_holder_name=raw.get("account_name") or "THE WILD ROUTE PVT LTD",
+                    account_holder_name=raw.get("account_name") or "KV TOURS & TRAVELS",
                     bank_name=raw.get("bank_name") or "HDFC Bank",
                     account_number=raw.get("account_number") or "50200012345678",
                     ifsc_code=raw.get("ifsc_code") or "HDFC0001234",
-                    branch_name=raw.get("branch_name") or "Palakkad Main Branch",
+                    branch_name=raw.get("branch_name") or "Main Branch",
                     account_type=raw.get("account_type") or "Current",
                     upi_id=raw.get("upi_id"),
                     currency="INR",

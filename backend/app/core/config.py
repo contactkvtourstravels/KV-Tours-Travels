@@ -60,15 +60,15 @@ class Settings(BaseSettings):
     firebase_project_id: str = "travel-agency-31216"
 
     # Cloudinary Media Settings
-    cloudinary_cloud_name: str = "wildroot"
-    cloudinary_api_key: str = "wildroot_api_key_dev"
-    cloudinary_api_secret: str = "wildroot_api_secret_dev"
+    cloudinary_cloud_name: str = "kvtours-travels"
+    cloudinary_api_key: str = "kvtours_api_key_dev"
+    cloudinary_api_secret: str = "kvtours_api_secret_dev"
 
     # Public Agency & WhatsApp Configuration
-    agency_name: str = "The Wild Route"
-    agency_location: str = "Palakkad, Kerala, India"
+    agency_name: str = "KV Tours & Travels"
+    agency_location: str = "Headquarters, India"
     whatsapp_number: str = "+919442000000"
-    contact_email: str = "contact@thewildroute.in"
+    contact_email: str = "contact.kvtourstravels@gmail.com"
     contact_phone: str = "+91 94420 00000"
 
     # Razorpay Payment Gateway Settings (Test / Sandbox defaults)
@@ -90,8 +90,8 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     smtp_username: str = ""
     smtp_password: SecretStr = SecretStr("")
-    email_from: str = "The Wild Route <bookings@thewildroute.in>"
-    email_reply_to: str = "concierge@thewildroute.in"
+    email_from: str = "KV Tours & Travels <contact.kvtourstravels@gmail.com>"
+    email_reply_to: str = "contact.kvtourstravels@gmail.com"
 
     # WhatsApp Communication Settings
     whatsapp_provider: str = "direct"  # 'direct', 'cloud_api', 'mock'
@@ -126,12 +126,13 @@ class Settings(BaseSettings):
             for origin in self.frontend_origins.split(",")
             if origin.strip()
         ]
-        # Always allow production frontend domains
+        # Always allow production and staging frontend domains
         for prod_domain in (
-            "https://the-wild-route.vercel.app",
             "https://the-wild-root.vercel.app",
-            "https://thewildroute.in",
-            "https://www.thewildroute.in",
+            "https://kvtours.in",
+            "https://www.kvtours.in",
+            "https://kvtourstravels.com",
+            "https://www.kvtourstravels.com",
         ):
             if prod_domain not in origins:
                 origins.append(prod_domain)

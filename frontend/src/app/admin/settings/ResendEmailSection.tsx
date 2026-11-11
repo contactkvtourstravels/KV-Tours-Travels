@@ -60,17 +60,17 @@ export default function ResendEmailSection({
   onDirtyChange,
   onViewLogs,
 }: ResendEmailSectionProps) {
-  const defaultAgencyName = settings.public_display_name || settings.agency_name || "The Wild Route";
+  const defaultAgencyName = settings.public_display_name || settings.agency_name || "KV Tours & Travels";
 
   // Master Toggle & Sender Configuration
   const [emailEnabled, setEmailEnabled] = useState(settings.email_enabled ?? true);
   const [senderName, setSenderName] = useState(settings.email_sender_name || defaultAgencyName);
-  const [senderEmail, setSenderEmail] = useState(settings.email_sender_email || "bookings@thewildroute.in");
+  const [senderEmail, setSenderEmail] = useState(settings.email_sender_email || "contact.kvtourstravels@gmail.com");
   const [replyToEmail, setReplyToEmail] = useState(
-    settings.email_reply_to || settings.reply_to_email || "concierge@thewildroute.in"
+    settings.email_reply_to || settings.reply_to_email || "contact.kvtourstravels@gmail.com"
   );
   const [adminNotificationEmail, setAdminNotificationEmail] = useState(
-    settings.admin_notification_email || "admin@thewildroute.in"
+    settings.admin_notification_email || "contact.kvtourstravels@gmail.com"
   );
 
   // Protected Resend API Key
@@ -81,7 +81,7 @@ export default function ResendEmailSection({
   const [showApiKey, setShowApiKey] = useState(false);
 
   // Test Email State
-  const [testRecipient, setTestRecipient] = useState(settings.admin_notification_email || "admin@thewildroute.in");
+  const [testRecipient, setTestRecipient] = useState(settings.admin_notification_email || "contact.kvtourstravels@gmail.com");
   const [sendingTest, setSendingTest] = useState(false);
   const [testResult, setTestResult] = useState<EmailSendTestResponse | null>(null);
   const [lastTestStatus, setLastTestStatus] = useState<"success" | "failed" | "not_tested">("not_tested");
@@ -114,7 +114,7 @@ export default function ResendEmailSection({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Derive target sender domain
-  const senderDomain = senderEmail.includes("@") ? senderEmail.split("@")[1].trim() : "thewildroute.in";
+  const senderDomain = senderEmail.includes("@") ? senderEmail.split("@")[1].trim() : "kvtours.in";
 
   // Production Webhook URL
   const productionWebhookUrl =
@@ -144,9 +144,9 @@ export default function ResendEmailSection({
     const isDirty =
       emailEnabled !== (settings.email_enabled ?? true) ||
       senderName !== (settings.email_sender_name || defaultAgencyName) ||
-      senderEmail !== (settings.email_sender_email || "bookings@thewildroute.in") ||
-      replyToEmail !== (settings.email_reply_to || settings.reply_to_email || "concierge@thewildroute.in") ||
-      adminNotificationEmail !== (settings.admin_notification_email || "admin@thewildroute.in") ||
+      senderEmail !== (settings.email_sender_email || "contact.kvtourstravels@gmail.com") ||
+      replyToEmail !== (settings.email_reply_to || settings.reply_to_email || "contact.kvtourstravels@gmail.com") ||
+      adminNotificationEmail !== (settings.admin_notification_email || "contact.kvtourstravels@gmail.com") ||
       apiKey.trim().length > 0 ||
       webhookSecret.trim().length > 0;
 
@@ -173,9 +173,9 @@ export default function ResendEmailSection({
   const handleReset = () => {
     setEmailEnabled(settings.email_enabled ?? true);
     setSenderName(settings.email_sender_name || defaultAgencyName);
-    setSenderEmail(settings.email_sender_email || "bookings@thewildroute.in");
-    setReplyToEmail(settings.email_reply_to || settings.reply_to_email || "concierge@thewildroute.in");
-    setAdminNotificationEmail(settings.admin_notification_email || "admin@thewildroute.in");
+    setSenderEmail(settings.email_sender_email || "contact.kvtourstravels@gmail.com");
+    setReplyToEmail(settings.email_reply_to || settings.reply_to_email || "contact.kvtourstravels@gmail.com");
+    setAdminNotificationEmail(settings.admin_notification_email || "contact.kvtourstravels@gmail.com");
     setApiKey("");
     setIsReplacingKey(!keyConfigured);
     setShowApiKey(false);
@@ -238,7 +238,7 @@ export default function ResendEmailSection({
         success: false,
         provider: "resend",
         recipient: testRecipient,
-        message: "Please enter a valid recipient email address (e.g. admin@thewildroute.in).",
+        message: "Please enter a valid recipient email address (e.g. contact.kvtourstravels@gmail.com).",
         timestamp: new Date().toISOString(),
       });
       setLastTestStatus("failed");
@@ -846,7 +846,7 @@ export default function ResendEmailSection({
               value={replyToEmail}
               onChange={(e) => setReplyToEmail(e.target.value)}
               disabled={!canEdit}
-              placeholder="concierge@thewildroute.in"
+              placeholder="contact.kvtourstravels@gmail.com"
               className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
             />
             <p className="text-[11px] text-[#5F6368]">Where customer replies are delivered when they hit &apos;Reply&apos;.</p>
@@ -862,7 +862,7 @@ export default function ResendEmailSection({
               value={adminNotificationEmail}
               onChange={(e) => setAdminNotificationEmail(e.target.value)}
               disabled={!canEdit}
-              placeholder="admin@thewildroute.in"
+              placeholder="contact.kvtourstravels@gmail.com"
               className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden"
             />
             <p className="text-[11px] text-[#5F6368]">Receives automated internal alerts for bookings and customer inquiries.</p>
@@ -909,7 +909,7 @@ export default function ResendEmailSection({
               type="email"
               value={testRecipient}
               onChange={(e) => setTestRecipient(e.target.value)}
-              placeholder="Recipient email address (e.g. admin@thewildroute.in)..."
+              placeholder="Recipient email address (e.g. contact.kvtourstravels@gmail.com)..."
               disabled={sendingTest}
               className="w-full text-xs px-3.5 py-2.5 bg-white border border-[#D3D8DF] rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden disabled:bg-stone-50"
             />

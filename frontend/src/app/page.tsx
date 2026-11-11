@@ -163,7 +163,7 @@ function HomeContent() {
       ? getWhatsAppClickToChatUrl(
           settings?.whatsapp_number || settings?.support_whatsapp,
           settings?.whatsapp_prefilled_message ||
-            `Hi ${settings?.public_display_name || settings?.agency_name || "The Wild Route"} ${settings?.city || "Palakkad"}, I am looking to plan a holiday journey. Please assist me.`,
+            `Hi ${settings?.public_display_name || settings?.agency_name || "KV Tours & Travels"}, I am looking to plan a holiday journey. Please assist me.`,
           settings?.whatsapp_country_code || "+91"
         )
       : "";
@@ -351,7 +351,7 @@ function HomeContent() {
           ) : (
             <Image
               src={getSafeImageUrl(pageContent?.hero?.image_url, "/images/hero/hero-1080p.webp")}
-              alt={`${settings?.public_display_name || settings?.agency_name || "The Wild Route"} luxury destination escape`}
+              alt={`${settings?.public_display_name || settings?.agency_name || "KV Tours & Travels"} luxury destination escape`}
               fill
               priority
               quality={80}
@@ -522,7 +522,7 @@ function HomeContent() {
             <div>
               <div className="inline-flex items-center gap-2 text-[#C5A880] text-xs uppercase tracking-[0.24em] font-semibold mb-2">
                 <Globe className="w-3.5 h-3.5 text-[#C5A880]" />
-                <span>Discover The World With {settings?.public_display_name || settings?.agency_name || "The Wild Route"}</span>
+                <span>Discover The World With {settings?.public_display_name || settings?.agency_name || "KV Tours & Travels"}</span>
               </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-serif font-bold text-[#202124] tracking-tight">
                 Trending Destinations
@@ -620,7 +620,7 @@ function HomeContent() {
                 Itineraries Being Curated
               </h3>
               <p className="text-[#5F6368] text-sm mt-1">
-                Our destination specialists in {settings?.city || "Palakkad"} are currently scheduling new departures for this category. Contact our concierge for bespoke planning.
+                Our destination specialists are currently scheduling new departures for this category. Contact our concierge for bespoke planning.
               </p>
               <Link
                 href="/contact"
@@ -1044,7 +1044,7 @@ function HomeContent() {
                   Build Your Own Itinerary
                 </h3>
                 <p className="text-white/80 text-xs sm:text-sm mt-3 leading-relaxed font-light">
-                  Have a specific route, family celebration, or custom dates? Our {settings?.city || "Palakkad"} travel specialists customize every detail.
+                  Have a specific route, family celebration, or custom dates? Our dedicated travel specialists customize every detail.
                 </p>
 
                 <div className="mt-6 space-y-2 text-xs text-white/90">
@@ -1208,7 +1208,7 @@ function HomeContent() {
                   Your Trip. <span className="text-[#C5A880] italic font-normal">Your Way.</span>
                 </h2>
                 <p className="mt-4 text-[#5F6368] text-sm sm:text-base leading-relaxed font-light">
-                  No rigid schedules or cookie-cutter templates. Whether you are designing an intimate honeymoon in the Maldives, an adventurous expedition through Kazakhstan, or a private family retreat to Manali, our {settings?.city || "Palakkad"} concierge crafts an itinerary tailored entirely to your desires.
+                  No rigid schedules or cookie-cutter templates. Whether you are designing an intimate honeymoon in the Maldives, an adventurous expedition through Kazakhstan, or a private family retreat to Manali, our concierge crafts an itinerary tailored entirely to your desires.
                 </p>
 
                 {/* 4 Pillars of Custom Planning */}
@@ -1262,16 +1262,16 @@ function HomeContent() {
 
 
       {/* =========================================================================
-          7. WHY THE WILD ROUTE (Verified Business Trust Indicators)
+          7. WHY KV TOURS & TRAVELS (Verified Business Trust Indicators)
          ========================================================================= */}
       <section className="py-24 bg-[#F7F7F5]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-[#C5A880] text-xs uppercase tracking-[0.24em] font-semibold block mb-2">
-              The {settings?.public_display_name || settings?.agency_name || "Wild Route"} Standard
+              The {settings?.public_display_name || settings?.agency_name || "KV Tours & Travels"} Standard
             </span>
             <h2 className="text-3xl sm:text-5xl font-serif font-bold text-[#202124] tracking-tight">
-              Why Travel With {settings?.public_display_name || settings?.agency_name || "The Wild Route"}?
+              Why Travel With {settings?.public_display_name || settings?.agency_name || "KV Tours & Travels"}?
             </h2>
             <p className="mt-4 text-[#5F6368] text-sm font-light">
               We focus on meticulous planning, genuine human support, and extraordinary travel memories.
@@ -1284,10 +1284,10 @@ function HomeContent() {
                 <MapPin className="w-6 h-6 text-[#C5A880]" />
               </div>
               <h3 className="text-lg font-serif font-bold text-[#202124] mb-2">
-                {settings?.city || "Palakkad"} Based
+                {settings?.city ? `${settings.city} Based` : "Accessible Concierge"}
               </h3>
               <p className="text-[#5F6368] text-xs sm:text-sm leading-relaxed font-light">
-                Direct, accessible travel consultations right here in {settings?.city || "Palakkad"}. You have a dedicated travel planner to coordinate your entire journey.
+                Direct, accessible travel consultations{settings?.city ? ` right here in ${settings.city}` : ""}. You have a dedicated travel planner to coordinate your entire journey.
               </p>
             </div>
 

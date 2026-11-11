@@ -20,8 +20,8 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
       publicCatalogApi.getDestination(slug),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
-    const agencyName = settings?.public_display_name || settings?.agency_name || "Travel Agency";
-    const siteUrl = settings?.website_url || "https://thewildroute.in";
+    const agencyName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
+    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
     const title = dest.seo_title || `${dest.name} Tour Packages | ${agencyName}`;
     const description =
       dest.seo_description ||
@@ -105,6 +105,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
     touristType: ["Luxury", "Adventure", "Couples", "Family"],
   };
 
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
   const breadcrumbData = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -113,19 +114,19 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
         "@type": "ListItem",
         position: 1,
         name: "Home",
-        item: "https://thewildroute.in",
+        item: siteUrl,
       },
       {
         "@type": "ListItem",
         position: 2,
         name: "Destinations",
-        item: "https://thewildroute.in/destinations",
+        item: `${siteUrl}/destinations`,
       },
       {
         "@type": "ListItem",
         position: 3,
         name: destination.name,
-        item: `https://thewildroute.in/destinations/${slug}`,
+        item: `${siteUrl}/destinations/${slug}`,
       },
     ],
   };

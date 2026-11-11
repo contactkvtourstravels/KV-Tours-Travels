@@ -27,6 +27,7 @@ import { PublicLayout } from "@/components/public/PublicLayout";
 import {
   DEFAULT_BUSINESS_PHONE,
   DEFAULT_WHATSAPP_NUMBER,
+  DEFAULT_CONTACT_EMAIL,
   getWhatsAppClickToChatUrl,
 } from "@/lib/constants";
 import { useBranding } from "@/context/BrandingContext";
@@ -82,8 +83,8 @@ function ContactPageContent() {
     settings?.public_display_name ||
     settings?.agency_name ||
     brandDisplayName ||
-    "The Wild Route";
-  const city = branding.city || settings?.city || "Palakkad";
+    "KV Tours & Travels";
+  const city = branding.city || settings?.city || "";
   const content = pageData?.content;
 
   // Resolve office address & phones with fallbacks
@@ -91,7 +92,7 @@ function ContactPageContent() {
     content?.cards?.office_address ||
     branding.office_address ||
     settings?.office_address ||
-    "The Wild Route Lounge, Fort Maidan Road, Near Palakkad Fort, Palakkad, Kerala 678001";
+    "Headquarters, India";
 
   const operatingHours =
     content?.cards?.operating_hours ||
@@ -109,7 +110,7 @@ function ContactPageContent() {
     content?.cards?.contact_email ||
     branding.contact_email ||
     settings?.contact_email ||
-    "concierge@thewildroute.in";
+    DEFAULT_CONTACT_EMAIL;
 
   const whatsappNumber =
     branding.whatsapp_number ||

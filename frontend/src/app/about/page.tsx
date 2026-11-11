@@ -62,13 +62,13 @@ function AboutPageContent() {
     branding.agency_name ||
     settings?.public_display_name ||
     settings?.agency_name ||
-    "The Wild Route";
-  const city = branding.city || settings?.city || "Palakkad";
+    "KV Tours & Travels";
+  const city = branding.city || settings?.city || "";
   const address =
     branding.office_address ||
     settings?.office_address ||
     settings?.public_office_address ||
-    "The Wild Route Lounge, Fort Maidan Road, Near Palakkad Fort, Palakkad, Kerala 678001";
+    "Headquarters, India";
   const whatsappNumber =
     branding.whatsapp_number ||
     settings?.whatsapp_number ||
@@ -112,7 +112,7 @@ function AboutPageContent() {
     .split(/\s+/)
     .slice(0, 2)
     .map((w: string) => w[0]?.toUpperCase() || "")
-    .join("") || "WR";
+    .join("") || "KV";
 
   return (
     <PublicLayout>

@@ -858,21 +858,21 @@ class AdminSiteSettingsResponse(BaseModel):
 
     # Business Identity
     legal_business_name: str | None = None
-    agency_name: str = "The Wild Route"
+    agency_name: str = "KV Tours & Travels"
     public_display_name: str | None = None
     admin_panel_name: str | None = None
     admin_portal_subtitle: str | None = None
-    tagline: str = "The Wild Route • Luxury & Adventure Journeys"
+    tagline: str = "KV Tours & Travels • Luxury & Adventure Journeys"
     logo_url: str | None = None
     favicon_url: str | None = None
     business_description: str | None = None
     registered_office_address: str | None = None
-    office_address: str = "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+    office_address: str = "Headquarters, India"
     public_office_address: str | None = None
-    agency_location: str = "Coimbatore, Tamil Nadu, India"
-    city: str | None = "Coimbatore"
-    state: str | None = "Tamil Nadu"
-    postal_code: str | None = "641012"
+    agency_location: str = "India"
+    city: str | None = None
+    state: str | None = None
+    postal_code: str | None = None
     country: str | None = "India"
     time_zone: str = "Asia/Kolkata"
     currency: str = "INR"
@@ -882,14 +882,14 @@ class AdminSiteSettingsResponse(BaseModel):
     secondary_phone: str | None = None
     support_whatsapp: str | None = None
     emergency_phone: str | None = None
-    contact_email: str = "contact@thewildroute.in"
-    customer_support_email: str | None = None
-    booking_email: str | None = None
-    general_inquiry_email: str | None = None
-    reply_to_email: str | None = None
+    contact_email: str = "contact.kvtourstravels@gmail.com"
+    customer_support_email: str | None = "contact.kvtourstravels@gmail.com"
+    booking_email: str | None = "contact.kvtourstravels@gmail.com"
+    general_inquiry_email: str | None = "contact.kvtourstravels@gmail.com"
+    reply_to_email: str | None = "contact.kvtourstravels@gmail.com"
 
     # Social and Online Presence
-    instagram_handle: str | None = "@thewildroute"
+    instagram_handle: str | None = None
     instagram_url: str | None = None
     facebook_url: str | None = None
     website_url: str | None = None
@@ -904,11 +904,11 @@ class AdminSiteSettingsResponse(BaseModel):
     # WhatsApp Click-to-Chat
     whatsapp_number: str = "+919442000000"
     whatsapp_country_code: str = "+91"
-    whatsapp_prefilled_message: str = "Hi The Wild Route, I am interested in planning a trip."
-    whatsapp_package_message: str = "Hi The Wild Route, I am interested in this package."
-    whatsapp_destination_message: str = "Hi The Wild Route, I would like to know more about this destination."
-    whatsapp_custom_trip_message: str = "Hi The Wild Route, I would like to plan a custom holiday."
-    whatsapp_booking_support_message: str = "Hi The Wild Route, I need assistance with my booking."
+    whatsapp_prefilled_message: str = "Hi KV Tours & Travels, I am interested in planning a trip."
+    whatsapp_package_message: str = "Hi KV Tours & Travels, I am interested in this package."
+    whatsapp_destination_message: str = "Hi KV Tours & Travels, I would like to know more about this destination."
+    whatsapp_custom_trip_message: str = "Hi KV Tours & Travels, I would like to plan a custom holiday."
+    whatsapp_booking_support_message: str = "Hi KV Tours & Travels, I need assistance with my booking."
     whatsapp_enabled: bool = True
     whatsapp_show_floating_concierge: bool = True
     whatsapp_concierge_floating: bool = True
@@ -939,24 +939,24 @@ class AdminSiteSettingsResponse(BaseModel):
     resend_webhook_signing_secret_masked: str | None = None
     resend_webhook_url: str | None = None
     resend_webhook_tunnel_url: str | None = None
-    email_sender_name: str = "The Wild Route"
-    email_sender_email: str = "bookings@thewildroute.in"
-    email_reply_to: str = "concierge@thewildroute.in"
-    admin_notification_email: str | None = "admin@thewildroute.in"
+    email_sender_name: str = "KV Tours & Travels"
+    email_sender_email: str = "contact.kvtourstravels@gmail.com"
+    email_reply_to: str = "contact.kvtourstravels@gmail.com"
+    admin_notification_email: str | None = "contact.kvtourstravels@gmail.com"
     email_enabled: bool = True
     email_booking_confirmation_enabled: bool = True
     email_inquiry_ack_enabled: bool = True
     email_payment_receipt_enabled: bool = True
     email_cancellation_updates_enabled: bool = True
     email_trip_reminders_enabled: bool = True
-    email_subject_booking_confirmation: str = "Your Booking Confirmation — The Wild Route"
-    email_subject_payment_receipt: str = "Payment Receipt — The Wild Route"
-    email_subject_inquiry_ack: str = "Inquiry Received — The Wild Route"
-    email_subject_trip_reminder: str = "Your Upcoming Journey with The Wild Route"
+    email_subject_booking_confirmation: str = "Your Booking Confirmation — KV Tours & Travels"
+    email_subject_payment_receipt: str = "Payment Receipt — KV Tours & Travels"
+    email_subject_inquiry_ack: str = "Inquiry Received — KV Tours & Travels"
+    email_subject_trip_reminder: str = "Your Upcoming Journey with KV Tours & Travels"
 
     # Homepage Content & Visibility
     hero_headline: str = "Handcrafted Journeys Beyond the Ordinary"
-    hero_subtitle: str = "Coimbatore's premier luxury travel curator crafting extraordinary journeys across India and the globe."
+    hero_subtitle: str = "Premier luxury travel curator crafting extraordinary journeys across India and the globe."
     hero_image_url: str | None = None
     contact_cta_text: str = "Speak With Concierge"
     whatsapp_cta_text: str = "Chat on WhatsApp"
@@ -1298,7 +1298,7 @@ class EmailSendTestRequest(BaseModel):
 
     recipient_email: str | None = None
     recipient: str | None = None
-    subject: str = "The Wild Route — Email Configuration Test"
+    subject: str = "KV Tours & Travels — Email Configuration Test"
     notes: str | None = None
 
     @model_validator(mode="after")

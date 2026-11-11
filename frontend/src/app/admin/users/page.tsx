@@ -468,7 +468,7 @@ export default function UsersAdminPage() {
                 {ALL_ROLES.map((role) => {
                   const isRoleSuperAdmin = role === "super_admin";
                   const isEligibleForSuperAdmin =
-                    ["athulsuresh4466@gmail.com", "athulsuresh446@gmail.com"].includes(
+                    ["contact.kvtourstravels@gmail.com"].includes(
                       roleModalUser.email.toLowerCase().trim()
                     );
                   const isDisabled = isRoleSuperAdmin && !isEligibleForSuperAdmin;

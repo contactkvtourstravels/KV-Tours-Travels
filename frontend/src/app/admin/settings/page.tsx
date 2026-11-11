@@ -20,10 +20,12 @@ import {
   X,
   Printer,
   FileText,
+  Building,
 } from "lucide-react";
 import { adminApi, AdminSiteSettings } from "@/lib/api";
 import { useAdmin } from "../AdminContext";
 
+import AgencyProfileSection from "./AgencyProfileSection";
 import WhatsAppClickToChatSection from "./WhatsAppClickToChatSection";
 import WhatsAppCloudApiSection from "./WhatsAppCloudApiSection";
 import ResendEmailSection from "./ResendEmailSection";
@@ -33,6 +35,7 @@ import DeliveryLogsSection from "./DeliveryLogsSection";
 import ConfigurationHealthSection from "./ConfigurationHealthSection";
 
 export type SettingsTab =
+  | "identity"
   | "whatsapp"
   | "whatsapp_cloud"
   | "email"
@@ -47,7 +50,7 @@ export default function AdminSettingsPage() {
   const { hasAnyRole } = useAdmin();
   const canEdit = hasAnyRole(["admin", "super_admin"]);
 
-  const [activeTab, setActiveTab] = useState<SettingsTab>("whatsapp");
+  const [activeTab, setActiveTab] = useState<SettingsTab>("identity");
   const [settings, setSettings] = useState<AdminSiteSettings | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -67,8 +70,8 @@ export default function AdminSettingsPage() {
         router.replace("/admin/content/main");
         return;
       }
-      if (tabParam === "profile" || tabParam === "business") {
-        router.replace("/admin/content/main?tab=branding");
+      if (tabParam === "profile" || tabParam === "business" || tabParam === "identity" || tabParam === "branding") {
+        setActiveTab("identity");
         return;
       }
       if (tabParam === "notification_logs") {
@@ -77,6 +80,7 @@ export default function AdminSettingsPage() {
         setActiveTab("pdf");
       } else if (
         [
+          "identity",
           "whatsapp",
           "whatsapp_cloud",
           "email",
@@ -172,6 +176,7 @@ export default function AdminSettingsPage() {
   }
 
   const tabs: { id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: "identity", label: "Business Identity", icon: Building },
     { id: "whatsapp", label: "WhatsApp Click-to-Chat", icon: MessageCircle },
     { id: "whatsapp_cloud", label: "WhatsApp Cloud API", icon: Shield },
     { id: "email", label: "Resend Email", icon: Mail },
@@ -294,6 +299,15 @@ export default function AdminSettingsPage() {
 
       {/* Tab Content Display */}
       <div>
+        {activeTab === "identity" && (
+          <AgencyProfileSection
+            settings={settings}
+            canEdit={canEdit}
+            onSaved={handleSettingsSaved}
+            onDirtyChange={setIsDirty}
+          />
+        )}
+
         {activeTab === "whatsapp" && (
           <WhatsAppClickToChatSection
             settings={settings}

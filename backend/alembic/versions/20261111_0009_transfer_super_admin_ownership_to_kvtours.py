@@ -25,14 +25,31 @@ NEW_SUPER_ADMIN_EMAIL = "contact.kvtourstravels@gmail.com"
 def upgrade() -> None:
     conn = op.get_bind()
 
-    # 1. Fetch role IDs for super_admin and admin
+    # 1. Fetch or initialize standard roles
     roles = conn.execute(text("SELECT id, name FROM roles")).fetchall()
     role_map = {row[1]: str(row[0]) for row in roles}
+
+    standard_roles = [
+        ("super_admin", "Super Administrator with full unrestricted access"),
+        ("admin", "Administrator with system and user management access"),
+        ("manager", "Operations Manager with booking and inventory management access"),
+        ("staff", "Support and Operations Staff with day-to-day handling access"),
+        ("customer", "End customer with personal booking and account access"),
+    ]
+    for role_name, desc in standard_roles:
+        if role_name not in role_map:
+            rid = uuid4().hex
+            conn.execute(
+                text(
+                    "INSERT INTO roles (id, name, description, created_at, updated_at) "
+                    "VALUES (:id, :name, :desc, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                ),
+                {"id": rid, "name": role_name, "desc": desc},
+            )
+            role_map[role_name] = rid
+
     super_admin_role_id = role_map.get("super_admin")
     admin_role_id = role_map.get("admin")
-
-    if not super_admin_role_id:
-        return
 
     # 2. Check if new super admin user exists
     target_user = conn.execute(

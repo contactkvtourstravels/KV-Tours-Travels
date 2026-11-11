@@ -1,9 +1,16 @@
+databases:
+  - name: kv-tours-db
+    databaseName: travelagency
+    user: travelagency
+    plan: free
+
 services:
   - type: web
     name: kv-tours-backend
     runtime: python
     rootDir: backend
     buildCommand: pip install -r requirements.txt
+    preDeployCommand: alembic upgrade head
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/v1/health
     envVars:
@@ -14,7 +21,9 @@ services:
       - key: LOG_LEVEL
         value: INFO
       - key: DATABASE_URL
-        sync: false
+        fromDatabase:
+          name: kv-tours-db
+          property: connectionString
       - key: SECRET_KEY
         generateValue: true
       - key: BACKEND_URL

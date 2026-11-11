@@ -33,6 +33,8 @@ try {
 
 const nextConfig: NextConfig = {
   devIndicators: false,
+  compress: true,
+  poweredByHeader: false,
   images: {
     qualities: [75, 80, 85, 90],
     formats: ["image/avif", "image/webp"],
@@ -127,6 +129,28 @@ const nextConfig: NextConfig = {
       {
         source: "/uploads/:path*",
         destination: `${backendBase}/uploads/:path*`,
+      },
+    ];
+  },
+  async headers() {
+    return [
+      {
+        source: "/images/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      {
+        source: "/favicon.ico",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400",
+          },
+        ],
       },
     ];
   },

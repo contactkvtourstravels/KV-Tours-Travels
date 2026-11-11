@@ -21,6 +21,8 @@ from app.models.commerce import AddOn, Inquiry
 def test_public_settings_endpoint(client, db_session) -> None:
     resp = client.get("/api/v1/settings")
     assert resp.status_code == 200
+    assert "public" in resp.headers.get("Cache-Control", "")
+    assert "s-maxage" in resp.headers.get("Cache-Control", "")
     data = resp.json()
     assert data["agency_name"] in ("The Wild Route", "Wild Route", "The Wild Root", "Wild Root", "KV Tours & Travels")
     assert any(loc in data["agency_location"] for loc in ("Coimbatore", "India", "Kerala"))

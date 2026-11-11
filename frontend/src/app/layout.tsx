@@ -6,15 +6,18 @@ import { DEFAULT_BUSINESS_PHONE } from "@/lib/constants";
 import { publicCatalogApi, type PublicSiteSettings } from "@/lib/api";
 import { BrandingProvider } from "@/context/BrandingContext";
 
+// Incremental Static Regeneration (ISR) - revalidate layout cache every 5 minutes
+export const revalidate = 300;
+
 export async function generateMetadata(): Promise<Metadata> {
   let settings: PublicSiteSettings | null = null;
   try {
     settings = await publicCatalogApi.getSettings();
   } catch {
-    // Graceful fallback during isolated builds
+    // Graceful fallback during isolated builds or cold starts
   }
 
-  const displayName = settings?.public_display_name || settings?.agency_name || "Travel Agency";
+  const displayName = settings?.public_display_name || settings?.agency_name || "The Wild Route";
   const tagline = settings?.tagline || "Luxury & Adventure Journeys";
   const siteTitle = `${displayName} | ${tagline}`;
   const siteDescription =
@@ -94,7 +97,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     // Graceful fallback during build or initial startup
   }
 
-  const displayName = settings?.public_display_name || settings?.agency_name || "Travel Agency";
+  const displayName = settings?.public_display_name || settings?.agency_name || "The Wild Route";
   const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://thewildroute.in";
   const phone = settings?.contact_phone || DEFAULT_BUSINESS_PHONE;
   const email = settings?.contact_email || "contact@travelagency.com";

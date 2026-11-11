@@ -39,6 +39,44 @@ import { PublicLayout } from "@/components/public/PublicLayout";
 import { QuickInquiryModal } from "@/components/public/QuickInquiryModal";
 import { BestOffersSection } from "@/components/public/BestOffersSection";
 
+const DEFAULT_HOME_PAGE_CONTENT: HomePageContent = {
+  hero: {
+    eyebrow: "Bespoke Journeys & Luxury Travel",
+    heading: "Discover Extraordinary Journeys Across India & Beyond",
+    description:
+      "Experience hand-crafted itineraries, signature group departures, and luxury stays curated for unforgettable adventures.",
+    primary_cta_text: "Explore Packages",
+    primary_cta_link: "/packages",
+    secondary_cta_text: "Plan Custom Trip",
+    secondary_cta_link: "/custom-trip",
+    whatsapp_cta_text: "WhatsApp Concierge",
+    popular_tags: ["Kashmir", "Kerala", "Bali", "Dubai", "Vietnam", "Himachal", "Europe"],
+    media_type: "image",
+    image_url: "/images/hero/hero-1080p.webp",
+  },
+  trust_indicators: [
+    { label: "Hand-Crafted Itineraries", icon: "Compass" },
+    { label: "Verified 5-Star Accommodations", icon: "ShieldCheck" },
+    { label: "24/7 Dedicated Concierge", icon: "Sparkles" },
+  ],
+  sections_visibility: {
+    trending_destinations: true,
+    best_offers: true,
+    featured_packages: true,
+    travel_inspirations: true,
+    upcoming_departures: true,
+    custom_cta: true,
+  },
+  sections_order: [
+    "trending_destinations",
+    "best_offers",
+    "featured_packages",
+    "travel_inspirations",
+    "upcoming_departures",
+    "custom_cta",
+  ],
+};
+
 function HomeContent() {
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
@@ -47,7 +85,7 @@ function HomeContent() {
   const [packages, setPackages] = useState<PublicPackageListItem[]>([]);
   const [departures, setDepartures] = useState<PublicDepartureListItem[]>([]);
   const [settings, setSettings] = useState<PublicSiteSettings | null>(null);
-  const [pageContent, setPageContent] = useState<HomePageContent | null>(null);
+  const [pageContent, setPageContent] = useState<HomePageContent>(DEFAULT_HOME_PAGE_CONTENT);
   const [loading, setLoading] = useState(true);
 
   // Trending Destinations Category Filter ("international" | "domestic")
@@ -78,7 +116,23 @@ function HomeContent() {
         if (depsRes.status === "fulfilled") setDepartures(depsRes.value);
         if (setsRes.status === "fulfilled") setSettings(setsRes.value);
         if (contentRes.status === "fulfilled" && contentRes.value?.content) {
-          setPageContent(contentRes.value.content);
+          const fresh = contentRes.value.content;
+          setPageContent((prev) => ({
+            ...prev,
+            ...fresh,
+            hero: {
+              ...prev.hero,
+              ...(fresh.hero || {}),
+            },
+            sections_visibility: {
+              ...prev.sections_visibility,
+              ...(fresh.sections_visibility || {}),
+            },
+            featured_content: {
+              ...prev.featured_content,
+              ...(fresh.featured_content || {}),
+            },
+          }));
         }
       } catch {
         // Fallbacks handled gracefully
@@ -296,12 +350,12 @@ function HomeContent() {
             />
           ) : (
             <Image
-              src={getSafeImageUrl(pageContent?.hero?.image_url, "/images/hero/hero-4k.webp")}
+              src={getSafeImageUrl(pageContent?.hero?.image_url, "/images/hero/hero-1080p.webp")}
               alt={`${settings?.public_display_name || settings?.agency_name || "The Wild Route"} luxury destination escape`}
               fill
               priority
-              quality={90}
-              sizes="100vw"
+              quality={80}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 100vw, 1920px"
               className="object-cover object-center"
             />
           )}

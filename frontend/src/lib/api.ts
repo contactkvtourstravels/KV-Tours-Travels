@@ -1492,120 +1492,225 @@ export function clearCachedCsrfToken(): void {
   csrfPromise = null;
 }
 
+export interface ApiRequestOptions extends RequestInit {
+  timeoutMs?: number;
+  skipCache?: boolean;
+  next?: {
+    revalidate?: number | false;
+    tags?: string[];
+  };
+}
+
+interface ClientCacheEntry {
+  data: unknown;
+  expiresAt: number;
+}
+
+const clientApiCache = new Map<string, ClientCacheEntry>();
+const inFlightApiRequests = new Map<string, Promise<unknown>>();
+
+export function clearClientCatalogCache(): void {
+  clientApiCache.clear();
+  inFlightApiRequests.clear();
+}
+
 /**
- * Generic request wrapper ensuring credentials: 'include', CSRF header attachment,
- * and seamless retry on CSRF token desynchronization.
+ * Generic request wrapper ensuring credentials, CSRF header attachment,
+ * client-side catalog caching, deduplication, and fast timeouts on server cold starts.
  */
 export async function apiRequest<T>(
   path: string,
-  options: RequestInit = {},
+  options: ApiRequestOptions = {},
   isCsrfRetry = false,
   overrideCsrf?: string
 ): Promise<T> {
   const baseUrl = getApiBaseUrl();
-  const url = `${baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  const url = `${baseUrl}${cleanPath}`;
   const method = (options.method || "GET").toUpperCase();
-
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    ...(options.headers as Record<string, string> | undefined),
-  };
-
+  const isServer = typeof window === "undefined";
   const sessionToken = getSessionToken();
-  if (sessionToken && !headers["Authorization"]) {
-    headers["Authorization"] = `Bearer ${sessionToken}`;
-  }
 
-  if (options.body && typeof options.body === "string" && !headers["Content-Type"]) {
-    headers["Content-Type"] = "application/json";
-  }
+  // Public read-only catalog endpoints eligible for caching and fast edge performance
+  const isPublicCatalogPath =
+    cleanPath.startsWith("/destinations") ||
+    cleanPath.startsWith("/packages") ||
+    cleanPath.startsWith("/departures") ||
+    cleanPath.startsWith("/settings") ||
+    cleanPath.startsWith("/offers") ||
+    cleanPath.startsWith("/add-ons") ||
+    cleanPath.startsWith("/content/pages");
 
-  // State-changing methods require CSRF token
-  if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
-    try {
-      const csrf = overrideCsrf || (await getCsrfToken());
-      headers["X-CSRF-Token"] = csrf;
-    } catch {
-      // Allow fallback if unauthenticated init
+  const isPreview = cleanPath.includes("preview=true");
+  const canCache =
+    method === "GET" &&
+    isPublicCatalogPath &&
+    !isPreview &&
+    !options.skipCache &&
+    !sessionToken;
+
+  // 1. Client-side memory cache check
+  if (!isServer && canCache) {
+    const cached = clientApiCache.get(cleanPath);
+    if (cached && Date.now() < cached.expiresAt) {
+      return cached.data as T;
+    }
+    const inFlight = inFlightApiRequests.get(cleanPath);
+    if (inFlight) {
+      return (await inFlight) as T;
     }
   }
 
-  let response: Response;
-  try {
-    response = await fetch(url, {
-      cache: "no-store",
+  // Deduplication promise executor
+  const executeFetch = async (): Promise<T> => {
+    const headers: Record<string, string> = {
+      Accept: "application/json",
+      ...(options.headers as Record<string, string> | undefined),
+    };
+
+    if (sessionToken && !headers["Authorization"]) {
+      headers["Authorization"] = `Bearer ${sessionToken}`;
+    }
+
+    if (options.body && typeof options.body === "string" && !headers["Content-Type"]) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    // State-changing methods require CSRF token
+    if (["POST", "PUT", "PATCH", "DELETE"].includes(method)) {
+      try {
+        const csrf = overrideCsrf || (await getCsrfToken());
+        headers["X-CSRF-Token"] = csrf;
+      } catch {
+        // Allow fallback if unauthenticated init
+      }
+    }
+
+    const fetchOptions: RequestInit & { next?: { revalidate?: number | false; tags?: string[] } } = {
       ...options,
       method,
       headers,
-      credentials: "include",
-    });
-  } catch (err: unknown) {
-    const error = err as Error;
-    if (error.name === "TypeError" || error.message?.toLowerCase().includes("fetch")) {
-      const endpointPath = path.startsWith("/") ? path : `/${path}`;
-      throw new Error(
-        `Unable to connect to backend server at ${baseUrl} (endpoint: ${endpointPath}). ` +
-        `Please verify that the FastAPI service is running and that CORS configuration permits requests from this origin.`
-      );
-    }
-    throw error;
-  }
+    };
 
-  if (!response.ok) {
-    // Automatic retry for 403 CSRF validation errors (re-fetch fresh token and retry once)
-    if (
-      response.status === 403 &&
-      !isCsrfRetry &&
-      ["POST", "PUT", "PATCH", "DELETE"].includes(method)
-    ) {
+    // For public catalog GET requests, omit cookies to allow CDN edge caching
+    if (canCache) {
+      fetchOptions.credentials = "same-origin";
+      if (isServer) {
+        fetchOptions.next = options.next || { revalidate: 300 };
+      }
+    } else {
+      fetchOptions.credentials = "include";
+      fetchOptions.cache = options.cache || "no-store";
+    }
+
+    // Server-side timeout (3500ms) prevents Vercel lambda freeze if Render container is cold
+    const timeoutMs = options.timeoutMs ?? (isServer && canCache ? 3500 : 15000);
+    let abortTimer: ReturnType<typeof setTimeout> | null = null;
+    let signal = options.signal;
+
+    if (!signal && timeoutMs > 0 && typeof AbortController !== "undefined") {
+      const controller = new AbortController();
+      signal = controller.signal;
+      abortTimer = setTimeout(() => controller.abort(), timeoutMs);
+      fetchOptions.signal = signal;
+    }
+
+    let response: Response;
+    try {
+      response = await fetch(url, fetchOptions);
+    } catch (err: unknown) {
+      const error = err as Error;
+      if (error.name === "AbortError") {
+        throw new Error(
+          `Request to backend timed out after ${timeoutMs}ms (endpoint: ${cleanPath}). Backend may be waking up.`
+        );
+      }
+      if (error.name === "TypeError" || error.message?.toLowerCase().includes("fetch")) {
+        throw new Error(
+          `Unable to connect to backend server at ${baseUrl} (endpoint: ${cleanPath}). ` +
+          `Please verify that the FastAPI service is running and that CORS configuration permits requests from this origin.`
+        );
+      }
+      throw error;
+    } finally {
+      if (abortTimer) clearTimeout(abortTimer);
+    }
+
+    if (!response.ok) {
+      // Automatic retry for 403 CSRF validation errors (re-fetch fresh token and retry once)
+      if (
+        response.status === 403 &&
+        !isCsrfRetry &&
+        ["POST", "PUT", "PATCH", "DELETE"].includes(method)
+      ) {
+        try {
+          const errorJson = (await response.clone().json()) as ApiErrorResponse;
+          if (
+            errorJson.error?.code === "CSRF_TOKEN_INVALID" ||
+            errorJson.error?.code === "CSRF_TOKEN_MISSING"
+          ) {
+            clearCachedCsrfToken();
+            const freshCsrf = await getCsrfToken(true);
+            return await apiRequest<T>(path, options, true, freshCsrf);
+          }
+        } catch {
+          // Fall through to standard error handling
+        }
+      }
+
+      let errorMessage = `Request failed with status ${response.status}`;
+      if (response.status === 401) {
+        errorMessage = "Session expired or unauthenticated. Please sign in to perform administrative actions.";
+      } else if (response.status === 403) {
+        errorMessage = "Access forbidden. Your account does not possess sufficient privileges for this operation.";
+      }
+      let errorDetails: Array<{ location: string[]; message: string; type: string }> | undefined = undefined;
       try {
-        const errorJson = (await response.clone().json()) as ApiErrorResponse;
-        if (
-          errorJson.error?.code === "CSRF_TOKEN_INVALID" ||
-          errorJson.error?.code === "CSRF_TOKEN_MISSING"
-        ) {
-          clearCachedCsrfToken();
-          const freshCsrf = await getCsrfToken(true);
-          return await apiRequest<T>(path, options, true, freshCsrf);
+        const errorJson = (await response.json()) as ApiErrorResponse;
+        if (errorJson.error?.message) {
+          errorMessage = errorJson.error.message;
+          if (errorJson.error.details && errorJson.error.details.length > 0) {
+            errorDetails = errorJson.error.details;
+            const detailStrings = errorJson.error.details.map((d) => {
+              const field = d.location && d.location.length > 0 ? d.location[d.location.length - 1] : "field";
+              return `${field}: ${d.message}`;
+            });
+            errorMessage = `${errorJson.error.message} (${detailStrings.join("; ")})`;
+          }
         }
       } catch {
-        // Fall through to standard error handling
+        // Non-JSON response
       }
+      const err = new Error(errorMessage) as Error & {
+        status: number;
+        details?: Array<{ location: string[]; message: string; type: string }>;
+      };
+      err.status = response.status;
+      err.details = errorDetails;
+      throw err;
     }
 
-    let errorMessage = `Request failed with status ${response.status}`;
-    if (response.status === 401) {
-      errorMessage = "Session expired or unauthenticated. Please sign in to perform administrative actions.";
-    } else if (response.status === 403) {
-      errorMessage = "Access forbidden. Your account does not possess sufficient privileges for this operation.";
+    const data = (await response.json()) as T;
+
+    if (!isServer && canCache) {
+      clientApiCache.set(cleanPath, {
+        data,
+        expiresAt: Date.now() + 120_000,
+      });
     }
-    let errorDetails: Array<{ location: string[]; message: string; type: string }> | undefined = undefined;
-    try {
-      const errorJson = (await response.json()) as ApiErrorResponse;
-      if (errorJson.error?.message) {
-        errorMessage = errorJson.error.message;
-        if (errorJson.error.details && errorJson.error.details.length > 0) {
-          errorDetails = errorJson.error.details;
-          const detailStrings = errorJson.error.details.map((d) => {
-            const field = d.location && d.location.length > 0 ? d.location[d.location.length - 1] : "field";
-            return `${field}: ${d.message}`;
-          });
-          errorMessage = `${errorJson.error.message} (${detailStrings.join("; ")})`;
-        }
-      }
-    } catch {
-      // Non-JSON response
-    }
-    const err = new Error(errorMessage) as Error & {
-      status: number;
-      details?: Array<{ location: string[]; message: string; type: string }>;
-    };
-    err.status = response.status;
-    err.details = errorDetails;
-    throw err;
+
+    return data;
+  };
+
+  if (!isServer && canCache) {
+    const promise = executeFetch().finally(() => {
+      inFlightApiRequests.delete(cleanPath);
+    });
+    inFlightApiRequests.set(cleanPath, promise);
+    return await promise;
   }
 
-  return (await response.json()) as T;
+  return await executeFetch();
 }
 
 /**
@@ -2741,6 +2846,10 @@ export const publicCatalogApi = {
     return await apiRequest<PublicPageResponse<T>>(
       `/content/pages/${slug}${preview ? "?preview=true" : ""}`
     );
+  },
+
+  clearCache: (): void => {
+    clearClientCatalogCache();
   },
 };
 

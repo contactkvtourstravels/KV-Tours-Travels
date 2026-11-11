@@ -124,7 +124,37 @@ async def security_headers_middleware(request: Request, call_next) -> Response:
     return response
 
 
-# 3. CORS Configuration
+# 3. Public Catalog Cache-Control Headers Middleware for Edge CDN & Browser Acceleration
+@app.middleware("http")
+async def public_catalog_cache_middleware(request: Request, call_next) -> Response:
+    """Attach Cache-Control headers to public read-only catalog queries for CDN Edge & browser performance."""
+    response: Response = await call_next(request)
+
+    if request.method == "GET" and 200 <= response.status_code < 300:
+        path = request.url.path
+        is_public_catalog = (
+            path.startswith("/api/v1/destinations")
+            or path.startswith("/api/v1/packages")
+            or path.startswith("/api/v1/departures")
+            or path.startswith("/api/v1/offers")
+            or path.startswith("/api/v1/settings")
+            or path.startswith("/api/v1/add-ons")
+            or path.startswith("/api/v1/content/pages")
+            or path.startswith("/uploads")
+        )
+        is_preview = "preview=true" in str(request.url.query).lower()
+        has_auth = "authorization" in request.headers or "travel_session" in request.cookies
+
+        if is_public_catalog and not is_preview and not has_auth:
+            if "Cache-Control" not in response.headers:
+                response.headers["Cache-Control"] = (
+                    "public, max-age=60, s-maxage=300, stale-while-revalidate=600"
+                )
+
+    return response
+
+
+# 4. CORS Configuration
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

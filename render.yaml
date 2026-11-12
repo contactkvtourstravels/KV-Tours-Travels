@@ -1,9 +1,3 @@
-databases:
-  - name: kv-tours-db
-    databaseName: travelagency
-    user: travelagency
-    plan: free
-
 services:
   - type: web
     name: kv-tours-backend
@@ -21,9 +15,7 @@ services:
       - key: LOG_LEVEL
         value: INFO
       - key: DATABASE_URL
-        fromDatabase:
-          name: kv-tours-db
-          property: connectionString
+        sync: false
       - key: SECRET_KEY
         generateValue: true
       - key: BACKEND_URL

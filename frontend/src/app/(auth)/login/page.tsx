@@ -147,8 +147,8 @@ function LoginForm() {
 
   return (
     <div className="w-full">
-      {/* Top back navigation & mobile brand header */}
-      <div className="flex items-center justify-between mb-8">
+      {/* Top back navigation */}
+      <div className="flex items-center justify-between mb-6">
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#636A64] hover:text-[#1C2420] transition-colors font-medium rounded-lg p-1 -m-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A880]"
@@ -156,25 +156,14 @@ function LoginForm() {
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Return to Homepage</span>
         </Link>
-
-        {/* Mobile-only brand badge when left hero panel is stacked */}
-        <div className="lg:hidden flex items-center gap-2.5">
-          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/60 shadow-xs flex items-center justify-center shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={logoUrl || "/logo.png"}
-              alt={resolvedBrandName}
-              className="w-full h-full object-cover rounded-full"
-            />
-          </div>
-          <span className="font-serif font-bold text-xs text-[#1C2420]">
-            {resolvedBrandName}
-          </span>
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#8A7659]">
+          <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
+          <span>Member Access</span>
         </div>
       </div>
 
       {/* Segmented Auth Switcher (Full-width, equal 50/50 distribution) */}
-      <div className="w-full grid grid-cols-2 p-1.5 bg-[#F2F0E8] rounded-full mb-8 border border-[#E5E2D8]">
+      <div className="w-full grid grid-cols-2 p-1.5 bg-[#F2F0E8] rounded-full mb-6 border border-[#E5E2D8]">
         <span className="py-2.5 text-center text-xs uppercase tracking-wider font-semibold rounded-full bg-[#1C2420] text-[#FAF9F5] shadow-xs flex items-center justify-center">
           Sign In
         </span>
@@ -187,36 +176,17 @@ function LoginForm() {
       </div>
 
       {/* Header */}
-      <div className="mb-7">
-        <div className="flex items-center gap-3.5 mb-5">
-          <div className="relative w-12 h-12 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/60 shadow-md flex items-center justify-center shrink-0">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={logoUrl || "/logo.png"}
-              alt={resolvedBrandName}
-              className="w-full h-full object-cover rounded-full"
-            />
-          </div>
-          <div>
-            <span className="text-[10px] uppercase tracking-[0.22em] text-[#C5A880] font-bold block leading-none mb-1">
-              {resolvedBrandName}
-            </span>
-            <span className="text-xs text-[#636A64] font-medium block leading-none">
-              {locationText ? `${locationText} • Official Member Portal` : "Official Member Portal"}
-            </span>
-          </div>
-        </div>
-
-        <h1 className="text-3xl sm:text-4xl font-serif font-normal text-[#1C2420] tracking-tight">
+      <div className="mb-6">
+        <h1 className="text-2xl sm:text-3xl font-serif font-normal text-[#1C2420] tracking-tight">
           Welcome Back
         </h1>
-        <p className="text-sm text-[#636A64] mt-2 leading-relaxed">
+        <p className="text-xs sm:text-sm text-[#636A64] mt-1.5 leading-relaxed">
           Sign in to access your curated bookings, luxury itineraries, and dedicated concierge services with{" "}
           <span className="font-medium text-[#1C2420]">{resolvedBrandName}</span>.
         </p>
 
         {redirectTarget === "/admin" && (
-          <div className="mt-4 flex items-start gap-2.5 p-3.5 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] text-xs leading-relaxed">
+          <div className="mt-3.5 flex items-start gap-2.5 p-3 rounded-2xl bg-[#FFFBEB] border border-[#FDE68A] text-[#92400E] text-xs leading-relaxed">
             <ShieldAlert className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
             <span>Administrative privileges required. Please sign in with an authorized team credential.</span>
           </div>
@@ -422,59 +392,80 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  const { displayName, settings, city, state } = useBranding();
-  const resolvedBrandName = displayName || settings?.agency_name || "Luxury Travel Concierge";
+  const { displayName, settings, city, state, logoUrl } = useBranding();
+  const resolvedBrandName = displayName || settings?.agency_name || "KV Tours & Travels";
   const locationText = [city, state].filter(Boolean).join(", ") || settings?.agency_location || "";
 
   return (
-    <div className="min-h-screen bg-[#FAF9F5] flex flex-col lg:flex-row items-stretch">
-      {/* Left 42% Dynamic Luxury Branding Panel */}
-      <AuthBrandingPanel
-        title={settings?.hero_headline || "Every journey, thoughtfully designed."}
-        tagline={
-          settings?.hero_subtitle ||
-          settings?.business_description ||
-          `Sign in to manage your luxury bookings, download bespoke itineraries, and contact your dedicated ${locationText ? `${locationText} ` : ""}concierge.`
-        }
-      />
+    <div className="min-h-screen bg-[#F8F7F3] flex flex-col justify-between py-8 sm:py-12 px-4 sm:px-6 relative overflow-hidden">
+      {/* Background Ambient Luxury Gradients */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-[#EDE8DC]/50 via-transparent to-transparent" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[radial-gradient(circle,rgba(217,186,134,0.18)_0%,transparent_70%)] blur-2xl" />
+      </div>
 
-      {/* Right Content Panel with Warm Ivory Canvas & Luxury Card */}
-      <main className="flex-1 flex flex-col justify-between items-center p-4 sm:p-8 lg:p-12 bg-[#FAF9F5]">
-        <div className="w-full flex-1 flex items-center justify-center my-auto py-6 sm:py-8">
-          <div className="w-full max-w-lg bg-white rounded-3xl border border-[#E8E6DF] shadow-[0_20px_50px_-15px_rgba(20,28,24,0.06)] p-6 sm:p-10 relative overflow-hidden">
-            {/* Subtle luxury soft gold hairline accent */}
-            <div
-              className="absolute top-0 inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#C5A880]/70 to-transparent"
-              aria-hidden="true"
+      {/* Top Centered Brand Crest & Return Link */}
+      <header className="relative z-10 w-full max-w-md mx-auto mb-6 sm:mb-7 flex flex-col items-center text-center">
+        <Link
+          href="/"
+          className="group inline-flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A880] rounded-2xl p-2 transition-all"
+        >
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-[#1B1E22] ring-2 ring-[#DFBA73]/70 group-hover:ring-[#DFBA73] shadow-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 mb-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoUrl || "/logo.png"}
+              alt={resolvedBrandName}
+              className="w-full h-full object-cover rounded-full"
             />
-
-            <Suspense
-              fallback={
-                <div className="p-12 text-center text-[#636A64] text-sm flex flex-col items-center justify-center gap-3">
-                  <Loader2 className="w-5 h-5 animate-spin text-[#C5A880]" />
-                  <span>Loading secure sign-in...</span>
-                </div>
-              }
-            >
-              <LoginForm />
-            </Suspense>
           </div>
+          <span className="text-base sm:text-lg font-serif font-bold uppercase tracking-[0.14em] text-[#1C2420] group-hover:text-[#A88045] transition-colors leading-tight">
+            {resolvedBrandName}
+          </span>
+          <span className="text-[10px] uppercase tracking-[0.24em] text-[#8A7659] font-semibold mt-1">
+            {locationText ? `${locationText} • Bespoke Journeys` : "Bespoke Journeys & Luxury Travel"}
+          </span>
+        </Link>
+      </header>
+
+      {/* Main Single Centered Card */}
+      <main className="relative z-10 w-full max-w-md mx-auto my-auto">
+        <div className="w-full bg-white rounded-3xl border border-[#E5E1D5] shadow-[0_20px_60px_-15px_rgba(28,36,32,0.08)] p-6 sm:p-9 relative overflow-hidden">
+          {/* Subtle luxury soft gold hairline accent */}
+          <div
+            className="absolute top-0 inset-x-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#C5A880] to-transparent"
+            aria-hidden="true"
+          />
+
+          <Suspense
+            fallback={
+              <div className="p-12 text-center text-[#636A64] text-sm flex flex-col items-center justify-center gap-3">
+                <Loader2 className="w-5 h-5 animate-spin text-[#C5A880]" />
+                <span>Loading secure sign-in...</span>
+              </div>
+            }
+          >
+            <LoginForm />
+          </Suspense>
         </div>
-
-        {/* Dynamic Accessible Footer */}
-        <footer className="w-full max-w-lg py-4 text-center text-[11px] text-[#8A908B] flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-[#E8E6DF]/60">
-          <span>© {new Date().getFullYear()} {resolvedBrandName}. All rights reserved.</span>
-          <div className="flex items-center gap-3">
-            <Link href="/" className="hover:text-[#1C2420] transition-colors">
-              Home
-            </Link>
-            <span>•</span>
-            <Link href="/contact" className="hover:text-[#1C2420] transition-colors">
-              Concierge
-            </Link>
-          </div>
-        </footer>
       </main>
+
+      {/* Accessible Footer */}
+      <footer className="relative z-10 w-full max-w-md mx-auto pt-6 sm:pt-8 text-center text-[11px] text-[#8A908B] flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <span>© {new Date().getFullYear()} {resolvedBrandName}. All rights reserved.</span>
+        <div className="flex items-center gap-3 font-medium">
+          <Link href="/" className="hover:text-[#1C2420] transition-colors">
+            Home
+          </Link>
+          <span>•</span>
+          <Link href="/packages" className="hover:text-[#1C2420] transition-colors">
+            Packages
+          </Link>
+          <span>•</span>
+          <Link href="/contact" className="hover:text-[#1C2420] transition-colors">
+            Concierge
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import React, { Suspense, useState } from "react";
-import { ArrowLeft, CheckCircle2, KeyRound, Lock } from "lucide-react";
+import { ArrowLeft, CheckCircle2, KeyRound, Lock, Sparkles } from "lucide-react";
 import { authApi } from "@/lib/api";
-import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
+import { useBranding } from "@/context/BrandingContext";
 
 function ResetPasswordForm() {
   const searchParams = useSearchParams();
@@ -46,24 +46,28 @@ function ResetPasswordForm() {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto p-6 sm:p-10">
+    <div className="w-full">
       {/* Top back navigation */}
-      <div className="mb-6">
+      <div className="flex items-center justify-between mb-6">
         <Link
           href="/login"
-          className="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#70757A] hover:text-[#202124] transition-colors font-medium"
+          className="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#636A64] hover:text-[#1C2420] transition-colors font-medium rounded-lg p-1 -m-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A880]"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Sign In</span>
         </Link>
+        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#8A7659]">
+          <Sparkles className="w-3.5 h-3.5 text-[#C5A880]" />
+          <span>Password Reset</span>
+        </div>
       </div>
 
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-serif font-bold text-[#202124] tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-serif font-normal text-[#1C2420] tracking-tight">
           Set New Password
         </h1>
-        <p className="text-sm text-[#70757A] mt-1.5">
+        <p className="text-xs sm:text-sm text-[#636A64] mt-1.5 leading-relaxed">
           Enter your recovery token and create a new secure password for your account.
         </p>
       </div>
@@ -82,17 +86,17 @@ function ResetPasswordForm() {
           <div className="flex items-start gap-3">
             <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
             <div>
-              <h3 className="text-base font-serif font-bold text-[#202124]">
+              <h3 className="text-base font-serif font-bold text-[#1C2420]">
                 Password Successfully Reset!
               </h3>
-              <p className="text-xs text-[#70757A] mt-1 leading-relaxed">
+              <p className="text-xs text-[#636A64] mt-1 leading-relaxed">
                 Your password has been updated and prior active sessions were revoked.
               </p>
             </div>
           </div>
           <Link
             href="/login"
-            className="w-full h-11 flex items-center justify-center bg-[#24292F] hover:bg-[#3D4450] text-white font-bold rounded-full text-xs uppercase tracking-widest transition shadow-sm"
+            className="w-full h-11 flex items-center justify-center bg-[#1C2420] hover:bg-[#28352F] text-white font-bold rounded-full text-xs uppercase tracking-widest transition shadow-sm"
           >
             Sign In with New Password →
           </Link>
@@ -102,12 +106,12 @@ function ResetPasswordForm() {
           <div>
             <label
               htmlFor="reset-token"
-              className="block text-xs font-semibold uppercase tracking-wider text-[#70757A] mb-1.5"
+              className="block text-xs font-semibold uppercase tracking-wider text-[#525754] mb-1.5"
             >
               Reset Token *
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#70757A]/60">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A908B]">
                 <KeyRound className="w-4 h-4" />
               </div>
               <input
@@ -117,7 +121,7 @@ function ResetPasswordForm() {
                 required
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#E4E5E7] text-[#202124] placeholder-[#70757A]/50 text-sm font-mono focus:border-[#24292F] focus:outline-none focus:ring-1 focus:ring-[#24292F] transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#DDD9CF] text-[#1C2420] placeholder-[#8A908B] text-sm font-mono focus:bg-white focus:border-[#C5A880] focus:outline-none focus:ring-2 focus:ring-[#C5A880]/30 transition-all duration-200"
                 placeholder="Paste recovery token"
               />
             </div>
@@ -126,12 +130,12 @@ function ResetPasswordForm() {
           <div>
             <label
               htmlFor="reset-new-password"
-              className="block text-xs font-semibold uppercase tracking-wider text-[#70757A] mb-1.5"
+              className="block text-xs font-semibold uppercase tracking-wider text-[#525754] mb-1.5"
             >
               New Password *
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#70757A]/60">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A908B]">
                 <Lock className="w-4 h-4" />
               </div>
               <input
@@ -142,7 +146,7 @@ function ResetPasswordForm() {
                 autoComplete="new-password"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#E4E5E7] text-[#202124] placeholder-[#70757A]/50 text-sm focus:border-[#24292F] focus:outline-none focus:ring-1 focus:ring-[#24292F] transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#DDD9CF] text-[#1C2420] placeholder-[#8A908B] text-sm focus:bg-white focus:border-[#C5A880] focus:outline-none focus:ring-2 focus:ring-[#C5A880]/30 transition-all duration-200"
                 placeholder="Min 8 chars, Aa, 1, @"
               />
             </div>
@@ -151,12 +155,12 @@ function ResetPasswordForm() {
           <div>
             <label
               htmlFor="reset-confirm-password"
-              className="block text-xs font-semibold uppercase tracking-wider text-[#70757A] mb-1.5"
+              className="block text-xs font-semibold uppercase tracking-wider text-[#525754] mb-1.5"
             >
               Confirm New Password *
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#70757A]/60">
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A908B]">
                 <Lock className="w-4 h-4" />
               </div>
               <input
@@ -167,7 +171,7 @@ function ResetPasswordForm() {
                 autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-[#E4E5E7] text-[#202124] placeholder-[#70757A]/50 text-sm focus:border-[#24292F] focus:outline-none focus:ring-1 focus:ring-[#24292F] transition-all"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FAF9F6] border border-[#DDD9CF] text-[#1C2420] placeholder-[#8A908B] text-sm focus:bg-white focus:border-[#C5A880] focus:outline-none focus:ring-2 focus:ring-[#C5A880]/30 transition-all duration-200"
                 placeholder="Repeat new password"
               />
             </div>
@@ -177,7 +181,7 @@ function ResetPasswordForm() {
             id="reset-pwd-submit-button"
             type="submit"
             disabled={loading}
-            className="w-full h-11 mt-2 rounded-full bg-[#24292F] hover:bg-[#3D4450] text-white text-xs uppercase tracking-widest font-bold shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.01] active:scale-[0.99]"
+            className="w-full h-12 mt-2 rounded-full bg-[#1C2420] hover:bg-[#28352F] text-white text-xs uppercase tracking-widest font-semibold shadow-xs transition-all disabled:opacity-50 flex items-center justify-center gap-2 hover:scale-[1.005] active:scale-[0.995]"
           >
             {loading ? "Updating Password..." : "Update Password"}
           </button>
@@ -185,11 +189,11 @@ function ResetPasswordForm() {
       )}
 
       {/* Footer link to sign in */}
-      <div className="mt-8 pt-6 border-t border-[#E4E5E7] text-center text-xs text-[#70757A]">
+      <div className="mt-8 pt-6 border-t border-[#E8E6DF] text-center text-xs text-[#636A64]">
         <span>Remember your credentials? </span>
         <Link
           href="/login"
-          className="font-semibold text-[#202124] hover:text-[#3D4450] transition-colors"
+          className="font-semibold text-[#1C2420] hover:text-[#8A7659] transition-colors"
         >
           Sign In
         </Link>
@@ -199,22 +203,71 @@ function ResetPasswordForm() {
 }
 
 export default function ResetPasswordPage() {
-  return (
-    <div className="min-h-screen bg-[#F3F4F4] flex flex-col lg:flex-row items-stretch">
-      {/* Left Branding Panel */}
-      <AuthBrandingPanel
-        title="Update your password."
-        tagline="Restore full access to your personalized itineraries, upcoming departures, and customer services."
-      />
+  const { displayName, city, state, logoUrl } = useBranding();
 
-      {/* Right Content Panel */}
-      <div className="flex-1 flex items-center justify-center bg-white lg:bg-[#F3F4F4] p-4 sm:p-8">
-        <div className="w-full max-w-lg bg-white lg:rounded-3xl lg:border lg:border-[#E4E5E7] lg:shadow-xl overflow-hidden">
-          <Suspense fallback={<div className="p-12 text-center text-[#70757A] text-sm">Loading form...</div>}>
+  return (
+    <div className="min-h-screen bg-[#F8F7F3] flex flex-col justify-between py-8 sm:py-12 px-4 sm:px-6 relative overflow-hidden">
+      {/* Background Ambient Luxury Gradients */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute top-0 inset-x-0 h-96 bg-gradient-to-b from-[#EDE8DC]/50 via-transparent to-transparent" />
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-[radial-gradient(circle,rgba(217,186,134,0.18)_0%,transparent_70%)] blur-2xl" />
+      </div>
+
+      {/* Top Centered Brand Crest & Return Link */}
+      <header className="relative z-10 w-full max-w-md mx-auto mb-6 sm:mb-7 flex flex-col items-center text-center">
+        <Link
+          href="/"
+          className="group inline-flex flex-col items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A880] rounded-2xl p-2 transition-all"
+        >
+          <div className="relative w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden bg-[#1B1E22] ring-2 ring-[#DFBA73]/70 group-hover:ring-[#DFBA73] shadow-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 mb-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoUrl || "/logo.png"}
+              alt={displayName}
+              className="w-full h-full object-cover rounded-full"
+            />
+          </div>
+          <span className="text-base sm:text-lg font-serif font-bold uppercase tracking-[0.14em] text-[#1C2420] group-hover:text-[#A88045] transition-colors leading-tight">
+            {displayName}
+          </span>
+          <span className="text-[10px] uppercase tracking-[0.24em] text-[#8A7659] font-semibold mt-1">
+            {[city, state].filter(Boolean).join(", ") ? `${[city, state].filter(Boolean).join(", ")} • Bespoke Journeys` : "Bespoke Journeys & Luxury Travel"}
+          </span>
+        </Link>
+      </header>
+
+      {/* Main Single Centered Card */}
+      <main className="relative z-10 w-full max-w-md mx-auto my-auto">
+        <div className="w-full bg-white rounded-3xl border border-[#E5E1D5] shadow-[0_20px_60px_-15px_rgba(28,36,32,0.08)] p-6 sm:p-9 relative overflow-hidden">
+          {/* Subtle luxury soft gold hairline accent */}
+          <div
+            className="absolute top-0 inset-x-0 h-[2.5px] bg-gradient-to-r from-transparent via-[#C5A880] to-transparent"
+            aria-hidden="true"
+          />
+
+          <Suspense fallback={<div className="p-12 text-center text-[#636A64] text-sm">Loading recovery session...</div>}>
             <ResetPasswordForm />
           </Suspense>
         </div>
-      </div>
+      </main>
+
+      {/* Accessible Footer */}
+      <footer className="relative z-10 w-full max-w-md mx-auto pt-6 sm:pt-8 text-center text-[11px] text-[#8A908B] flex flex-col sm:flex-row items-center justify-between gap-2.5">
+        <span>© {new Date().getFullYear()} {displayName}. All rights reserved.</span>
+        <div className="flex items-center gap-3 font-medium">
+          <Link href="/" className="hover:text-[#1C2420] transition-colors">
+            Home
+          </Link>
+          <span>•</span>
+          <Link href="/packages" className="hover:text-[#1C2420] transition-colors">
+            Packages
+          </Link>
+          <span>•</span>
+          <Link href="/contact" className="hover:text-[#1C2420] transition-colors">
+            Concierge
+          </Link>
+        </div>
+      </footer>
     </div>
   );
 }

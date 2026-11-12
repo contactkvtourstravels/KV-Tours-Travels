@@ -11,7 +11,7 @@ import { useBranding } from "@/context/BrandingContext";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { displayName, shortName, city } = useBranding();
+  const { displayName, shortName, city, state, logoUrl } = useBranding();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
@@ -74,8 +74,8 @@ export default function RegisterPage() {
       {/* Right Content Panel */}
       <div className="flex-1 flex items-center justify-center bg-white lg:bg-[#F3F4F4] p-4 sm:p-8">
         <div className="w-full max-w-lg bg-white lg:rounded-3xl lg:border lg:border-[#E4E5E7] lg:shadow-xl overflow-hidden p-6 sm:p-10">
-          {/* Top back navigation */}
-          <div className="mb-6">
+          {/* Top back navigation & mobile brand header */}
+          <div className="flex items-center justify-between mb-6">
             <Link
               href="/"
               className="inline-flex items-center gap-2 text-xs uppercase tracking-wider text-[#70757A] hover:text-[#202124] transition-colors font-medium"
@@ -83,6 +83,20 @@ export default function RegisterPage() {
               <ArrowLeft className="w-3.5 h-3.5" />
               <span>Back to Home</span>
             </Link>
+
+            <div className="lg:hidden flex items-center gap-2">
+              <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/60 shadow-xs flex items-center justify-center shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoUrl || "/logo.png"}
+                  alt={displayName}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+              <span className="font-serif font-bold text-xs text-[#1C2420]">
+                {displayName}
+              </span>
+            </div>
           </div>
 
           {/* Auth Toggle Tabs (Full-width, equal 50/50 distribution) */}
@@ -100,6 +114,25 @@ export default function RegisterPage() {
 
           {/* Header */}
           <div className="mb-6">
+            <div className="flex items-center gap-3.5 mb-5">
+              <div className="relative w-12 h-12 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/60 shadow-md flex items-center justify-center shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={logoUrl || "/logo.png"}
+                  alt={displayName}
+                  className="w-full h-full object-cover rounded-full"
+                />
+              </div>
+              <div>
+                <span className="text-[10px] uppercase tracking-[0.22em] text-[#C5A880] font-bold block leading-none mb-1">
+                  {displayName}
+                </span>
+                <span className="text-xs text-[#70757A] font-medium block leading-none">
+                  {[city, state].filter(Boolean).join(", ") ? `${[city, state].filter(Boolean).join(", ")} • Exclusive Member Portal` : "Exclusive Member Portal"}
+                </span>
+              </div>
+            </div>
+
             <h1 className="text-3xl font-serif font-bold text-[#202124] tracking-tight">
               Create Your Account
             </h1>

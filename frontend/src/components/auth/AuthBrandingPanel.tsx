@@ -87,21 +87,14 @@ export function AuthBrandingPanel({
           href="/"
           className="inline-flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A880] rounded-xl p-1 -m-1 transition-all"
         >
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
+          <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/60 group-hover:ring-[#DFBA73] shadow-md flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-105">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={logoUrl}
+              src={logoUrl || "/logo.png"}
               alt={resolvedBrandName}
-              className="h-10 w-auto max-w-[130px] object-contain rounded-lg p-1 bg-white/5 border border-white/10 backdrop-blur-md"
+              className="w-full h-full object-cover rounded-full"
             />
-          ) : (
-            <div className="h-10 px-3.5 rounded-xl border border-[#C5A880]/30 bg-[#1E2622]/80 backdrop-blur-md text-[#E5D3B3] flex items-center justify-center gap-2 shadow-sm group-hover:bg-[#25322B] group-hover:border-[#C5A880]/50 transition-all">
-              <Compass className="w-4 h-4 text-[#C5A880]" />
-              <span className="font-serif font-bold text-xs tracking-wider text-[#FAF9F5]">
-                {shortName || initials}
-              </span>
-            </div>
-          )}
+          </div>
           <div className="flex flex-col justify-center">
             <span className="font-serif font-bold text-base sm:text-lg tracking-wider text-[#FAF9F5] block leading-tight group-hover:text-[#E5D3B3] transition-colors">
               {resolvedBrandName}

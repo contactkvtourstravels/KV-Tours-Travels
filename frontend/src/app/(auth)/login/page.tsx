@@ -158,22 +158,18 @@ function LoginForm() {
         </Link>
 
         {/* Mobile-only brand badge when left hero panel is stacked */}
-        <div className="lg:hidden flex items-center gap-2">
-          {logoUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
+        <div className="lg:hidden flex items-center gap-2.5">
+          <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/60 shadow-xs flex items-center justify-center shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={logoUrl}
+              src={logoUrl || "/logo.png"}
               alt={resolvedBrandName}
-              className="h-7 w-auto max-w-[80px] object-contain rounded-md"
+              className="w-full h-full object-cover rounded-full"
             />
-          ) : (
-            <div className="h-7 px-2 rounded-lg border border-[#C5A880]/30 bg-[#1C2420] text-[#E5D3B3] flex items-center gap-1">
-              <Compass className="w-3 h-3 text-[#C5A880]" />
-              <span className="font-serif font-bold text-[10px] text-[#FAF9F5]">
-                {shortName || initials}
-              </span>
-            </div>
-          )}
+          </div>
+          <span className="font-serif font-bold text-xs text-[#1C2420]">
+            {resolvedBrandName}
+          </span>
         </div>
       </div>
 
@@ -192,6 +188,25 @@ function LoginForm() {
 
       {/* Header */}
       <div className="mb-7">
+        <div className="flex items-center gap-3.5 mb-5">
+          <div className="relative w-12 h-12 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/60 shadow-md flex items-center justify-center shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={logoUrl || "/logo.png"}
+              alt={resolvedBrandName}
+              className="w-full h-full object-cover rounded-full"
+            />
+          </div>
+          <div>
+            <span className="text-[10px] uppercase tracking-[0.22em] text-[#C5A880] font-bold block leading-none mb-1">
+              {resolvedBrandName}
+            </span>
+            <span className="text-xs text-[#636A64] font-medium block leading-none">
+              {locationText ? `${locationText} • Official Member Portal` : "Official Member Portal"}
+            </span>
+          </div>
+        </div>
+
         <h1 className="text-3xl sm:text-4xl font-serif font-normal text-[#1C2420] tracking-tight">
           Welcome Back
         </h1>

@@ -29,15 +29,15 @@ services:
       - key: BACKEND_URL
         sync: false
       - key: FRONTEND_URL
-        sync: false
+        value: "https://kv-tours-travels.vercel.app"
       - key: FRONTEND_ORIGINS
-        sync: false
+        value: "https://kv-tours-travels.vercel.app"
       - key: AUTH_COOKIE_NAME
         value: travel_session
       - key: AUTH_COOKIE_SECURE
         value: "true"
       - key: AUTH_COOKIE_SAMESITE
-        value: "lax"
+        value: "none"
       - key: AUTH_COOKIE_PATH
         value: "/"
       - key: CSRF_COOKIE_NAME

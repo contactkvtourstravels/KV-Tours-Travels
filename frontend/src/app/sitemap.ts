@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 import { publicCatalogApi } from "@/lib/api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {

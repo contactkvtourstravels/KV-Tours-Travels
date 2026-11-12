@@ -25,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
     settings?.business_description ||
     `${displayName} is your premier travel curator designing bespoke international escapes, breathtaking domestic expeditions, and signature group departures.`;
 
-  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
+  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
 
   return {
     metadataBase: new URL(siteUrl),
@@ -92,7 +92,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   }
 
   const displayName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
-  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
+  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
   const phone = settings?.contact_phone || DEFAULT_BUSINESS_PHONE;
   const email = settings?.contact_email || "contact.kvtourstravels@gmail.com";
   const street = settings?.office_address || "Main Road";

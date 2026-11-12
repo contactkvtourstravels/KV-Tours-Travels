@@ -17,6 +17,7 @@ import {
   type PublicDepartureListItem,
   type GroupTripsPageContent,
 } from "@/lib/api";
+import { INITIAL_DEPARTURES } from "@/lib/initialCatalog";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { TravelImage } from "@/components/public/TravelImage";
 import { getSafeImageUrl } from "@/lib/images";
@@ -36,9 +37,10 @@ function GroupTripsContent() {
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
-  const [departures, setDepartures] = useState<PublicDepartureListItem[]>([]);
+  // Pre-populated with official departures for instant 0ms first paint
+  const [departures, setDepartures] = useState<PublicDepartureListItem[]>(INITIAL_DEPARTURES);
   const [pageContent, setPageContent] = useState<GroupTripsPageContent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Inquiry modal
   const [modalOpen, setModalOpen] = useState(false);
@@ -51,7 +53,7 @@ function GroupTripsContent() {
           publicCatalogApi.getAllDepartures(),
           publicCatalogApi.getPageContent<GroupTripsPageContent>("group-trips", isPreview).catch(() => null),
         ]);
-        setDepartures(data);
+        if (Array.isArray(data) && data.length > 0) setDepartures(data);
         if (contentRes?.content) {
           setPageContent(contentRes.content);
         }

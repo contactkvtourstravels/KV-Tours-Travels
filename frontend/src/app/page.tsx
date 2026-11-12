@@ -32,6 +32,12 @@ import {
   type PublicSiteSettings,
   type HomePageContent,
 } from "@/lib/api";
+import {
+  INITIAL_DESTINATIONS,
+  INITIAL_PACKAGES,
+  INITIAL_DEPARTURES,
+  INITIAL_HOME_CONTENT,
+} from "@/lib/initialCatalog";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 import { TravelImage } from "@/components/public/TravelImage";
@@ -39,54 +45,19 @@ import { PublicLayout } from "@/components/public/PublicLayout";
 import { QuickInquiryModal } from "@/components/public/QuickInquiryModal";
 import { BestOffersSection } from "@/components/public/BestOffersSection";
 
-const DEFAULT_HOME_PAGE_CONTENT: HomePageContent = {
-  hero: {
-    eyebrow: "Bespoke Journeys & Luxury Travel",
-    heading: "Discover Extraordinary Journeys Across India & Beyond",
-    description:
-      "Experience hand-crafted itineraries, signature group departures, and luxury stays curated for unforgettable adventures.",
-    primary_cta_text: "Explore Packages",
-    primary_cta_link: "/packages",
-    secondary_cta_text: "Plan Custom Trip",
-    secondary_cta_link: "/custom-trip",
-    whatsapp_cta_text: "WhatsApp Concierge",
-    popular_tags: ["Kashmir", "Kerala", "Bali", "Dubai", "Vietnam", "Himachal", "Europe"],
-    media_type: "image",
-    image_url: "/images/hero/hero-1080p.webp",
-  },
-  trust_indicators: [
-    { label: "Hand-Crafted Itineraries", icon: "Compass" },
-    { label: "Verified 5-Star Accommodations", icon: "ShieldCheck" },
-    { label: "24/7 Dedicated Concierge", icon: "Sparkles" },
-  ],
-  sections_visibility: {
-    trending_destinations: true,
-    best_offers: true,
-    featured_packages: true,
-    travel_inspirations: true,
-    upcoming_departures: true,
-    custom_cta: true,
-  },
-  sections_order: [
-    "trending_destinations",
-    "best_offers",
-    "featured_packages",
-    "travel_inspirations",
-    "upcoming_departures",
-    "custom_cta",
-  ],
-};
+const DEFAULT_HOME_PAGE_CONTENT: HomePageContent = INITIAL_HOME_CONTENT;
 
 function HomeContent() {
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
 
-  const [destinations, setDestinations] = useState<PublicDestinationListItem[]>([]);
-  const [packages, setPackages] = useState<PublicPackageListItem[]>([]);
-  const [departures, setDepartures] = useState<PublicDepartureListItem[]>([]);
+  // Pre-populated with official catalog data for instant 0ms first paint
+  const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(INITIAL_DESTINATIONS);
+  const [packages, setPackages] = useState<PublicPackageListItem[]>(INITIAL_PACKAGES);
+  const [departures, setDepartures] = useState<PublicDepartureListItem[]>(INITIAL_DEPARTURES);
   const [settings, setSettings] = useState<PublicSiteSettings | null>(null);
-  const [pageContent, setPageContent] = useState<HomePageContent>(DEFAULT_HOME_PAGE_CONTENT);
-  const [loading, setLoading] = useState(true);
+  const [pageContent, setPageContent] = useState<HomePageContent>(INITIAL_HOME_CONTENT);
+  const [loading, setLoading] = useState(false);
 
   // Trending Destinations Category Filter ("international" | "domestic")
   const [destFilter, setDestFilter] = useState<"international" | "domestic">("domestic");
@@ -111,10 +82,18 @@ function HomeContent() {
           publicCatalogApi.getPageContent<HomePageContent>("home", isPreview),
         ]);
 
-        if (destsRes.status === "fulfilled") setDestinations(destsRes.value);
-        if (pkgsRes.status === "fulfilled") setPackages(pkgsRes.value);
-        if (depsRes.status === "fulfilled") setDepartures(depsRes.value);
-        if (setsRes.status === "fulfilled") setSettings(setsRes.value);
+        if (destsRes.status === "fulfilled" && Array.isArray(destsRes.value) && destsRes.value.length > 0) {
+          setDestinations(destsRes.value);
+        }
+        if (pkgsRes.status === "fulfilled" && Array.isArray(pkgsRes.value) && pkgsRes.value.length > 0) {
+          setPackages(pkgsRes.value);
+        }
+        if (depsRes.status === "fulfilled" && Array.isArray(depsRes.value) && depsRes.value.length > 0) {
+          setDepartures(depsRes.value);
+        }
+        if (setsRes.status === "fulfilled" && setsRes.value) {
+          setSettings(setsRes.value);
+        }
         if (contentRes.status === "fulfilled" && contentRes.value?.content) {
           const fresh = contentRes.value.content;
           setPageContent((prev) => ({
@@ -404,7 +383,7 @@ function HomeContent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
-              className="text-4xl sm:text-6xl lg:text-7xl font-serif font-bold text-white tracking-tight leading-[1.1] max-w-4xl mx-auto drop-shadow-[0_4px_24px_rgba(0,0,0,0.65)]"
+              className="text-3xl sm:text-5xl lg:text-7xl font-serif font-bold text-white tracking-tight leading-[1.12] max-w-4xl mx-auto drop-shadow-[0_4px_24px_rgba(0,0,0,0.65)]"
             >
               {pageContent.hero.heading}
             </motion.h1>
@@ -416,7 +395,7 @@ function HomeContent() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.2 }}
-              className="mt-6 text-base sm:text-lg text-white/90 font-light max-w-2xl mx-auto leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]"
+              className="mt-4 sm:mt-6 text-sm sm:text-lg text-white/90 font-light max-w-2xl mx-auto leading-relaxed drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]"
             >
               {pageContent.hero.description}
             </motion.p>
@@ -428,7 +407,7 @@ function HomeContent() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.3 }}
-              className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 text-xs tracking-wider"
+              className="mt-6 sm:mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 text-xs tracking-wider"
             >
               <span className="text-white/80 font-medium text-xs uppercase tracking-widest mr-1">
                 Popular Escapes:
@@ -437,7 +416,7 @@ function HomeContent() {
                 <Link
                   key={item}
                   href={`/destinations?search=${encodeURIComponent(item)}`}
-                  className="px-3.5 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white/90 border border-white/15 hover:border-[#DFBA73]/60 transition-all backdrop-blur-sm text-xs font-medium"
+                  className="px-3.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 active:bg-white/30 text-white/95 border border-white/15 hover:border-[#DFBA73]/60 transition-all backdrop-blur-sm text-xs font-medium inline-flex items-center shadow-xs"
                 >
                   {item}
                 </Link>
@@ -451,7 +430,7 @@ function HomeContent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.4 }}
-              className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3.5"
+              className="mt-8 sm:mt-10 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-3 sm:gap-3.5 w-full max-w-md sm:max-w-none mx-auto"
             >
               {hasPrimaryCta && (
                 <Link
@@ -633,14 +612,18 @@ function HomeContent() {
             <div
               ref={carouselRef}
               onScroll={handleScrollUpdate}
-              className="flex gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 pt-1 snap-x snap-mandatory"
-              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 pt-1 snap-x snap-mandatory touch-pan-x"
+              style={{
+                scrollbarWidth: "none",
+                msOverflowStyle: "none",
+                WebkitOverflowScrolling: "touch",
+              }}
             >
               {carouselDestinations.map((dest) => (
                 <Link
                   key={dest.id}
                   href={`/destinations/${dest.slug}`}
-                  className="group relative w-[290px] sm:w-[330px] md:w-[350px] h-[470px] sm:h-[490px] rounded-3xl shrink-0 overflow-hidden border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-between p-6 shadow-sm hover:shadow-2xl bg-[#202124] snap-start cursor-pointer"
+                  className="group relative w-[82vw] max-w-[320px] sm:w-[330px] md:w-[350px] h-[450px] sm:h-[490px] rounded-3xl shrink-0 overflow-hidden border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-between p-5 sm:p-6 shadow-sm hover:shadow-2xl bg-[#202124] snap-start cursor-pointer"
                 >
                   {/* Destination Cover Image */}
                   <TravelImage

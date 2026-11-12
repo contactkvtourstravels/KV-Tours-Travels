@@ -10,6 +10,7 @@ import {
   type PublicDestinationListItem,
   type DestinationsPageContent,
 } from "@/lib/api";
+import { INITIAL_DESTINATIONS } from "@/lib/initialCatalog";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { TravelImage } from "@/components/public/TravelImage";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
@@ -22,9 +23,10 @@ function DestinationsContent() {
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
-  const [destinations, setDestinations] = useState<PublicDestinationListItem[]>([]);
+  // Pre-populated with official destinations for instant 0ms first paint
+  const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(INITIAL_DESTINATIONS);
   const [pageContent, setPageContent] = useState<DestinationsPageContent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [classificationTab, setClassificationTab] = useState<"all" | "domestic" | "international">("all");
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
@@ -37,7 +39,7 @@ function DestinationsContent() {
           publicCatalogApi.getDestinations(),
           publicCatalogApi.getPageContent<DestinationsPageContent>("destinations", isPreview).catch(() => null),
         ]);
-        setDestinations(data);
+        if (Array.isArray(data) && data.length > 0) setDestinations(data);
         if (contentRes?.content) {
           setPageContent(contentRes.content);
         }

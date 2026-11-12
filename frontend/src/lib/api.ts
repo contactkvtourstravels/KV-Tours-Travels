@@ -1512,6 +1512,15 @@ const inFlightApiRequests = new Map<string, Promise<unknown>>();
 export function clearClientCatalogCache(): void {
   clientApiCache.clear();
   inFlightApiRequests.clear();
+  if (typeof window !== "undefined") {
+    try {
+      Object.keys(sessionStorage).forEach((key) => {
+        if (key.startsWith("kv_catalog_")) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    } catch {}
+  }
 }
 
 /**
@@ -1549,11 +1558,25 @@ export async function apiRequest<T>(
     !options.skipCache &&
     !sessionToken;
 
-  // 1. Client-side memory cache check
+  // 1. Client-side memory & persistent storage cache check
   if (!isServer && canCache) {
     const cached = clientApiCache.get(cleanPath);
     if (cached && Date.now() < cached.expiresAt) {
       return cached.data as T;
+    }
+    if (typeof window !== "undefined") {
+      try {
+        const stored = sessionStorage.getItem(`kv_catalog_${cleanPath}`);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          if (parsed && typeof parsed.expiresAt === "number" && Date.now() < parsed.expiresAt) {
+            clientApiCache.set(cleanPath, parsed);
+            return parsed.data as T;
+          }
+        }
+      } catch {
+        // Ignore storage access errors
+      }
     }
     const inFlight = inFlightApiRequests.get(cleanPath);
     if (inFlight) {
@@ -1693,10 +1716,18 @@ export async function apiRequest<T>(
     const data = (await response.json()) as T;
 
     if (!isServer && canCache) {
-      clientApiCache.set(cleanPath, {
+      const cacheEntry = {
         data,
-        expiresAt: Date.now() + 120_000,
-      });
+        expiresAt: Date.now() + 300_000, // 5 min TTL
+      };
+      clientApiCache.set(cleanPath, cacheEntry);
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(`kv_catalog_${cleanPath}`, JSON.stringify(cacheEntry));
+        } catch {
+          // Ignore storage quota errors
+        }
+      }
     }
 
     return data;

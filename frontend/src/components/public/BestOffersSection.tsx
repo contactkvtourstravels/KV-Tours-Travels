@@ -18,7 +18,7 @@ import { TravelImage } from "@/components/public/TravelImage";
 export function BestOffersSection() {
   const [offers, setOffers] = useState<PublicOfferListItem[]>([]);
   const [sectionEnabled, setSectionEnabled] = useState<boolean>(true);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -53,8 +53,8 @@ export function BestOffersSection() {
     return getSafeImageUrl(raw);
   };
 
-  // If section is master disabled, or not loading and zero offers, cleanly hide section
-  if (!loading && (!sectionEnabled || offers.length === 0)) {
+  // If section is master disabled, or zero offers, cleanly hide section without jarring skeleton flash
+  if (!sectionEnabled || offers.length === 0) {
     return null;
   }
 

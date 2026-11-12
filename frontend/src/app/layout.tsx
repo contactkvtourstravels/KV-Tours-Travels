@@ -53,9 +53,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: settings?.favicon_url
       ? [
-          { rel: "icon", url: settings.favicon_url },
-          { rel: "shortcut icon", url: settings.favicon_url },
-        ]
+        { rel: "icon", url: settings.favicon_url },
+        { rel: "shortcut icon", url: settings.favicon_url },
+      ]
       : undefined,
     openGraph: {
       title: siteTitle,
@@ -67,8 +67,8 @@ export async function generateMetadata(): Promise<Metadata> {
       images: settings?.seo_og_image_url
         ? [{ url: settings.seo_og_image_url, width: 1200, height: 630, alt: displayName }]
         : settings?.logo_url
-        ? [{ url: settings.logo_url, alt: displayName }]
-        : undefined,
+          ? [{ url: settings.logo_url, alt: displayName }]
+          : undefined,
     },
     twitter: {
       card: "summary_large_image",

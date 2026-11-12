@@ -11,6 +11,10 @@ import {
   type PublicPackageListItem,
   type PackagesPageContent,
 } from "@/lib/api";
+import {
+  INITIAL_PACKAGES,
+  INITIAL_DESTINATIONS,
+} from "@/lib/initialCatalog";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { QuickInquiryModal } from "@/components/public/QuickInquiryModal";
 import { TravelImage } from "@/components/public/TravelImage";
@@ -22,10 +26,11 @@ function PackagesContent() {
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
-  const [packages, setPackages] = useState<PublicPackageListItem[]>([]);
-  const [destinations, setDestinations] = useState<PublicDestinationListItem[]>([]);
+  // Pre-populated with official catalog for instant 0ms first paint
+  const [packages, setPackages] = useState<PublicPackageListItem[]>(INITIAL_PACKAGES);
+  const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(INITIAL_DESTINATIONS);
   const [pageContent, setPageContent] = useState<PackagesPageContent | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   // Filters
   const [classificationTab, setClassificationTab] = useState<"all" | "domestic" | "international">("all");
@@ -46,8 +51,8 @@ function PackagesContent() {
           publicCatalogApi.getDestinations(),
           publicCatalogApi.getPageContent<PackagesPageContent>("packages", isPreview).catch(() => null),
         ]);
-        setPackages(pkgs);
-        setDestinations(dests);
+        if (Array.isArray(pkgs) && pkgs.length > 0) setPackages(pkgs);
+        if (Array.isArray(dests) && dests.length > 0) setDestinations(dests);
         if (contentRes?.content) {
           setPageContent(contentRes.content);
         }

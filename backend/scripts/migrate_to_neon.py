@@ -100,7 +100,7 @@ def seed_site_settings_and_cms(engine) -> None:
     print("[4/5] Configuring official KV Tours & Travels branding & CMS content...")
     from sqlalchemy.orm import sessionmaker
     from sqlalchemy import select
-    from app.models.content import SiteSetting, PageContent
+    from app.models.content import SiteSetting
 
     SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
     with SessionLocal() as db:

@@ -82,32 +82,23 @@ export function Navbar() {
       >
         <div className="w-full max-w-7xl 2xl:max-w-[1400px] mx-auto px-3.5 sm:px-6">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {/* Brand Logo with Small Oval Box */}
-            <Link href="/" className="group flex items-center gap-2 sm:gap-2.5 shrink-0">
-              {logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
+            {/* Brand Logo & Name */}
+            <Link href="/" className="group flex items-center gap-2.5 sm:gap-3 shrink-0">
+              <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/50 group-hover:ring-[#DFBA73] shadow-xs flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-105">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={logoUrl}
+                  src={logoUrl || "/logo.png"}
                   alt={displayName}
-                  className="h-8 sm:h-9 w-auto max-w-[100px] sm:max-w-[120px] object-contain rounded-lg shrink-0"
+                  className="w-full h-full object-cover rounded-full"
                 />
-              ) : (
-                <div className="h-8 sm:h-9 px-2.5 sm:px-3 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 shadow-xs shrink-0 group-hover:bg-[#3D4450] transition-colors border border-[#3D4450]">
-                  <Compass className="w-3.5 h-3.5 text-[#ECEFF3]" />
-                  <span className="font-serif font-bold text-xs tracking-wider whitespace-nowrap">
-                    {shortName || displayName}
-                  </span>
-                </div>
-              )}
+              </div>
               <div className="flex flex-col justify-center">
-                <span className="text-[#202124] font-serif tracking-[0.04em] sm:tracking-[0.10em] text-xs sm:text-base uppercase font-bold leading-tight group-hover:text-[#3D4450] transition-colors whitespace-nowrap">
+                <span className="text-[#202124] font-serif tracking-[0.06em] sm:tracking-[0.10em] text-xs sm:text-sm md:text-base uppercase font-bold leading-tight group-hover:text-[#A88045] transition-colors whitespace-nowrap">
                   {displayName}
                 </span>
-                {city ? (
-                  <span className="text-[9px] uppercase tracking-[0.16em] sm:tracking-[0.22em] text-[#6B7280] font-semibold leading-none whitespace-nowrap">
-                    {city}
-                  </span>
-                ) : null}
+                <span className="text-[9px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-[#6B7280] font-semibold leading-none mt-0.5 whitespace-nowrap">
+                  {city ? `${city} • Luxury Escapes` : "Luxury Escapes"}
+                </span>
               </div>
             </Link>
 

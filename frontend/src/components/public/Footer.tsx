@@ -66,19 +66,14 @@ export function Footer() {
           {/* Brand Col */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              {settings?.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
+              <div className="relative w-10 h-10 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/50 shadow-xs flex items-center justify-center shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={settings.logo_url}
+                  src={settings?.logo_url || "/logo.png"}
                   alt={agencyName}
-                  className="h-9 w-auto max-w-[120px] object-contain rounded-lg"
+                  className="w-full h-full object-cover rounded-full"
                 />
-              ) : (
-                <div className="h-9 px-3.5 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 border border-[#3D4450] shadow-2xs font-serif font-bold text-xs tracking-wider">
-                  <Compass className="w-3.5 h-3.5 text-[#ECEFF3]" />
-                  <span>{settings?.short_name || agencyName}</span>
-                </div>
-              )}
+              </div>
               <div>
                 <span className="text-[#202124] font-serif tracking-[0.12em] text-lg uppercase font-bold block leading-tight">
                   {agencyName}

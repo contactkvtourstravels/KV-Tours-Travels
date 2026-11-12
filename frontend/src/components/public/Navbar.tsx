@@ -74,11 +74,10 @@ export function Navbar() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          isScrolled
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled
             ? "bg-white/95 backdrop-blur-md border-b border-[#E2E4E8] py-2.5 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)]"
             : "bg-white/90 backdrop-blur-md border-b border-[#E2E4E8]/80 py-3 sm:py-3.5"
-        }`}
+          }`}
       >
         <div className="w-full max-w-7xl 2xl:max-w-[1400px] mx-auto px-3.5 sm:px-6">
           <div className="flex items-center justify-between gap-2 sm:gap-4">
@@ -110,11 +109,10 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`h-7 px-2.5 2xl:px-3 rounded-full text-[11px] 2xl:text-xs uppercase tracking-wider font-semibold transition-all inline-flex items-center justify-center whitespace-nowrap ${
-                      isActive
+                    className={`h-7 px-2.5 2xl:px-3 rounded-full text-[11px] 2xl:text-xs uppercase tracking-wider font-semibold transition-all inline-flex items-center justify-center whitespace-nowrap ${isActive
                         ? "bg-[#24292F] text-white shadow-xs"
                         : "text-[#5F6368] hover:text-[#202124] hover:bg-white/80"
-                    }`}
+                      }`}
                   >
                     {link.label}
                   </Link>
@@ -264,11 +262,10 @@ export function Navbar() {
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className={`px-4 py-2.5 rounded-full text-xs uppercase tracking-wider font-semibold transition-colors ${
-                        isActive
+                      className={`px-4 py-2.5 rounded-full text-xs uppercase tracking-wider font-semibold transition-colors ${isActive
                           ? "bg-[#24292F] text-white"
                           : "text-[#5F6368] hover:text-[#202124] hover:bg-[#F0F2F5]"
-                      }`}
+                        }`}
                     >
                       {link.label}
                     </Link>

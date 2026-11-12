@@ -1428,8 +1428,29 @@ function getCookie(name: string): string | null {
 }
 
 export function getApiBaseUrl(): string {
-  const url = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-  return url.replace(/\/+$/, "");
+  // If explicitly configured with an absolute URL
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl && envUrl.trim().startsWith("http")) {
+    return envUrl.trim().replace(/\/+$/, "");
+  }
+
+  // In browser context: use relative /api/v1 so Next.js rewrites proxy to backend Base seamlessly
+  if (typeof window !== "undefined") {
+    // If running on localhost in browser, preserve localhost:8000 fallback
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:8000/api/v1";
+    }
+    return "/api/v1";
+  }
+
+  // Server-side default
+  const base =
+    process.env.BACKEND_URL ||
+    process.env.NEXT_PUBLIC_BACKEND_URL ||
+    (process.env.NODE_ENV === "production"
+      ? "https://travel-agency-kdrs.onrender.com"
+      : "http://127.0.0.1:8000");
+  return `${base.replace(/\/+$/, "")}/api/v1`;
 }
 
 /**
@@ -1686,20 +1707,28 @@ export async function apiRequest<T>(
         errorMessage = "Session expired or unauthenticated. Please sign in to perform administrative actions.";
       } else if (response.status === 403) {
         errorMessage = "Access forbidden. Your account does not possess sufficient privileges for this operation.";
+      } else if (response.status === 404) {
+        errorMessage = "Backend service endpoint returned 404. If the cloud service is waking up, please wait a moment and try again.";
+      } else if (response.status >= 502 && response.status <= 504) {
+        errorMessage = "Backend server is currently waking up (cloud container spin-up). Please wait 20-30 seconds and try again.";
       }
       let errorDetails: Array<{ location: string[]; message: string; type: string }> | undefined = undefined;
       try {
-        const errorJson = (await response.json()) as ApiErrorResponse;
-        if (errorJson.error?.message) {
+        const errorJson = (await response.json()) as any;
+        if (errorJson?.error?.message) {
           errorMessage = errorJson.error.message;
           if (errorJson.error.details && errorJson.error.details.length > 0) {
             errorDetails = errorJson.error.details;
-            const detailStrings = errorJson.error.details.map((d) => {
+            const detailStrings = errorJson.error.details.map((d: any) => {
               const field = d.location && d.location.length > 0 ? d.location[d.location.length - 1] : "field";
               return `${field}: ${d.message}`;
             });
             errorMessage = `${errorJson.error.message} (${detailStrings.join("; ")})`;
           }
+        } else if (errorJson?.detail && typeof errorJson.detail === "string" && errorJson.detail !== "Not Found") {
+          errorMessage = errorJson.detail;
+        } else if (errorJson?.message && typeof errorJson.message === "string" && errorJson.message !== "Not Found") {
+          errorMessage = errorJson.message;
         }
       } catch {
         // Non-JSON response

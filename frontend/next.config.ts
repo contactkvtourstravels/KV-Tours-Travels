@@ -1,12 +1,17 @@
 import type { NextConfig } from "next";
 
+const isProd = process.env.NODE_ENV === "production";
+const fallbackBackend = isProd
+  ? "https://travel-agency-kdrs.onrender.com"
+  : "http://127.0.0.1:8000";
+
 const rawBackendUrl =
   process.env.NEXT_PUBLIC_BACKEND_URL ||
   process.env.BACKEND_URL ||
   (process.env.NEXT_PUBLIC_API_URL
     ? process.env.NEXT_PUBLIC_API_URL.replace(/\/api\/v1\/?$/, "")
     : "") ||
-  "http://127.0.0.1:8000";
+  fallbackBackend;
 
 const backendBase = rawBackendUrl.replace(/\/+$/, "");
 
@@ -139,6 +144,10 @@ const nextConfig: NextConfig = {
       {
         source: "/uploads/:path*",
         destination: `${backendBase}/uploads/:path*`,
+      },
+      {
+        source: "/api/v1/:path*",
+        destination: `${backendBase}/api/v1/:path*`,
       },
     ];
   },

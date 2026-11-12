@@ -85,15 +85,15 @@ export default function RegisterPage() {
             </Link>
           </div>
 
-          {/* Auth Toggle Tabs */}
-          <div className="flex items-center p-1 bg-[#F3F4F4] rounded-full mb-8 border border-[#E4E5E7] max-w-xs">
+          {/* Auth Toggle Tabs (Full-width, equal 50/50 distribution) */}
+          <div className="w-full grid grid-cols-2 p-1.5 bg-[#F2F0E8] rounded-full mb-8 border border-[#E5E2D8]">
             <Link
               href="/login"
-              className="flex-1 py-2 text-center text-xs uppercase tracking-wider font-semibold rounded-full text-[#70757A] hover:text-[#202124] transition-colors"
+              className="py-2.5 text-center text-xs uppercase tracking-wider font-medium rounded-full text-[#636A64] hover:text-[#1C2420] transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A880]"
             >
               Sign In
             </Link>
-            <span className="flex-1 py-2 text-center text-xs uppercase tracking-wider font-bold rounded-full bg-white text-[#202124] shadow-sm">
+            <span className="py-2.5 text-center text-xs uppercase tracking-wider font-semibold rounded-full bg-[#1C2420] text-[#FAF9F5] shadow-xs flex items-center justify-center">
               Create Account
             </span>
           </div>

@@ -74,7 +74,17 @@ function LoginForm() {
       }
     } catch (err: unknown) {
       if (err instanceof Error) {
-        setError(err.message);
+        if (
+          err.message.includes("Not Found") ||
+          err.message.includes("404") ||
+          err.message.includes("Unable to connect")
+        ) {
+          setError(
+            "Backend server is waking up or connecting to the cloud database. Please wait a few moments and try signing in again."
+          );
+        } else {
+          setError(err.message);
+        }
       } else {
         setError("An unexpected error occurred during login.");
       }
@@ -167,14 +177,14 @@ function LoginForm() {
         </div>
       </div>
 
-      {/* Segmented Auth Switcher */}
-      <div className="flex items-center p-1 bg-[#F2F0E8] rounded-full mb-8 border border-[#E5E2D8] max-w-xs">
-        <span className="flex-1 py-2 text-center text-xs uppercase tracking-wider font-semibold rounded-full bg-[#1C2420] text-[#FAF9F5] shadow-xs">
+      {/* Segmented Auth Switcher (Full-width, equal 50/50 distribution) */}
+      <div className="w-full grid grid-cols-2 p-1.5 bg-[#F2F0E8] rounded-full mb-8 border border-[#E5E2D8]">
+        <span className="py-2.5 text-center text-xs uppercase tracking-wider font-semibold rounded-full bg-[#1C2420] text-[#FAF9F5] shadow-xs flex items-center justify-center">
           Sign In
         </span>
         <Link
           href="/register"
-          className="flex-1 py-2 text-center text-xs uppercase tracking-wider font-medium rounded-full text-[#636A64] hover:text-[#1C2420] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A880]"
+          className="py-2.5 text-center text-xs uppercase tracking-wider font-medium rounded-full text-[#636A64] hover:text-[#1C2420] transition-colors flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C5A880]"
         >
           Create Account
         </Link>
@@ -274,17 +284,7 @@ function LoginForm() {
             disabled={loading}
           />
 
-          {/* Luxury Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center" aria-hidden="true">
-              <div className="w-full border-t border-[#E8E6DF]" />
-            </div>
-            <div className="relative flex justify-center text-[10px] uppercase tracking-widest">
-              <span className="bg-white px-3 text-[#8A908B] font-medium">
-                Or sign in with private email
-              </span>
-            </div>
-          </div>
+
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>

@@ -200,7 +200,10 @@ def get_public_destination_by_slug(db: Session, slug: str) -> PublicDestinationD
         display_order=dest.display_order or 0,
         short_description=dest.short_description,
         description=dest.description,
-        highlights=dest.highlights_json or [],
+        highlights=[
+            h if isinstance(h, dict) else {"title": str(h), "description": ""}
+            for h in (dest.highlights_json or [])
+        ],
         travel_guide=dest.travel_guide_json or {},
         faqs=dest.faqs_json or [],
         social_image_url=dest.social_image_url,

@@ -1409,6 +1409,10 @@ def run_seed():
                 db.add(addon)
                 print(f"  ✓ Added AddOn: {add_data['name']}")
 
+        # Seed Google Sheet 13 Tour Packages & Departures
+        from app.catalog_import.seed_sheet_catalog import seed_sheet_catalog
+        seed_sheet_catalog(db=db)
+
         db.commit()
         print("\n==================================================================")
         print("DATABASE SEEDING COMPLETED SUCCESSFULLY!")

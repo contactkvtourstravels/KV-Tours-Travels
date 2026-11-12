@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { publicCatalogApi, type PublicPackageDetail } from "@/lib/api";
+import { getInitialPackageDetail } from "@/lib/initialCatalog";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { PackageDetailClientActions } from "./PackageDetailClientActions";
@@ -33,11 +34,14 @@ export async function generateMetadata({ params }: PackagePageProps): Promise<Me
   const { slug } = await params;
   try {
     const [pkg, settings] = await Promise.all([
-      publicCatalogApi.getPackage(slug),
+      publicCatalogApi.getPackage(slug).catch(() => getInitialPackageDetail(slug)),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
+    if (!pkg) {
+      return { title: "Package Not Found" };
+    }
     const agencyName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
-    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
+    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
     const title = pkg.seo_title || `${pkg.name} | ${agencyName}`;
     const description =
       pkg.seo_description ||
@@ -54,7 +58,7 @@ export async function generateMetadata({ params }: PackagePageProps): Promise<Me
         title,
         description,
         url: `${siteUrl}/packages/${slug}`,
-        images: pkg.cover_image_url ? [pkg.cover_image_url] : pkg.images[0]?.image_url ? [pkg.images[0].image_url] : [],
+        images: pkg.cover_image_url ? [pkg.cover_image_url] : pkg.images?.[0]?.image_url ? [pkg.images[0].image_url] : [],
       },
       twitter: {
         card: "summary_large_image",
@@ -75,25 +79,35 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
   let pkg: PublicPackageDetail;
   let onlinePaymentsEnabled = false;
   let maintenanceMsg: string | undefined;
-  let agencyName = "Travel Agency";
-  let whatsappNumber: string | undefined;
+  let agencyName = "KV Tours & Travels";
+  let whatsappNumber: string | undefined = "+919442000000";
   let whatsappCountryCode = "+91";
   let whatsappEnabled = true;
 
   try {
     const [pkgData, settingsData] = await Promise.all([
-      publicCatalogApi.getPackage(slug),
+      publicCatalogApi.getPackage(slug).catch(() => getInitialPackageDetail(slug)),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
-    pkg = pkgData;
+
+    if (!pkgData) {
+      const fallback = getInitialPackageDetail(slug);
+      if (!fallback) notFound();
+      pkg = fallback;
+    } else {
+      pkg = pkgData;
+    }
+
     onlinePaymentsEnabled = Boolean(settingsData?.online_payments_enabled);
     maintenanceMsg = settingsData?.online_payments_maintenance_message;
-    agencyName = settingsData?.public_display_name || settingsData?.agency_name || "Travel Agency";
-    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || undefined;
+    agencyName = settingsData?.public_display_name || settingsData?.agency_name || "KV Tours & Travels";
+    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || "+919442000000";
     whatsappCountryCode = settingsData?.whatsapp_country_code || "+91";
     whatsappEnabled = settingsData?.whatsapp_enabled !== false && settingsData?.whatsapp_show_on_package_pages !== false;
   } catch {
-    notFound();
+    const fallback = getInitialPackageDetail(slug);
+    if (!fallback) notFound();
+    pkg = fallback;
   }
 
   const waUrl = whatsappEnabled

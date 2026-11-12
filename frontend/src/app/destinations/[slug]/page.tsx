@@ -4,6 +4,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, Compass, MapPin, MessageCircle, Users } from "lucide-react";
 import { publicCatalogApi, type PublicDestinationDetail, type PublicPackageListItem } from "@/lib/api";
+import { getInitialDestinationDetail, INITIAL_PACKAGES } from "@/lib/initialCatalog";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { TravelImage } from "@/components/public/TravelImage";
@@ -17,11 +18,14 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
   const { slug } = await params;
   try {
     const [dest, settings] = await Promise.all([
-      publicCatalogApi.getDestination(slug),
+      publicCatalogApi.getDestination(slug).catch(() => getInitialDestinationDetail(slug)),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
+    if (!dest) {
+      return { title: "Destination Not Found" };
+    }
     const agencyName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
-    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
+    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
     const title = dest.seo_title || `${dest.name} Tour Packages | ${agencyName}`;
     const description =
       dest.seo_description ||
@@ -38,7 +42,7 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
         title,
         description,
         url: `${siteUrl}/destinations/${slug}`,
-        images: dest.cover_image_url ? [dest.cover_image_url] : dest.images[0]?.image_url ? [dest.images[0].image_url] : [],
+        images: dest.cover_image_url ? [dest.cover_image_url] : dest.images?.[0]?.image_url ? [dest.images[0].image_url] : [],
       },
       twitter: {
         card: "summary_large_image",
@@ -57,25 +61,38 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
   const { slug } = await params;
   let destination: PublicDestinationDetail;
   let packages: PublicPackageListItem[] = [];
-  let agencyName = "Travel Agency";
-  let whatsappNumber: string | undefined;
+  let agencyName = "KV Tours & Travels";
+  let whatsappNumber: string | undefined = "+919442000000";
   let whatsappCountryCode = "+91";
-  let agencyCity = "India";
+  let agencyCity = "Coimbatore";
   let whatsappEnabled = true;
   let waUrl = "";
 
   try {
     const [destData, packagesData, settingsData] = await Promise.all([
-      publicCatalogApi.getDestination(slug),
-      publicCatalogApi.getPackages({ destination_slug: slug }),
+      publicCatalogApi.getDestination(slug).catch(() => getInitialDestinationDetail(slug)),
+      publicCatalogApi.getPackages({ destination_slug: slug }).catch(() =>
+        INITIAL_PACKAGES.filter((p) => p.destination_slug === slug)
+      ),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
-    destination = destData;
-    packages = packagesData;
-    agencyName = settingsData?.public_display_name || settingsData?.agency_name || "Travel Agency";
-    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || undefined;
+
+    if (!destData) {
+      const fallback = getInitialDestinationDetail(slug);
+      if (!fallback) notFound();
+      destination = fallback;
+    } else {
+      destination = destData;
+    }
+
+    packages = packagesData && packagesData.length > 0
+      ? packagesData
+      : INITIAL_PACKAGES.filter((p) => p.destination_slug === slug);
+
+    agencyName = settingsData?.public_display_name || settingsData?.agency_name || "KV Tours & Travels";
+    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || "+919442000000";
     whatsappCountryCode = settingsData?.whatsapp_country_code || "+91";
-    agencyCity = settingsData?.city || "India";
+    agencyCity = settingsData?.city || "Coimbatore";
     whatsappEnabled = settingsData?.whatsapp_enabled !== false;
 
     waUrl = whatsappEnabled
@@ -87,7 +104,15 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
         )
       : "";
   } catch {
-    notFound();
+    const fallback = getInitialDestinationDetail(slug);
+    if (!fallback) notFound();
+    destination = fallback;
+    packages = INITIAL_PACKAGES.filter((p) => p.destination_slug === slug);
+    waUrl = getWhatsAppClickToChatUrl(
+      whatsappNumber,
+      `Hi ${agencyName}, I am interested in traveling to ${destination.name}. Please share customized package options.`,
+      whatsappCountryCode
+    );
   }
 
   const rawHero =

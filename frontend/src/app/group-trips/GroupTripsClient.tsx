@@ -237,7 +237,7 @@ export function GroupTripsClient({
                     className="group rounded-3xl overflow-hidden bg-white border border-[#E4E5E7] hover:border-[#24292F]/40 transition-all duration-300 flex flex-col shadow-sm hover:shadow-xl"
                   >
                     {/* Visual Card Top */}
-                    <div className="relative h-56 sm:h-60 overflow-hidden">
+                    <div className="relative w-full aspect-[16/10] overflow-hidden">
                       <TravelImage
                         src={getImg(dep)}
                         alt={dep.package_name}

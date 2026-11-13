@@ -337,7 +337,7 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
       {/* =========================================================================
           1. CINEMATIC HERO SECTION
          ========================================================================= */}
-      <section className="relative min-h-[96vh] flex items-center justify-center overflow-hidden bg-black">
+      <section className="relative min-h-[90svh] sm:min-h-[96vh] flex items-center justify-center overflow-hidden bg-black">
         {/* Cinematic Backdrop Image / Video Asset */}
         <div className="absolute inset-0 z-0">
           {pageContent?.hero?.media_type === "video" && pageContent.hero.video_url ? (
@@ -645,7 +645,7 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
                 <Link
                   key={dest.id}
                   href={`/destinations/${dest.slug}`}
-                  className="group relative w-[82vw] max-w-[320px] sm:w-[330px] md:w-[350px] h-[450px] sm:h-[490px] rounded-3xl shrink-0 overflow-hidden border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-between p-5 sm:p-6 shadow-sm hover:shadow-2xl bg-[#202124] snap-start cursor-pointer"
+                  className="group relative w-[78vw] max-w-[310px] sm:w-[330px] md:w-[350px] aspect-[3/4] sm:aspect-auto sm:h-[490px] rounded-3xl shrink-0 overflow-hidden border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-between p-5 sm:p-6 shadow-sm hover:shadow-2xl bg-[#202124] snap-start cursor-pointer"
                 >
                   {/* Destination Cover Image */}
                   <TravelImage
@@ -784,7 +784,7 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
                   className="group rounded-3xl overflow-hidden bg-white border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-300 flex flex-col shadow-sm hover:shadow-xl"
                 >
                   {/* Package Cover Image */}
-                  <div className="relative h-64 overflow-hidden">
+                  <div className="relative w-full aspect-[16/10] overflow-hidden">
                     <TravelImage
                       src={getPackageImg(pkg)}
                       alt={pkg.name}

@@ -159,6 +159,7 @@ async def public_catalog_cache_middleware(request: Request, call_next) -> Respon
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
+    allow_origin_regex=r"https://.*\.vercel\.app|http://localhost(:\d+)?|http://127\.0\.0\.1(:\d+)?|http://192\.168\.\d+\.\d+(:\d+)?|http://172\.\d+\.\d+\.\d+(:\d+)?|http://10\.\d+\.\d+\.\d+(:\d+)?",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=[

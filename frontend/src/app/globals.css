@@ -113,6 +113,36 @@ body {
   border: 1px solid rgba(228, 229, 231, 0.9);
 }
 
+/* Mobile GPU & Smooth Scroll Performance Optimizations */
+@media (max-width: 768px) {
+  html, body {
+    -webkit-overflow-scrolling: touch;
+    touch-action: manipulation;
+  }
+
+  /* Cap expensive GPU blur calculations on mobile hardware */
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .backdrop-blur-md,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl {
+    backdrop-filter: blur(6px) !important;
+    -webkit-backdrop-filter: blur(6px) !important;
+  }
+
+  /* Hardware accelerate carousel and horizontally scrolled lists */
+  .touch-pan-x,
+  .snap-x {
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    will-change: scroll-position;
+  }
+}
+
 /* Smoky Slate Gradient Text & Button Utilities */
 .smoke-gradient-text,
 .gold-gradient-text {

@@ -42,3 +42,4 @@ def get_home_feed_endpoint(
         tags=["home_feed", "destinations", "packages", "departures", "settings"],
     )
     return Response(content=raw, media_type="application/json")
+

@@ -754,7 +754,146 @@ export default function DestinationsAdminPage() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            {/* Mobile Stacked Card View */}
+            <div className="block lg:hidden divide-y divide-[#E4E5E7]">
+              {destinations.items.map((dest) => (
+                <div key={dest.id} className="p-4 space-y-3 hover:bg-[#FDFBF7] transition-colors">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-12 rounded-xl overflow-hidden bg-[#E4E5E7] shrink-0 border border-[#D3D8DF] flex items-center justify-center">
+                        {dest.cover_image_url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={dest.cover_image_url}
+                            alt={dest.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <MapPin className="w-5 h-5 text-[#70757A]" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-bold text-[#202124] text-sm flex items-center gap-1.5">
+                          <span>{dest.name}</span>
+                          {dest.is_featured && (
+                            <Star className="w-3.5 h-3.5 text-[#C5A880] fill-[#C5A880]" />
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[11px] text-[#5F6368] font-semibold">{dest.country}</span>
+                          <span className="text-[#D3D8DF]">•</span>
+                          <span className="text-[11px] font-mono text-[#70757A]">/{dest.slug}</span>
+                          <Link
+                            href={`/destinations/${dest.slug}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="View Live Public Page"
+                            className="text-[#C5A880] hover:text-[#A3865F] inline-flex items-center"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs bg-[#F7F7F5] rounded-xl px-3 py-2 border border-[#E4E5E7]">
+                    <div>
+                      <span className="text-[10px] uppercase tracking-wider text-[#70757A] font-semibold block">Location</span>
+                      <span className="font-semibold text-[#202124]">{[dest.state_or_city, dest.region].filter(Boolean).join(", ") || dest.country}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase tracking-wider text-[#70757A] font-semibold block">Packages</span>
+                      <span className="inline-flex items-center gap-1 font-bold text-[#202124]">
+                        <PackageIcon className="w-3 h-3 text-[#70757A]" />
+                        {dest.package_count || 0}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[10px] uppercase tracking-wider text-[#70757A] font-semibold block">Category</span>
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-white text-[10px] font-bold text-[#202124] border border-[#E4E5E7]">
+                        {dest.category || "General"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Touch Action Controls */}
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      {canEdit ? (
+                        <button
+                          onClick={() => handleTogglePublish(dest)}
+                          className={`min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer ${
+                            dest.is_published
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100"
+                              : "bg-amber-50 text-amber-700 border-amber-200 active:bg-amber-100"
+                          }`}
+                        >
+                          {dest.is_published ? (
+                            <>
+                              <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                              <span>Visible</span>
+                            </>
+                          ) : (
+                            <>
+                              <EyeOff className="w-3.5 h-3.5 text-amber-600" />
+                              <span>Hidden</span>
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border ${
+                            dest.is_published
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200"
+                          }`}
+                        >
+                          {dest.is_published ? "Visible" : "Hidden"}
+                        </span>
+                      )}
+
+                      {canEdit && (
+                        <button
+                          onClick={() => handleToggleActive(dest)}
+                          className={`min-h-[36px] inline-flex items-center px-2.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer ${
+                            dest.is_active
+                              ? "bg-stone-50 text-[#3D4450] border-[#D3D8DF]"
+                              : "bg-rose-50 text-rose-700 border-rose-200"
+                          }`}
+                        >
+                          {dest.is_active ? "Active" : "Paused"}
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => openGalleryModal(dest)}
+                        title="Manage Gallery Images"
+                        className="min-h-[36px] px-3 py-1.5 rounded-xl border border-[#D3D8DF] bg-white text-[#202124] text-xs font-bold transition-all shadow-2xs flex items-center gap-1"
+                      >
+                        <ImageIcon className="w-3.5 h-3.5 text-[#5F6368]" />
+                        <span>Gallery</span>
+                      </button>
+                      {canEdit && (
+                        <button
+                          onClick={() => openEditModal(dest)}
+                          className="min-h-[36px] px-3 py-1.5 rounded-xl bg-[#24292F] text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-2xs"
+                        >
+                          <Edit2 className="w-3 h-3" />
+                          <span>Edit</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#E4E5E7] bg-[#F7F7F5] text-[11px] font-bold uppercase tracking-wider text-[#5F6368]">
@@ -974,7 +1113,8 @@ export default function DestinationsAdminPage() {
               </tbody>
             </table>
           </div>
-        )}
+        </>
+      )}
 
         {/* Pagination Bar */}
         {destinations && destinations.total_pages > 1 && (

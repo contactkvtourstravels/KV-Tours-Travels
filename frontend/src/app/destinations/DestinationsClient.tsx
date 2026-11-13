@@ -299,7 +299,7 @@ export function DestinationsClient({
                     href={`/destinations/${dest.slug}`}
                     className="group rounded-3xl overflow-hidden border border-[#E4E5E7] hover:border-[#24292F]/40 bg-white transition-all duration-300 flex flex-col shadow-sm hover:shadow-xl"
                   >
-                    <div className="relative h-64 overflow-hidden">
+                    <div className="relative w-full aspect-[16/10] overflow-hidden">
                       <TravelImage
                         src={getImg(dest)}
                         alt={dest.name}

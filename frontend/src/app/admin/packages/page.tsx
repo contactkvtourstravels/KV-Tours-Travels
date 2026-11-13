@@ -496,7 +496,157 @@ export default function PackagesAdminPage() {
             )}
           </div>
         ) : (
-          <div className="overflow-x-auto">
+          <>
+            {/* Mobile Stacked Card View */}
+            <div className="block lg:hidden divide-y divide-[#E4E5E7]">
+              {packages.items.map((pkg) => {
+                const isParentDraft = pkg.destination_is_published === false;
+                return (
+                  <div key={pkg.id} className="p-4 space-y-3 hover:bg-[#FDFBF7] transition-colors">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-12 rounded-xl overflow-hidden bg-[#E4E5E7] shrink-0 border border-[#D3D8DF] flex items-center justify-center">
+                          {pkg.cover_image_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={pkg.cover_image_url}
+                              alt={pkg.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <PackageIcon className="w-5 h-5 text-[#70757A]" />
+                          )}
+                        </div>
+                        <div>
+                          <Link
+                            href={`/admin/packages/${pkg.id}`}
+                            className="font-bold text-[#202124] text-sm hover:text-[#C5A880] transition-colors flex items-center gap-1.5"
+                          >
+                            <span>{pkg.name}</span>
+                            {pkg.is_featured && (
+                              <Star className="w-3.5 h-3.5 text-[#C5A880] fill-[#C5A880]" />
+                            )}
+                          </Link>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className="text-[11px] font-semibold text-[#5F6368] flex items-center gap-1">
+                              <MapPin className="w-3 h-3 text-[#C5A880]" />
+                              {pkg.destination_name || "Destination"}
+                            </span>
+                            <span className="text-[#D3D8DF]">•</span>
+                            <span className="text-[11px] font-mono text-[#70757A]">/{pkg.slug}</span>
+                            <Link
+                              href={`/packages/${pkg.slug}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="View Live Public Page"
+                              className="text-[#C5A880] hover:text-[#A3865F] inline-flex items-center"
+                            >
+                              <ExternalLink className="w-3 h-3" />
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs bg-[#F7F7F5] rounded-xl px-3 py-2 border border-[#E4E5E7]">
+                      <div>
+                        <span className="text-[10px] uppercase tracking-wider text-[#70757A] font-semibold block">Price</span>
+                        <span className="font-bold text-[#202124] text-sm">₹{Number(pkg.base_price).toLocaleString("en-IN")}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase tracking-wider text-[#70757A] font-semibold block">Duration</span>
+                        <span className="font-semibold text-[#202124]">{pkg.duration_days}D / {pkg.duration_nights}N</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] uppercase tracking-wider text-[#70757A] font-semibold block">Category</span>
+                        <span className="inline-block px-1.5 py-0.5 rounded bg-white text-[10px] font-bold text-[#202124] border border-[#E4E5E7]">
+                          {pkg.category || "Tour"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {isParentDraft && pkg.is_published && (
+                      <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300 w-full">
+                        <AlertTriangle className="w-3 h-3 text-amber-700 shrink-0" />
+                        <span>Destination is in draft. Hidden publicly until destination is published.</span>
+                      </div>
+                    )}
+
+                    {/* Touch Action Controls */}
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <div className="flex items-center gap-2">
+                        {canEdit ? (
+                          <button
+                            onClick={() => handleTogglePublish(pkg)}
+                            className={`min-h-[36px] inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer ${
+                              pkg.is_published
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200 active:bg-emerald-100"
+                                : "bg-amber-50 text-amber-700 border-amber-200 active:bg-amber-100"
+                            }`}
+                          >
+                            {pkg.is_published ? (
+                              <>
+                                <Eye className="w-3.5 h-3.5 text-emerald-600" />
+                                <span>Visible</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3.5 h-3.5 text-amber-600" />
+                                <span>Hidden</span>
+                              </>
+                            )}
+                          </button>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider border ${
+                              pkg.is_published
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                : "bg-amber-50 text-amber-700 border-amber-200"
+                            }`}
+                          >
+                            {pkg.is_published ? "Visible" : "Hidden"}
+                          </span>
+                        )}
+
+                        {canEdit && (
+                          <button
+                            onClick={() => handleToggleActive(pkg)}
+                            className={`min-h-[36px] inline-flex items-center px-2.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all border cursor-pointer ${
+                              pkg.is_active
+                                ? "bg-stone-50 text-[#3D4450] border-[#D3D8DF]"
+                                : "bg-rose-50 text-rose-700 border-rose-200"
+                            }`}
+                          >
+                            {pkg.is_active ? "Active" : "Paused"}
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {canEdit && (
+                          <button
+                            onClick={() => openEditModal(pkg)}
+                            className="min-h-[36px] px-3 py-1.5 rounded-xl border border-[#D3D8DF] bg-white text-[#202124] text-xs font-bold transition-all shadow-2xs"
+                          >
+                            Edit
+                          </button>
+                        )}
+                        <Link
+                          href={`/admin/packages/${pkg.id}`}
+                          className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-[#24292F] text-white text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1 shadow-2xs"
+                        >
+                          <span>Studio</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-[#E4E5E7] bg-[#F7F7F5] text-[11px] font-bold uppercase tracking-wider text-[#5F6368]">
@@ -729,7 +879,8 @@ export default function PackagesAdminPage() {
               </tbody>
             </table>
           </div>
-        )}
+        </>
+      )}
 
         {/* Pagination Bar */}
         {packages && packages.total_pages > 1 && (

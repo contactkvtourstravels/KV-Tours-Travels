@@ -320,7 +320,76 @@ export default function InquiriesAdminPage() {
         </div>
       ) : (
         <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
+          {/* Mobile Stacked Card View */}
+          <div className="block lg:hidden divide-y divide-slate-800">
+            {inquiries.items.map((inq) => (
+              <div key={inq.id} className="p-4 space-y-3 hover:bg-slate-800/40 transition-colors">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="font-semibold text-slate-100 text-sm">{inq.name}</div>
+                    <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                      <Mail className="w-3 h-3 text-slate-500" /> {inq.email}
+                    </div>
+                    {inq.phone && (
+                      <div className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                        <Phone className="w-3 h-3 text-slate-500" /> {inq.phone}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${getStatusBadgeClass(inq.status)}`}>
+                      {inq.status}
+                    </span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-semibold ${getPriorityBadgeClass(inq.priority)}`}>
+                      {inq.priority}
+                    </span>
+                  </div>
+                </div>
+
+                {(inq.destination_name || inq.package_name) && (
+                  <div className="flex items-center gap-2 text-xs bg-slate-800/60 px-3 py-1.5 rounded-lg border border-slate-700/60 text-slate-300">
+                    {inq.destination_name && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-slate-400" /> {inq.destination_name}
+                      </span>
+                    )}
+                    {inq.destination_name && inq.package_name && <span>•</span>}
+                    {inq.package_name && (
+                      <span className="flex items-center gap-1 truncate text-slate-400">
+                        <PackageIcon className="w-3 h-3 text-slate-400" /> {inq.package_name}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {inq.message && (
+                  <p className="text-xs text-slate-300 line-clamp-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/80">
+                    &ldquo;{inq.message}&rdquo;
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-[11px] text-slate-400">
+                    {new Date(inq.created_at).toLocaleDateString("en-IN", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
+                  <button
+                    onClick={() => openDetail(inq.id)}
+                    className="min-h-[36px] px-4 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold transition-colors"
+                  >
+                    Manage Lead
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop Table View */}
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-950/60 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
                 <tr>

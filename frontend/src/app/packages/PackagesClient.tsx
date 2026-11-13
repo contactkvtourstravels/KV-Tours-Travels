@@ -353,7 +353,7 @@ export function PackagesClient({
                     key={pkg.id}
                     className="rounded-3xl overflow-hidden bg-white border border-[#E4E5E7] hover:border-[#24292F]/40 transition-all duration-300 flex flex-col shadow-sm hover:shadow-xl group"
                   >
-                    <div className="relative h-64 overflow-hidden">
+                    <div className="relative w-full aspect-[16/10] overflow-hidden">
                       <TravelImage
                         src={getPkgImg(pkg)}
                         alt={pkg.name}

@@ -105,6 +105,38 @@ class InMemoryCache:
 catalog_cache = InMemoryCache(default_ttl_seconds=60, max_entries=2000)
 
 
+def trigger_nextjs_revalidation(tag: str = "catalog") -> None:
+    """Asynchronously notify Next.js on Vercel to purge its Edge and Data cache.
+
+    Runs in a non-blocking background daemon thread to ensure database transactions
+    complete with zero delay.
+    """
+    def _ping():
+        import urllib.request
+        from app.core.config import get_settings
+        try:
+            settings = get_settings()
+            secret = "kv-tours-secret-revalidate-token"
+            frontend_base = settings.frontend_url.rstrip("/")
+            targets = [f"{frontend_base}/api/revalidate?tag={tag}&secret={secret}"]
+            if "kv-tours" not in frontend_base:
+                targets.append(
+                    f"https://kv-tours-travels.vercel.app/api/revalidate?tag={tag}&secret={secret}"
+                )
+            for url in targets:
+                try:
+                    req = urllib.request.Request(url, method="POST")
+                    with urllib.request.urlopen(req, timeout=4.0):
+                        pass
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    t = threading.Thread(target=_ping, daemon=True)
+    t.start()
+
+
 def attach_cache_invalidation_listeners() -> None:
     """Attach SQLAlchemy event listeners to automatically invalidate relevant public catalog cache entries."""
     try:
@@ -116,33 +148,39 @@ def attach_cache_invalidation_listeners() -> None:
         @event.listens_for(Destination, "after_update")
         @event.listens_for(Destination, "after_delete")
         def _on_destination_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["destinations", "packages"])
+            catalog_cache.invalidate(["destinations", "packages", "home_feed"])
+            trigger_nextjs_revalidation("destinations")
 
         @event.listens_for(Package, "after_insert")
         @event.listens_for(Package, "after_update")
         @event.listens_for(Package, "after_delete")
         def _on_package_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["packages", "destinations", "departures", "offers"])
+            catalog_cache.invalidate(["packages", "destinations", "departures", "offers", "home_feed"])
+            trigger_nextjs_revalidation("packages")
 
         @event.listens_for(PackageDeparture, "after_insert")
         @event.listens_for(PackageDeparture, "after_update")
         @event.listens_for(PackageDeparture, "after_delete")
         def _on_departure_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["departures", "packages"])
+            catalog_cache.invalidate(["departures", "packages", "home_feed"])
+            trigger_nextjs_revalidation("departures")
 
         @event.listens_for(BestOffer, "after_insert")
         @event.listens_for(BestOffer, "after_update")
         @event.listens_for(BestOffer, "after_delete")
         def _on_offer_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["offers"])
+            catalog_cache.invalidate(["offers", "home_feed"])
+            trigger_nextjs_revalidation("offers")
 
         @event.listens_for(SiteSetting, "after_insert")
         @event.listens_for(SiteSetting, "after_update")
         @event.listens_for(SiteSetting, "after_delete")
         def _on_setting_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["settings", "offers"])
+            catalog_cache.invalidate(["settings", "offers", "home_feed"])
+            trigger_nextjs_revalidation("settings")
 
         logger.info("Catalog cache auto-invalidation event listeners attached successfully.")
     except Exception as e:
         logger.warning("Could not attach SQLAlchemy cache listeners: %s", e)
+
 

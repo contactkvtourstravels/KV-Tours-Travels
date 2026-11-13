@@ -151,3 +151,14 @@ def test_public_departures_listing(client, db_session) -> None:
     addons_list = addon_resp.json()
     assert len(addons_list) >= 1
     assert any(a["name"] == "Travel Insurance Gold" for a in addons_list)
+
+    # Check consolidated public home feed endpoint
+    feed_resp = client.get("/api/v1/public/home-feed")
+    assert feed_resp.status_code == 200
+    feed_data = feed_resp.json()
+    assert "destinations" in feed_data
+    assert "packages" in feed_data
+    assert "departures" in feed_data
+    assert "settings" in feed_data
+    assert "content" in feed_data
+

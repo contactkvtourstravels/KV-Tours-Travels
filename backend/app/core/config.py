@@ -23,8 +23,8 @@ class Settings(BaseSettings):
         default="postgresql+psycopg://postgres:change-me@localhost:5432/travelagency",
         repr=False,
     )
-    db_pool_size: int = Field(default=5, ge=1, le=100)
-    db_max_overflow: int = Field(default=10, ge=0, le=100)
+    db_pool_size: int = Field(default=10, ge=1, le=100)
+    db_max_overflow: int = Field(default=20, ge=0, le=100)
     secret_key: SecretStr = SecretStr("unsafe-development-secret-change-me")
     frontend_url: str = "http://localhost:3000"
     frontend_origins: str = "http://localhost:3000"

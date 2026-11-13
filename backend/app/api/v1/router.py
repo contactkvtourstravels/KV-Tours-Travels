@@ -15,6 +15,7 @@ from app.api.v1.routes.inquiries import router as inquiries_router
 from app.api.v1.routes.content import router as content_router
 from app.api.v1.routes.offers import router as offers_router
 from app.api.v1.routes.packages import router as packages_router
+from app.api.v1.routes.public_feed import router as public_feed_router
 from app.api.v1.routes.payments import router as payments_router
 from app.api.v1.routes.settings import router as settings_router
 from app.api.v1.routes.webhooks import router as webhooks_router
@@ -34,4 +35,5 @@ api_router.include_router(inquiries_router)
 api_router.include_router(settings_router)
 api_router.include_router(content_router)
 api_router.include_router(offers_router)
+api_router.include_router(public_feed_router)
 api_router.include_router(admin_router)

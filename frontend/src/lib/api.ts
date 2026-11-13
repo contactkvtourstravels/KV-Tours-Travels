@@ -1035,6 +1035,15 @@ export interface PublicSiteSettings {
   pdf_logo_url?: string | null;
 }
 
+export interface PublicHomeFeed {
+  destinations: PublicDestinationListItem[];
+  packages: PublicPackageListItem[];
+  departures: PublicDepartureListItem[];
+  settings: PublicSiteSettings;
+  content: HomePageContent;
+}
+
+
 // ==============================================================================
 // Website Content Schemas (About, Contact Pages)
 // ==============================================================================
@@ -1571,6 +1580,7 @@ export async function apiRequest<T>(
     cleanPath.startsWith("/settings") ||
     cleanPath.startsWith("/offers") ||
     cleanPath.startsWith("/add-ons") ||
+    cleanPath.startsWith("/public") ||
     cleanPath.startsWith("/content/pages");
 
   const isPreview = cleanPath.includes("preview=true");
@@ -1637,10 +1647,13 @@ export async function apiRequest<T>(
     };
 
     // For public catalog GET requests, omit cookies to allow CDN edge caching
-    if (canCache) {
+    if (options.next) {
+      fetchOptions.next = options.next;
+      fetchOptions.credentials = "same-origin";
+    } else if (canCache) {
       fetchOptions.credentials = "same-origin";
       if (isServer) {
-        fetchOptions.next = options.next || { revalidate: 300 };
+        fetchOptions.next = { revalidate: 300 };
       }
     } else {
       fetchOptions.credentials = "include";
@@ -2821,6 +2834,13 @@ export const adminBankAccountApi = {
  * Public catalog API client (read-only customer exploration endpoints).
  */
 export const publicCatalogApi = {
+  getHomeFeed: async (preview = false, options?: ApiRequestOptions): Promise<PublicHomeFeed> => {
+    return await apiRequest<PublicHomeFeed>(
+      `/public/home-feed${preview ? "?preview=true" : ""}`,
+      options
+    );
+  },
+
   getDestinations: async (params?: {
     country?: string;
     travel_type?: string;
@@ -3875,6 +3895,15 @@ export interface TravelVoucherData {
   pdf_badge_label?: string | null;
   pdf_logo_url?: string | null;
 }
+
+export interface PublicHomeFeed {
+  destinations: PublicDestinationListItem[];
+  packages: PublicPackageListItem[];
+  departures: PublicDepartureListItem[];
+  settings: PublicSiteSettings;
+  content: HomePageContent;
+}
+
 
 export interface PaymentReceiptData {
   receipt_number: string;

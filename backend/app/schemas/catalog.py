@@ -342,3 +342,14 @@ class PublicSiteSettings(BaseModel):
     pdf_footer_declaration: str | None = None
     pdf_badge_label: str | None = None
     pdf_logo_url: str | None = None
+
+
+class PublicHomeFeed(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    destinations: list[PublicDestinationListItem]
+    packages: list[PublicPackageListItem]
+    departures: list[PublicDepartureListItem]
+    settings: PublicSiteSettings
+    content: dict[str, Any] = Field(default_factory=dict)
+

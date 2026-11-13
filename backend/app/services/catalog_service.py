@@ -37,6 +37,7 @@ from app.schemas.catalog import (
     PublicPackageDetail,
     PublicPackageListItem,
     PublicSiteSettings,
+    PublicHomeFeed,
 )
 
 
@@ -1022,3 +1023,42 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
     )
     catalog_cache.set(cache_key, res, ttl_seconds=60, tags=["settings"])
     return res
+
+
+def get_public_home_feed(db: Session, is_preview: bool = False) -> PublicHomeFeed:
+    """Retrieve consolidated public home feed (destinations, packages, departures, settings, content).
+
+    Serves the entire homepage in a single fast, cached operation to eliminate client waterfall delays.
+    """
+    cache_key = f"home_feed:{is_preview}"
+    cached = catalog_cache.get(cache_key)
+    if cached is not None:
+        return cached
+
+    from app.services.content_service import get_public_page
+
+    destinations = get_public_destinations(db, limit=20)
+    packages = get_public_packages(db, limit=50)
+    departures = get_public_all_departures(db)
+    settings = get_public_settings(db)
+    try:
+        content_page = get_public_page(db, "home", is_preview=is_preview)
+        content = content_page.content if content_page else {}
+    except Exception:
+        content = {}
+
+    feed = PublicHomeFeed(
+        destinations=destinations,
+        packages=packages,
+        departures=departures,
+        settings=settings,
+        content=content,
+    )
+    catalog_cache.set(
+        cache_key,
+        feed,
+        ttl_seconds=60,
+        tags=["home_feed", "destinations", "packages", "departures", "settings"],
+    )
+    return feed
+

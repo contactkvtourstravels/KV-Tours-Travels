@@ -140,6 +140,7 @@ async def public_catalog_cache_middleware(request: Request, call_next) -> Respon
             or path.startswith("/api/v1/settings")
             or path.startswith("/api/v1/add-ons")
             or path.startswith("/api/v1/content/pages")
+            or path.startswith("/api/v1/public")
             or path.startswith("/uploads")
         )
         is_preview = "preview=true" in str(request.url.query).lower()

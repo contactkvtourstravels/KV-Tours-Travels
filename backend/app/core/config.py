@@ -56,8 +56,8 @@ class Settings(BaseSettings):
     login_rate_limit_window_seconds: int = 900  # 15 minutes
 
     # Google & Firebase Social Authentication Settings
-    google_client_id: str = "786587181693-9m54fg2tp89kafu39f5qpki0p63ovm5q.apps.googleusercontent.com"
-    firebase_project_id: str = "travel-agency-31216"
+    google_client_id: str = "886994768602-vr6rtdg6gr8v4ogfa4det3j0ml69r9me.apps.googleusercontent.com"
+    firebase_project_id: str = "kv-tours-and-travels"
 
     # Cloudinary Media Settings
     cloudinary_cloud_name: str = "kvtours-travels"

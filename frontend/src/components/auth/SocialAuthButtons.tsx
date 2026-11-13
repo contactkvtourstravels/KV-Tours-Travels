@@ -49,7 +49,7 @@ export function SocialAuthButtons({
 
   const googleClientId =
     process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ||
-    "786587181693-9m54fg2tp89kafu39f5qpki0p63ovm5q.apps.googleusercontent.com";
+    "886994768602-vr6rtdg6gr8v4ogfa4det3j0ml69r9me.apps.googleusercontent.com";
 
   const isBusy = disabled || googleLoading || appleLoading;
 

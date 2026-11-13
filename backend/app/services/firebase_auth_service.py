@@ -147,11 +147,20 @@ def verify_firebase_id_token(id_token: str) -> dict[str, Any]:
         try:
             jwks_client = jwt.PyJWKClient("https://www.googleapis.com/oauth2/v3/certs")
             signing_key = jwks_client.get_signing_key_from_jwt(id_token)
+            accepted_audiences = list(
+                dict.fromkeys(
+                    [
+                        settings.google_client_id,
+                        "886994768602-vr6rtdg6gr8v4ogfa4det3j0ml69r9me.apps.googleusercontent.com",
+                        "786587181693-9m54fg2tp89kafu39f5qpki0p63ovm5q.apps.googleusercontent.com",
+                    ]
+                )
+            )
             claims = jwt.decode(
                 id_token,
                 key=signing_key.key,
                 algorithms=["RS256"],
-                audience=settings.google_client_id,
+                audience=accepted_audiences,
                 issuer=["https://accounts.google.com", "accounts.google.com"],
                 options={
                     "verify_signature": True,
@@ -223,16 +232,24 @@ def verify_firebase_id_token(id_token: str) -> dict[str, Any]:
         ) from exc
 
     # 5. Verify token signature, audience, issuer, and expiration
-    project_id = settings.firebase_project_id
-    expected_issuer = f"https://securetoken.google.com/{project_id}"
+    accepted_projects = list(
+        dict.fromkeys(
+            [
+                settings.firebase_project_id,
+                "kv-tours-and-travels",
+                "travel-agency-31216",
+            ]
+        )
+    )
+    accepted_issuers = [f"https://securetoken.google.com/{pid}" for pid in accepted_projects]
 
     try:
         claims = jwt.decode(
             id_token,
             key=public_key,
             algorithms=["RS256"],
-            audience=project_id,
-            issuer=expected_issuer,
+            audience=accepted_projects,
+            issuer=accepted_issuers,
             options={
                 "verify_signature": True,
                 "verify_aud": True,

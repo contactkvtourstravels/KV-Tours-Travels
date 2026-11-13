@@ -146,10 +146,10 @@ async def public_catalog_cache_middleware(request: Request, call_next) -> Respon
         has_auth = "authorization" in request.headers or "travel_session" in request.cookies
 
         if is_public_catalog and not is_preview and not has_auth:
-            if "Cache-Control" not in response.headers:
-                response.headers["Cache-Control"] = (
-                    "public, max-age=60, s-maxage=300, stale-while-revalidate=600"
-                )
+            # Zero-delay cache policy: ensure changes saved in admin appear immediately on public site
+            response.headers["Cache-Control"] = (
+                "public, max-age=0, s-maxage=0, stale-while-revalidate=0, must-revalidate"
+            )
 
     return response
 

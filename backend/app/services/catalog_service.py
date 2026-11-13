@@ -133,7 +133,8 @@ def get_public_destinations(
 
 
 def get_public_destination_by_slug(db: Session, slug: str) -> PublicDestinationDetail:
-    clean_slug = slug.strip().lower()
+    raw_slug = slug.strip().lower()
+    clean_slug = raw_slug.replace(" ", "-")
     cache_key = f"destination_detail:{clean_slug}"
     cached = catalog_cache.get(cache_key)
     if cached is not None:
@@ -144,7 +145,7 @@ def get_public_destination_by_slug(db: Session, slug: str) -> PublicDestinationD
             select(Destination)
             .options(joinedload(Destination.images))
             .where(
-                Destination.slug == clean_slug,
+                Destination.slug.in_([clean_slug, raw_slug]),
                 Destination.is_published.is_(True),
                 Destination.deleted_at.is_(None),
             )
@@ -307,7 +308,8 @@ def get_public_packages(
 
 
 def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
-    clean_slug = slug.strip().lower()
+    raw_slug = slug.strip().lower()
+    clean_slug = raw_slug.replace(" ", "-")
     cache_key = f"package_detail:{clean_slug}"
     cached = catalog_cache.get(cache_key)
     if cached is not None:
@@ -328,7 +330,7 @@ def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
             )
             .join(Destination, Package.destination_id == Destination.id)
             .where(
-                Package.slug == clean_slug,
+                Package.slug.in_([clean_slug, raw_slug]),
                 Package.is_published.is_(True),
                 Package.deleted_at.is_(None),
                 Destination.is_published.is_(True),

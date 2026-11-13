@@ -26,15 +26,20 @@ import { PublicLayout } from "@/components/public/PublicLayout";
 import { PackageDetailClientActions } from "./PackageDetailClientActions";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 interface PackagePageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: PackagePageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug).trim().toLowerCase().replace(/\s+/g, "-");
   try {
     const [pkg, settings] = await Promise.all([
-      publicCatalogApi.getPackage(slug).catch(() => getInitialPackageDetail(slug)),
+      publicCatalogApi.getPackage(slug).catch(() => publicCatalogApi.getPackage(rawSlug).catch(() => getInitialPackageDetail(slug))),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
     if (!pkg) {
@@ -74,7 +79,8 @@ export async function generateMetadata({ params }: PackagePageProps): Promise<Me
 }
 
 export default async function PackageDetailPage({ params }: PackagePageProps) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug).trim().toLowerCase().replace(/\s+/g, "-");
 
   let pkg: PublicPackageDetail;
   let onlinePaymentsEnabled = false;
@@ -86,7 +92,7 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
 
   try {
     const [pkgData, settingsData] = await Promise.all([
-      publicCatalogApi.getPackage(slug).catch(() => getInitialPackageDetail(slug)),
+      publicCatalogApi.getPackage(slug).catch(() => publicCatalogApi.getPackage(rawSlug).catch(() => getInitialPackageDetail(slug))),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
 

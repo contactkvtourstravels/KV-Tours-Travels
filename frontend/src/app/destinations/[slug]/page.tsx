@@ -10,15 +10,20 @@ import { PublicLayout } from "@/components/public/PublicLayout";
 import { TravelImage } from "@/components/public/TravelImage";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
+
 interface DestinationPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateMetadata({ params }: DestinationPageProps): Promise<Metadata> {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug).trim().toLowerCase().replace(/\s+/g, "-");
   try {
     const [dest, settings] = await Promise.all([
-      publicCatalogApi.getDestination(slug).catch(() => getInitialDestinationDetail(slug)),
+      publicCatalogApi.getDestination(slug).catch(() => publicCatalogApi.getDestination(rawSlug).catch(() => getInitialDestinationDetail(slug))),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
     if (!dest) {
@@ -58,7 +63,8 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
 }
 
 export default async function DestinationDetailPage({ params }: DestinationPageProps) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = decodeURIComponent(rawSlug).trim().toLowerCase().replace(/\s+/g, "-");
   let destination: PublicDestinationDetail;
   let packages: PublicPackageListItem[] = [];
   let agencyName = "KV Tours & Travels";
@@ -70,9 +76,9 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
 
   try {
     const [destData, packagesData, settingsData] = await Promise.all([
-      publicCatalogApi.getDestination(slug).catch(() => getInitialDestinationDetail(slug)),
+      publicCatalogApi.getDestination(slug).catch(() => publicCatalogApi.getDestination(rawSlug).catch(() => getInitialDestinationDetail(slug))),
       publicCatalogApi.getPackages({ destination_slug: slug }).catch(() =>
-        INITIAL_PACKAGES.filter((p) => p.destination_slug === slug)
+        INITIAL_PACKAGES.filter((p) => p.destination_slug === slug || p.destination_slug === rawSlug)
       ),
       publicCatalogApi.getSettings().catch(() => null),
     ]);

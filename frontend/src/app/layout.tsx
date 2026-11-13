@@ -6,8 +6,10 @@ import { DEFAULT_BUSINESS_PHONE } from "@/lib/constants";
 import { publicCatalogApi, type PublicSiteSettings } from "@/lib/api";
 import { BrandingProvider } from "@/context/BrandingContext";
 
-// Incremental Static Regeneration (ISR) - revalidate layout cache every 5 minutes
-export const revalidate = 300;
+// Real-time zero-delay updates: always fetch fresh settings and branding from live database
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export async function generateMetadata(): Promise<Metadata> {
   let settings: PublicSiteSettings | null = null;

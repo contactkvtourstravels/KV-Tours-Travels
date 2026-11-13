@@ -1574,12 +1574,8 @@ export async function apiRequest<T>(
     cleanPath.startsWith("/content/pages");
 
   const isPreview = cleanPath.includes("preview=true");
-  const canCache =
-    method === "GET" &&
-    isPublicCatalogPath &&
-    !isPreview &&
-    !options.skipCache &&
-    !sessionToken;
+  // Zero-delay real-time data: all public queries bypass stale caches so admin edits reflect immediately
+  const canCache = false;
 
   // 1. Client-side memory & persistent storage cache check
   if (!isServer && canCache) {
@@ -1611,6 +1607,8 @@ export async function apiRequest<T>(
   const executeFetch = async (): Promise<T> => {
     const headers: Record<string, string> = {
       Accept: "application/json",
+      "Cache-Control": "no-cache, no-store",
+      Pragma: "no-cache",
       ...(options.headers as Record<string, string> | undefined),
     };
 

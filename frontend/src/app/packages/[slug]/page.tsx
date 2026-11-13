@@ -232,12 +232,12 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
             )}
             {pkg.difficulty_level && (
               <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-[11px] uppercase tracking-wider backdrop-blur-md">
-                ⚡ {pkg.difficulty_level}
+                {pkg.difficulty_level}
               </span>
             )}
             {pkg.departure_location && (
               <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-white/90 text-[11px] uppercase tracking-wider backdrop-blur-md">
-                🛫 Ex-{pkg.departure_location}
+                Ex-{pkg.departure_location}
               </span>
             )}
           </div>

@@ -314,7 +314,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                         </div>
                         {item.caption && (
                           <div className="mt-3 pt-2 border-t border-[#E4E5E7] text-[11px] text-[#5F6368] italic">
-                            💡 {item.caption}
+                            {item.caption}
                           </div>
                         )}
                       </div>
@@ -336,7 +336,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.best_time_to_visit && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          📅 Best Time to Visit
+                          Best Time to Visit
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.best_time_to_visit}
@@ -346,7 +346,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.recommended_duration && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          ⏱️ Recommended Trip Duration
+                          Recommended Trip Duration
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.recommended_duration}
@@ -356,7 +356,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.seasonal_weather && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          🌤️ Climate & Weather
+                          Climate & Weather
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.seasonal_weather}
@@ -366,7 +366,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.local_language && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          🗣️ Local Language
+                          Local Language
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.local_language}
@@ -376,7 +376,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.currency && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          💳 Local Currency
+                          Local Currency
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.currency}
@@ -386,7 +386,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.visa_entry && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          🛂 Visa & Entry
+                          Visa & Entry
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.visa_entry}
@@ -396,7 +396,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.time_zone && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          ⏰ Time Zone
+                          Time Zone
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.time_zone}
@@ -406,7 +406,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.clothing_etiquette && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          👔 Clothing & Etiquette
+                          Clothing & Etiquette
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.clothing_etiquette}
@@ -416,7 +416,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {(destination.travel_guide.transport_options || destination.travel_guide.transport_getting_around) && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          🚗 Transport & Getting Around
+                          Transport & Getting Around
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.transport_options || destination.travel_guide.transport_getting_around}
@@ -426,7 +426,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {(destination.travel_guide.safety_tips || destination.travel_guide.safety_information) && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          🛡️ Safety & Health Information
+                          Safety & Health Information
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.safety_tips || destination.travel_guide.safety_information}
@@ -436,7 +436,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.packing_tips && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          🧳 Packing Tips & Essentials
+                          Packing Tips & Essentials
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.packing_tips}
@@ -446,7 +446,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {destination.travel_guide.accessibility_information && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7]">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          ♿ Accessibility Information
+                          Accessibility Information
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.accessibility_information}
@@ -456,7 +456,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                     {(destination.travel_guide.insider_advice || destination.travel_guide.travel_advice) && (
                       <div className="p-4 rounded-2xl bg-[#F7F7F5] border border-[#E4E5E7] sm:col-span-2 md:col-span-3">
                         <span className="text-[10px] uppercase tracking-wider text-[#5F6368] font-bold block mb-1">
-                          ✨ Concierge Insider Advice
+                          Concierge Insider Advice
                         </span>
                         <p className="text-xs sm:text-sm text-[#202124] font-medium">
                           {destination.travel_guide.insider_advice || destination.travel_guide.travel_advice}

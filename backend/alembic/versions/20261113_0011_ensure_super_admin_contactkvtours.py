@@ -25,7 +25,7 @@ def upgrade() -> None:
 
     # 1. Fetch or create super_admin and admin roles
     roles = conn.execute(text("SELECT id, name FROM roles")).fetchall()
-    role_map = {row[1]: row[0] for row in roles}
+    role_map = {row[1]: str(row[0]) for row in roles}
 
     for role_name, desc in [
         ("super_admin", "Super Administrator"),
@@ -35,7 +35,7 @@ def upgrade() -> None:
         ("customer", "Customer"),
     ]:
         if role_name not in role_map:
-            rid = uuid4()
+            rid = uuid4().hex
             conn.execute(
                 text(
                     "INSERT INTO roles (id, name, description, created_at, updated_at) "
@@ -56,7 +56,7 @@ def upgrade() -> None:
 
     target_user_id = None
     if not user:
-        new_id = uuid4()
+        new_id = uuid4().hex
         target_user_id = new_id
         conn.execute(
             text(
@@ -80,7 +80,7 @@ def upgrade() -> None:
             },
         )
     else:
-        target_user_id = user[0]
+        target_user_id = str(user[0]).replace("-", "")
         # Update user status, verified, and password if missing
         conn.execute(
             text(
@@ -89,7 +89,7 @@ def upgrade() -> None:
                 SET is_email_verified = :is_verified, status = 'active', is_deleted = :is_deleted,
                     password_hash = COALESCE(password_hash, :pwd),
                     updated_at = CURRENT_TIMESTAMP
-                WHERE id = :uid
+                WHERE id = :uid OR replace(cast(id as text), '-', '') = :uid
                 """
             ),
             {
@@ -108,10 +108,11 @@ def upgrade() -> None:
             text(
                 """
                 SELECT id FROM user_roles
-                WHERE user_id = :uid AND role_id = :rid
+                WHERE (user_id = :uid OR replace(cast(user_id as text), '-', '') = :uid)
+                  AND (role_id = :rid OR replace(cast(role_id as text), '-', '') = :rid)
                 """
             ),
-            {"uid": target_user_id, "rid": rid},
+            {"uid": target_user_id, "rid": str(rid).replace("-", "")},
         ).fetchone()
 
         if not exists:
@@ -122,9 +123,10 @@ def upgrade() -> None:
                     VALUES (:id, :uid, :rid, CURRENT_TIMESTAMP)
                     """
                 ),
-                {"id": uuid4(), "uid": target_user_id, "rid": rid},
+                {"id": uuid4().hex, "uid": target_user_id, "rid": str(rid).replace("-", "")},
             )
 
 
 def downgrade() -> None:
     pass
+

@@ -112,7 +112,17 @@ function LoginForm() {
   );
 
   const handleSocialError = useCallback((errorMessage: string) => {
-    setError(errorMessage);
+    if (
+      errorMessage.includes("Not Found") ||
+      errorMessage.includes("404") ||
+      errorMessage.includes("Unable to connect")
+    ) {
+      setError(
+        "Backend server is waking up or connecting to the cloud database. Please wait a few moments and try signing in again."
+      );
+    } else {
+      setError(errorMessage);
+    }
   }, []);
 
   const handleCheckMe = async () => {

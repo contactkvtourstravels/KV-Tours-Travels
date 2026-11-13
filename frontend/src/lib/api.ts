@@ -1428,19 +1428,20 @@ function getCookie(name: string): string | null {
 }
 
 export function getApiBaseUrl(): string {
-  // If explicitly configured with an absolute URL
-  const envUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (envUrl && envUrl.trim().startsWith("http")) {
-    return envUrl.trim().replace(/\/+$/, "");
-  }
-
-  // In browser context: use relative /api/v1 so Next.js rewrites proxy to backend Base seamlessly
+  // In browser context: ALWAYS use relative /api/v1 so Next.js rewrites proxy to backend Base seamlessly
+  // This eliminates cross-origin issues, third-party cookie blocking, and missing /api/v1 prefix bugs
   if (typeof window !== "undefined") {
-    // If running on localhost in browser, preserve localhost:8000 fallback
     if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
       return "http://localhost:8000/api/v1";
     }
     return "/api/v1";
+  }
+
+  // If explicitly configured with an absolute URL on server
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (envUrl && envUrl.trim().startsWith("http")) {
+    const trimmed = envUrl.trim().replace(/\/+$/, "");
+    return trimmed.endsWith("/api/v1") ? trimmed : `${trimmed}/api/v1`;
   }
 
   // Server-side default
@@ -1450,7 +1451,8 @@ export function getApiBaseUrl(): string {
     (process.env.NODE_ENV === "production"
       ? "https://travel-agency-kdrs.onrender.com"
       : "http://127.0.0.1:8000");
-  return `${base.replace(/\/+$/, "")}/api/v1`;
+  const trimmedBase = base.replace(/\/+$/, "");
+  return trimmedBase.endsWith("/api/v1") ? trimmedBase : `${trimmedBase}/api/v1`;
 }
 
 /**

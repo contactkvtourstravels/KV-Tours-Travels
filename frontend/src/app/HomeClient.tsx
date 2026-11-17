@@ -56,15 +56,19 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
 
+  const hasServerData = Boolean(
+    initialFeed?.destinations?.length && initialFeed?.packages?.length
+  );
+
   // Pre-hydrated with live database catalog for instant 0ms first paint without stale flash
   const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(
-    initialFeed?.destinations?.length ? initialFeed.destinations : INITIAL_DESTINATIONS
+    initialFeed?.destinations?.length ? initialFeed.destinations : []
   );
   const [packages, setPackages] = useState<PublicPackageListItem[]>(
-    initialFeed?.packages?.length ? initialFeed.packages : INITIAL_PACKAGES
+    initialFeed?.packages?.length ? initialFeed.packages : []
   );
   const [departures, setDepartures] = useState<PublicDepartureListItem[]>(
-    initialFeed?.departures?.length ? initialFeed.departures : INITIAL_DEPARTURES
+    initialFeed?.departures?.length ? initialFeed.departures : []
   );
   const [settings, setSettings] = useState<PublicSiteSettings | null>(
     initialFeed?.settings || null
@@ -74,7 +78,49 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
       ? { ...INITIAL_HOME_CONTENT, ...initialFeed.content }
       : INITIAL_HOME_CONTENT
   );
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!hasServerData);
+
+  // Restore active session data instantly if server pre-fetch timed out
+  useEffect(() => {
+    if (typeof window === "undefined" || hasServerData) return;
+    try {
+      const cached = sessionStorage.getItem("kv_live_home_feed");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.destinations?.length && parsed?.packages?.length) {
+          setDestinations(parsed.destinations);
+          setPackages(parsed.packages);
+          if (parsed.departures?.length) setDepartures(parsed.departures);
+          if (parsed.settings) setSettings(parsed.settings);
+          if (parsed.content) setPageContent((prev) => ({ ...prev, ...parsed.content }));
+          setLoading(false);
+        }
+      }
+    } catch {
+      // Ignore session storage errors
+    }
+  }, [hasServerData]);
+
+  // Persist live feed to session storage
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (destinations.length > 0 && packages.length > 0) {
+      try {
+        sessionStorage.setItem(
+          "kv_live_home_feed",
+          JSON.stringify({
+            destinations,
+            packages,
+            departures,
+            settings,
+            content: pageContent,
+          })
+        );
+      } catch {
+        // Ignore session quota
+      }
+    }
+  }, [destinations, packages, departures, settings, pageContent]);
 
   // Trending Destinations Category Filter ("international" | "domestic")
   const [destFilter, setDestFilter] = useState<"international" | "domestic">("domestic");
@@ -634,7 +680,7 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
             <div
               ref={carouselRef}
               onScroll={handleScrollUpdate}
-              className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 pt-1 snap-x snap-mandatory touch-pan-x"
+              className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 pt-1 snap-x snap-mandatory overscroll-x-contain touch-auto"
               style={{
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",

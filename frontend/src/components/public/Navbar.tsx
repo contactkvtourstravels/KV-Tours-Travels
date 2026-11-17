@@ -95,9 +95,11 @@ export function Navbar() {
                 <span className="text-[#202124] font-serif tracking-[0.06em] sm:tracking-[0.10em] text-xs sm:text-sm md:text-base uppercase font-bold leading-tight group-hover:text-[#A88045] transition-colors whitespace-nowrap">
                   {displayName}
                 </span>
-                <span className="text-[9px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-[#6B7280] font-semibold leading-none mt-0.5 whitespace-nowrap">
-                  {city ? `${city} • Luxury Escapes` : "Luxury Escapes"}
-                </span>
+                {city ? (
+                  <span className="text-[9px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-[#6B7280] font-semibold leading-none mt-0.5 whitespace-nowrap">
+                    {city}
+                  </span>
+                ) : null}
               </div>
             </Link>
 

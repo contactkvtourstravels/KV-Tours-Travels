@@ -14,11 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
     const title =
       feed?.content?.seo_title ||
       feed?.settings?.seo_website_title ||
-      "KV Tours & Travels | Coimbatore Luxury Escapes & Curated Holidays";
+      "KV Tours & Travels | Curated Journeys & Holidays";
     const description =
       feed?.content?.seo_meta_description ||
       feed?.settings?.seo_meta_description ||
-      "Coimbatore's premier luxury travel agency crafting extraordinary holidays across India and the globe.";
+      "Coimbatore's premier travel concierge crafting extraordinary holidays across India and the globe.";
     return {
       title,
       description,
@@ -30,9 +30,9 @@ export async function generateMetadata(): Promise<Metadata> {
     };
   } catch {
     return {
-      title: "KV Tours & Travels | Coimbatore Luxury Escapes & Curated Holidays",
+      title: "KV Tours & Travels | Curated Journeys & Holidays",
       description:
-        "Coimbatore's premier luxury travel agency crafting extraordinary holidays across India and the globe.",
+        "Coimbatore's premier travel concierge crafting extraordinary holidays across India and the globe.",
     };
   }
 }

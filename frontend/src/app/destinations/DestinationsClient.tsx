@@ -31,14 +31,16 @@ export function DestinationsClient({
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
+  const hasServerData = Boolean(initialDestinations?.length);
+
   // Pre-hydrated with live database destinations for instant 0ms first paint
   const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(
-    initialDestinations?.length ? initialDestinations : INITIAL_DESTINATIONS
+    initialDestinations?.length ? initialDestinations : []
   );
   const [pageContent, setPageContent] = useState<DestinationsPageContent | null>(
     initialContent || null
   );
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!hasServerData);
   const [search, setSearch] = useState("");
   const [classificationTab, setClassificationTab] = useState<"all" | "domestic" | "international">("all");
   const [selectedCountry, setSelectedCountry] = useState<string>("all");

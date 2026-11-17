@@ -36,17 +36,19 @@ export function PackagesClient({
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
+  const hasServerData = Boolean(initialPackages?.length);
+
   // Pre-hydrated with live database catalog for instant 0ms first paint
   const [packages, setPackages] = useState<PublicPackageListItem[]>(
-    initialPackages?.length ? initialPackages : INITIAL_PACKAGES
+    initialPackages?.length ? initialPackages : []
   );
   const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(
-    initialDestinations?.length ? initialDestinations : INITIAL_DESTINATIONS
+    initialDestinations?.length ? initialDestinations : []
   );
   const [pageContent, setPageContent] = useState<PackagesPageContent | null>(
     initialContent || null
   );
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!hasServerData);
 
   // Filters
   const [classificationTab, setClassificationTab] = useState<"all" | "domestic" | "international">("all");

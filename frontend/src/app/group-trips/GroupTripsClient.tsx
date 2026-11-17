@@ -45,14 +45,16 @@ export function GroupTripsClient({
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
+  const hasServerData = Boolean(initialDepartures?.length);
+
   // Pre-hydrated with live database departures for instant 0ms first paint
   const [departures, setDepartures] = useState<PublicDepartureListItem[]>(
-    initialDepartures?.length ? initialDepartures : INITIAL_DEPARTURES
+    initialDepartures?.length ? initialDepartures : []
   );
   const [pageContent, setPageContent] = useState<GroupTripsPageContent | null>(
     initialContent || null
   );
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(!hasServerData);
 
   // Inquiry modal
   const [modalOpen, setModalOpen] = useState(false);

@@ -1222,6 +1222,45 @@ def seed_sheet_catalog(db: Session | None = None):
     try:
         print("Starting KV Tours & Travels Google Sheet Catalog Seed...")
 
+        # 0. Clean / Unpublish legacy demo packages that do not belong to KV Tours & Travels
+        official_pkg_slugs = {p["slug"] for p in PACKAGES_DATA}
+        official_dest_slugs = {d["slug"] for d in DESTINATIONS_DATA}
+
+        legacy_pkgs = db.execute(
+            select(Package).where(~Package.slug.in_(official_pkg_slugs))
+        ).scalars().all()
+
+        if legacy_pkgs:
+            print(f"Demoting/cleaning {len(legacy_pkgs)} legacy template packages...")
+            from app.models.commerce import Booking
+            for lp in legacy_pkgs:
+                has_booking = db.execute(
+                    select(Booking.id).where(Booking.package_id == lp.id).limit(1)
+                ).scalar_one_or_none()
+                if has_booking:
+                    lp.is_published = False
+                    lp.is_featured = False
+                else:
+                    db.execute(delete(PackageDay).where(PackageDay.package_id == lp.id))
+                    db.execute(delete(PackageDeparture).where(PackageDeparture.package_id == lp.id))
+                    db.execute(delete(PackageImage).where(PackageImage.package_id == lp.id))
+                    db.delete(lp)
+            db.flush()
+
+        legacy_dests = db.execute(
+            select(Destination).where(~Destination.slug.in_(official_dest_slugs))
+        ).scalars().all()
+        for ld in legacy_dests:
+            pkg_using_dest = db.execute(
+                select(Package.id).where(Package.destination_id == ld.id).limit(1)
+            ).scalar_one_or_none()
+            if pkg_using_dest:
+                ld.is_published = False
+                ld.is_featured = False
+            else:
+                db.delete(ld)
+        db.flush()
+
         # 1. Seed Destinations
         dest_map: dict[str, Destination] = {}
         for d_info in DESTINATIONS_DATA:
@@ -1384,10 +1423,14 @@ def seed_sheet_catalog(db: Session | None = None):
                 db.add(p_dep)
                 total_departures_count += 1
 
-        db.commit()
+        if owns_db:
+            db.commit()
+        else:
+            db.flush()
         print(f"\nSUCCESS: Seeded {len(DESTINATIONS_DATA)} Destinations, {len(PACKAGES_DATA)} Packages, and {total_departures_count} Departures into database.")
     except Exception as e:
-        db.rollback()
+        if owns_db:
+            db.rollback()
         print(f"ERROR: Failed to seed catalog: {e}", file=sys.stderr)
         raise
     finally:

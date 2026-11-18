@@ -380,6 +380,7 @@ def delete_destination(
     res = serialize_destination(destination, package_count)
     res.is_active = False
     res.is_published = False
+    res.deleted_at = datetime.now(timezone.utc)
 
     # Check if any bookings exist for packages under this destination
     booking_count = 0
@@ -392,31 +393,65 @@ def delete_destination(
 
     from app.models.catalog import (
         Activity,
+        BestOffer,
         DestinationImage,
         Hotel,
+        PackageActivity,
         PackageDay,
+        PackageDayActivity,
         PackageDeparture,
+        PackageHotel,
         PackageImage,
         Review,
+        WishlistItem,
     )
 
-    if booking_count == 0:
-        # Delete packages under this destination first
+    # If already deactivated/soft-deleted and has no bookings, permanently purge from database
+    is_already_deactivated = destination.deleted_at is not None
+
+    if is_already_deactivated and booking_count == 0:
+        # Delete all packages under this destination first
         for pkg in packages:
             db.execute(delete(Review).where(Review.package_id == pkg.id))
+            db.execute(delete(WishlistItem).where(WishlistItem.package_id == pkg.id))
+            db.execute(delete(BestOffer).where(BestOffer.package_id == pkg.id))
+            db.execute(delete(PackageActivity).where(PackageActivity.package_id == pkg.id))
+            db.execute(delete(PackageHotel).where(PackageHotel.package_id == pkg.id))
+
+            # Delete package day activities before package days
+            pkg_days = db.execute(select(PackageDay).where(PackageDay.package_id == pkg.id)).scalars().all()
+            if pkg_days:
+                day_ids = [d.id for d in pkg_days]
+                db.execute(delete(PackageDayActivity).where(PackageDayActivity.package_day_id.in_(day_ids)))
+
             db.execute(delete(PackageDay).where(PackageDay.package_id == pkg.id))
             db.execute(delete(PackageDeparture).where(PackageDeparture.package_id == pkg.id))
             db.execute(delete(PackageImage).where(PackageImage.package_id == pkg.id))
             db.delete(pkg)
 
+        # Delete activities and their linkages
+        activities = db.execute(select(Activity).where(Activity.destination_id == destination.id)).scalars().all()
+        if activities:
+            act_ids = [a.id for a in activities]
+            db.execute(delete(PackageDayActivity).where(PackageDayActivity.activity_id.in_(act_ids)))
+            db.execute(delete(PackageActivity).where(PackageActivity.activity_id.in_(act_ids)))
+            db.execute(delete(Activity).where(Activity.destination_id == destination.id))
+
+        # Delete hotels and their linkages
+        hotels = db.execute(select(Hotel).where(Hotel.destination_id == destination.id)).scalars().all()
+        if hotels:
+            hotel_ids = [h.id for h in hotels]
+            db.execute(delete(PackageHotel).where(PackageHotel.hotel_id.in_(hotel_ids)))
+            db.execute(delete(Hotel).where(Hotel.destination_id == destination.id))
+
         db.execute(delete(DestinationImage).where(DestinationImage.destination_id == destination.id))
-        db.execute(delete(Hotel).where(Hotel.destination_id == destination.id))
-        db.execute(delete(Activity).where(Activity.destination_id == destination.id))
         db.delete(destination)
         action_name = "destination_deleted"
     else:
         destination.deleted_at = datetime.now(timezone.utc)
         destination.is_published = False
+        destination.is_active = False
+        res.deleted_at = destination.deleted_at
         action_name = "destination_deactivated"
 
     record_audit_log(

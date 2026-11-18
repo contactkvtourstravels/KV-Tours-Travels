@@ -99,24 +99,30 @@ def list_audit_logs(
     page = max(1, page)
     page_size = min(max(1, page_size), 100)
 
-    query = select(AuditLog).options(joinedload(AuditLog.actor))
-
+    # Filter conditions for both count and record queries
+    filters = []
     if actor_user_id is not None:
-        query = query.where(AuditLog.actor_user_id == actor_user_id)
+        filters.append(AuditLog.actor_user_id == actor_user_id)
     if action:
-        query = query.where(AuditLog.action == action)
+        filters.append(AuditLog.action == action)
     if entity_type:
-        query = query.where(AuditLog.entity_type == entity_type)
+        filters.append(AuditLog.entity_type == entity_type)
     if from_date:
-        query = query.where(AuditLog.created_at >= from_date)
+        filters.append(AuditLog.created_at >= from_date)
     if to_date:
-        query = query.where(AuditLog.created_at <= to_date)
+        filters.append(AuditLog.created_at <= to_date)
 
-    # Count total matching
-    count_query = select(func.count()).select_from(query.order_by(None).subquery())
+    # Count total matching records directly without subquery column collision
+    count_query = select(func.count(AuditLog.id))
+    if filters:
+        count_query = count_query.where(*filters)
     total = db.execute(count_query).scalar_one()
 
-    # Apply ordering and limit/offset
+    # Query records with actor eagerly loaded
+    query = select(AuditLog).options(joinedload(AuditLog.actor))
+    if filters:
+        query = query.where(*filters)
+
     query = (
         query.order_by(desc(AuditLog.created_at))
         .offset((page - 1) * page_size)
@@ -129,7 +135,7 @@ def list_audit_logs(
         actor_name = None
         actor_email = None
         if log.actor:
-            actor_name = f"{log.actor.first_name} {log.actor.last_name}".strip()
+            actor_name = f"{log.actor.first_name or ''} {log.actor.last_name or ''}".strip() or log.actor.email
             actor_email = log.actor.email
 
         items.append(

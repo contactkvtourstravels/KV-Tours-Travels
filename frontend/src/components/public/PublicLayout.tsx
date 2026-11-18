@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { FloatingWhatsApp } from "./FloatingWhatsApp";
+import { BackendWakeUpBanner } from "./BackendWakeUpBanner";
 
 interface PublicLayoutProps {
   children: ReactNode;
@@ -22,6 +23,9 @@ export function PublicLayout({ children, transparentHeader = false }: PublicLayo
       </div>
       <div className="print:hidden">
         <FloatingWhatsApp />
+      </div>
+      <div className="print:hidden">
+        <BackendWakeUpBanner />
       </div>
     </div>
   );

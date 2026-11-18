@@ -1524,8 +1524,34 @@ export function clearCachedCsrfToken(): void {
   csrfPromise = null;
 }
 
+export interface BackendWakeUpState {
+  isWakingUp: boolean;
+  attempt?: number;
+  maxRetries?: number;
+  failed?: boolean;
+  message?: string;
+}
+
+const wakeUpListeners = new Set<(state: BackendWakeUpState) => void>();
+
+export function subscribeToBackendWakeUp(listener: (state: BackendWakeUpState) => void): () => void {
+  wakeUpListeners.add(listener);
+  return () => wakeUpListeners.delete(listener);
+}
+
+export function notifyBackendWakeUp(state: BackendWakeUpState): void {
+  wakeUpListeners.forEach((fn) => {
+    try {
+      fn(state);
+    } catch {
+      // Ignore listener error
+    }
+  });
+}
+
 export interface ApiRequestOptions extends RequestInit {
   timeoutMs?: number;
+  maxRetries?: number;
   skipCache?: boolean;
   next?: {
     revalidate?: number | false;
@@ -1660,119 +1686,159 @@ export async function apiRequest<T>(
       fetchOptions.cache = options.cache || "no-store";
     }
 
-    // Server-side timeout (3500ms) prevents Vercel lambda freeze if Render container is cold
-    const timeoutMs = options.timeoutMs ?? (isServer && canCache ? 3500 : 15000);
-    let abortTimer: ReturnType<typeof setTimeout> | null = null;
-    let signal = options.signal;
+    // Sensible production timeouts for cold-starts:
+    // Client-side GET requests: allow up to 35s for Render Free container cold start
+    // Server-side GET requests: 8s to prevent Vercel SSR edge timeout
+    // Mutation requests (POST, PUT, PATCH, DELETE): 30s timeout
+    const isSafeGet = method === "GET";
+    const maxRetries = isSafeGet && !isServer ? (options.maxRetries ?? 2) : 0;
+    const timeoutMs = options.timeoutMs ?? (
+      isServer
+        ? 8000
+        : (isSafeGet ? 35000 : 30000)
+    );
 
-    if (!signal && timeoutMs > 0 && typeof AbortController !== "undefined") {
-      const controller = new AbortController();
-      signal = controller.signal;
-      abortTimer = setTimeout(() => controller.abort(), timeoutMs);
-      fetchOptions.signal = signal;
-    }
+    let attempt = 0;
+    while (attempt <= maxRetries) {
+      attempt++;
+      let abortTimer: ReturnType<typeof setTimeout> | null = null;
+      let signal = options.signal;
 
-    let response: Response;
-    try {
-      response = await fetch(url, fetchOptions);
-    } catch (err: unknown) {
-      const error = err as Error;
-      if (error.name === "AbortError") {
-        throw new Error(
-          `Request to backend timed out after ${timeoutMs}ms (endpoint: ${cleanPath}). Backend may be waking up.`
-        );
-      }
-      if (error.name === "TypeError" || error.message?.toLowerCase().includes("fetch")) {
-        throw new Error(
-          `Unable to connect to backend server at ${baseUrl} (endpoint: ${cleanPath}). ` +
-          `Please verify that the FastAPI service is running and that CORS configuration permits requests from this origin.`
-        );
-      }
-      throw error;
-    } finally {
-      if (abortTimer) clearTimeout(abortTimer);
-    }
-
-    if (!response.ok) {
-      // Automatic retry for 403 CSRF validation errors (re-fetch fresh token and retry once)
-      if (
-        response.status === 403 &&
-        !isCsrfRetry &&
-        ["POST", "PUT", "PATCH", "DELETE"].includes(method)
-      ) {
-        try {
-          const errorJson = (await response.clone().json()) as ApiErrorResponse;
-          if (
-            errorJson.error?.code === "CSRF_TOKEN_INVALID" ||
-            errorJson.error?.code === "CSRF_TOKEN_MISSING"
-          ) {
-            clearCachedCsrfToken();
-            const freshCsrf = await getCsrfToken(true);
-            return await apiRequest<T>(path, options, true, freshCsrf);
-          }
-        } catch {
-          // Fall through to standard error handling
-        }
+      if (!signal && timeoutMs > 0 && typeof AbortController !== "undefined") {
+        const controller = new AbortController();
+        signal = controller.signal;
+        abortTimer = setTimeout(() => controller.abort(), timeoutMs);
+        fetchOptions.signal = signal;
       }
 
-      let errorMessage = `Request failed with status ${response.status}`;
-      if (response.status === 401) {
-        errorMessage = "Session expired or unauthenticated. Please sign in to perform administrative actions.";
-      } else if (response.status === 403) {
-        errorMessage = "Access forbidden. Your account does not possess sufficient privileges for this operation.";
-      } else if (response.status === 404) {
-        errorMessage = "Backend service endpoint returned 404. If the cloud service is waking up, please wait a moment and try again.";
-      } else if (response.status >= 502 && response.status <= 504) {
-        errorMessage = "Backend server is currently waking up (cloud container spin-up). Please wait 20-30 seconds and try again.";
-      }
-      let errorDetails: Array<{ location: string[]; message: string; type: string }> | undefined = undefined;
+      let response: Response;
       try {
-        const errorJson = (await response.json()) as any;
-        if (errorJson?.error?.message) {
-          errorMessage = errorJson.error.message;
-          if (errorJson.error.details && errorJson.error.details.length > 0) {
-            errorDetails = errorJson.error.details;
-            const detailStrings = errorJson.error.details.map((d: any) => {
-              const field = d.location && d.location.length > 0 ? d.location[d.location.length - 1] : "field";
-              return `${field}: ${d.message}`;
-            });
-            errorMessage = `${errorJson.error.message} (${detailStrings.join("; ")})`;
+        response = await fetch(url, fetchOptions);
+      } catch (err: unknown) {
+        if (abortTimer) clearTimeout(abortTimer);
+        const error = err as Error;
+        const isNetworkOrAbort =
+          error.name === "AbortError" ||
+          error.name === "TypeError" ||
+          error.message?.toLowerCase().includes("fetch");
+
+        if (isSafeGet && isNetworkOrAbort && attempt <= maxRetries) {
+          const delay = attempt === 1 ? 2500 : 5000;
+          notifyBackendWakeUp({
+            isWakingUp: true,
+            attempt,
+            maxRetries,
+            message: `Cloud services are waking up. Retrying connection (${attempt}/${maxRetries})...`,
+          });
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+
+        notifyBackendWakeUp({ isWakingUp: false, failed: true });
+        if (error.name === "AbortError") {
+          throw new Error(
+            `Request to backend timed out after ${timeoutMs}ms (endpoint: ${cleanPath}). Cloud service may be cold-starting.`
+          );
+        }
+        if (error.name === "TypeError" || error.message?.toLowerCase().includes("fetch")) {
+          throw new Error(
+            `Unable to connect to backend server at ${baseUrl} (endpoint: ${cleanPath}). ` +
+            `The cloud service may be waking up from sleep. Please wait a few seconds and retry.`
+          );
+        }
+        throw error;
+      } finally {
+        if (abortTimer) clearTimeout(abortTimer);
+      }
+
+      // Check for transient server cold start (502, 503, 504)
+      const isTransientColdStart = response.status >= 502 && response.status <= 504;
+      const isDbWarmingUp = response.status === 503;
+
+      if (isSafeGet && (isTransientColdStart || isDbWarmingUp) && attempt <= maxRetries) {
+        const delay = attempt === 1 ? 2500 : 5000;
+        notifyBackendWakeUp({
+          isWakingUp: true,
+          attempt,
+          maxRetries,
+          message: `Cloud service or database is resuming from sleep. Retrying (${attempt}/${maxRetries})...`,
+        });
+        await new Promise((r) => setTimeout(r, delay));
+        continue;
+      }
+
+      if (!response.ok) {
+        notifyBackendWakeUp({ isWakingUp: false, failed: true });
+        // Automatic retry for 403 CSRF validation errors (re-fetch fresh token and retry once)
+        if (
+          response.status === 403 &&
+          !isCsrfRetry &&
+          ["POST", "PUT", "PATCH", "DELETE"].includes(method)
+        ) {
+          try {
+            const errorJson = (await response.clone().json()) as ApiErrorResponse;
+            if (
+              errorJson.error?.code === "CSRF_TOKEN_INVALID" ||
+              errorJson.error?.code === "CSRF_TOKEN_MISSING"
+            ) {
+              clearCachedCsrfToken();
+              const freshCsrf = await getCsrfToken(true);
+              return await apiRequest<T>(path, options, true, freshCsrf);
+            }
+          } catch {
+            // Fall through to standard error handling
           }
-        } else if (errorJson?.detail && typeof errorJson.detail === "string" && errorJson.detail !== "Not Found") {
-          errorMessage = errorJson.detail;
-        } else if (errorJson?.message && typeof errorJson.message === "string" && errorJson.message !== "Not Found") {
-          errorMessage = errorJson.message;
         }
-      } catch {
-        // Non-JSON response
-      }
-      const err = new Error(errorMessage) as Error & {
-        status: number;
-        details?: Array<{ location: string[]; message: string; type: string }>;
-      };
-      err.status = response.status;
-      err.details = errorDetails;
-      throw err;
-    }
 
-    const data = (await response.json()) as T;
-
-    if (!isServer && canCache) {
-      const cacheEntry = {
-        data,
-        expiresAt: Date.now() + 300_000, // 5 min TTL
-      };
-      clientApiCache.set(cleanPath, cacheEntry);
-      if (typeof window !== "undefined") {
+        let errorMessage = `Request failed with status ${response.status}`;
+        if (response.status === 401) {
+          errorMessage = "Session expired or unauthenticated. Please sign in to perform administrative actions.";
+        } else if (response.status === 403) {
+          errorMessage = "Access forbidden. Your account does not possess sufficient privileges for this operation.";
+        } else if (response.status === 404) {
+          errorMessage = "Backend service endpoint returned 404. If the cloud service is waking up, please wait a moment and try again.";
+        } else if (response.status === 503) {
+          errorMessage = "Cloud database or service is resuming from sleep. Please wait a moment and try again.";
+        } else if (response.status >= 502 && response.status <= 504) {
+          errorMessage = "Backend server is currently waking up (cloud container spin-up). Please wait 20-30 seconds and try again.";
+        }
+        let errorDetails: Array<{ location: string[]; message: string; type: string }> | undefined = undefined;
         try {
-          sessionStorage.setItem(`kv_catalog_${cleanPath}`, JSON.stringify(cacheEntry));
+          const errorJson = (await response.json()) as any;
+          if (errorJson?.error?.message) {
+            errorMessage = errorJson.error.message;
+            if (errorJson.error.details && errorJson.error.details.length > 0) {
+              errorDetails = errorJson.error.details;
+              const detailStrings = errorJson.error.details.map((d: any) => {
+                const field = d.location && d.location.length > 0 ? d.location[d.location.length - 1] : "field";
+                return `${field}: ${d.message}`;
+              });
+              errorMessage = `${errorJson.error.message} (${detailStrings.join("; ")})`;
+            }
+          } else if (errorJson?.detail && typeof errorJson.detail === "string" && errorJson.detail !== "Not Found") {
+            errorMessage = errorJson.detail;
+          } else if (errorJson?.message && typeof errorJson.message === "string" && errorJson.message !== "Not Found") {
+            errorMessage = errorJson.message;
+          }
         } catch {
-          // Ignore storage quota errors
+          // Non-JSON response
         }
+        const err = new Error(errorMessage) as Error & {
+          status: number;
+          details?: Array<{ location: string[]; message: string; type: string }>;
+        };
+        err.status = response.status;
+        err.details = errorDetails;
+        throw err;
       }
+
+      // Success
+      notifyBackendWakeUp({ isWakingUp: false, failed: false });
+      const data = (await response.json()) as T;
+      return data;
     }
 
-    return data;
+    throw new Error("Unable to complete request. Please retry.");
   };
 
   if (!isServer && canCache) {
@@ -3189,14 +3255,23 @@ export const bookingApi = {
     data: BookingCreateRequest,
     idempotencyKey?: string,
   ): Promise<BookingDetailResponse> => {
-    const headers: Record<string, string> = {};
-    if (idempotencyKey) {
-      headers["X-Idempotency-Key"] = idempotencyKey;
-    }
+    const key =
+      idempotencyKey ||
+      data.idempotency_key ||
+      (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function"
+        ? crypto.randomUUID()
+        : `bk_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`);
+    const headers: Record<string, string> = {
+      "X-Idempotency-Key": key,
+    };
+    const payload: BookingCreateRequest = {
+      ...data,
+      idempotency_key: key,
+    };
     return await apiRequest<BookingDetailResponse>("/bookings", {
       method: "POST",
       headers,
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
   },
 

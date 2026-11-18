@@ -61,7 +61,7 @@ def get_decrypted_secret(db: Session, key: str) -> str | None:
         return None
 
     if raw_val.startswith("v1:"):
-        key_bytes = resolve_encryption_key(get_settings())
+        key_bytes = resolve_encryption_key(get_settings(), allow_derived_fallback=True)
         if key_bytes and len(key_bytes) == 32:
             try:
                 return decrypt_secret(raw_val, key_bytes)
@@ -97,9 +97,13 @@ def get_resend_api_key(db: Session | None = None) -> str:
 def _store_secret(db: Session, key: str, plaintext: str, description: str) -> None:
     """Store secret encrypted with AES-256-GCM. Stored private (is_public=False)."""
     clean_val = plaintext.strip()
-    key_bytes = resolve_encryption_key(get_settings())
+    key_bytes = resolve_encryption_key(get_settings(), allow_derived_fallback=True)
     if not key_bytes or len(key_bytes) != 32:
-        raise ValueError(f"Cannot encrypt secret {key}: 32-byte encryption key could not be resolved.")
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail=f"Cannot encrypt secret {key}: 32-byte encryption key could not be resolved from environment or SECRET_KEY.",
+        )
     stored_val = encrypt_secret(clean_val, key_bytes)
 
     row = db.get(SiteSetting, key)

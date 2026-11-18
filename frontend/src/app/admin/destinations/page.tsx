@@ -1100,7 +1100,7 @@ export default function DestinationsAdminPage() {
                         {canEdit && (
                           <button
                             onClick={() => handleDelete(dest)}
-                            title="Deactivate Destination"
+                            title="Delete Destination"
                             className="p-1.5 rounded-lg border border-[#D3D8DF] bg-white hover:bg-rose-50 text-[#70757A] hover:text-rose-600 transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

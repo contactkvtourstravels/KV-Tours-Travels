@@ -183,6 +183,30 @@ uploads_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 
+from sqlalchemy.exc import DBAPIError, OperationalError
+
+
+@app.exception_handler(OperationalError)
+@app.exception_handler(DBAPIError)
+async def handle_database_connection_error(_: Request, exc: Exception) -> JSONResponse:
+    """Handle transient cloud database compute-suspension or connection drop gracefully.
+
+    When Neon Free compute is suspended, returning 503 with Retry-After lets frontend clients
+    know the service is resuming rather than permanently broken.
+    """
+    logger.warning("Database connectivity/resumption event: %s", exc)
+    return JSONResponse(
+        status_code=503,
+        headers={"Retry-After": "3"},
+        content={
+            "error": {
+                "code": "DATABASE_WARMING_UP",
+                "message": "Cloud database is resuming from inactive state. Please wait a moment and retry.",
+            }
+        },
+    )
+
+
 @app.exception_handler(ApiError)
 async def handle_api_error(_: Request, exc: ApiError) -> JSONResponse:
     return JSONResponse(

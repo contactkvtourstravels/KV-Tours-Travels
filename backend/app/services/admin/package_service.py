@@ -487,10 +487,35 @@ def delete_package(
     package_res = serialize_package(package)
     package_res.is_active = False
     package_res.is_published = False
+    package_res.deleted_at = datetime.now(timezone.utc)
 
-    if booking_count == 0 or package.deleted_at is not None:
-        # Hard delete package days, departures, images, reviews, and package
+    from app.models.catalog import (
+        BestOffer,
+        PackageActivity,
+        PackageDay,
+        PackageDayActivity,
+        PackageDeparture,
+        PackageHotel,
+        PackageImage,
+        Review,
+        WishlistItem,
+    )
+
+    is_already_deactivated = package.deleted_at is not None
+
+    if is_already_deactivated and booking_count == 0:
+        # Hard delete package days, departures, images, reviews, linkages, and package
         db.execute(delete(Review).where(Review.package_id == package.id))
+        db.execute(delete(WishlistItem).where(WishlistItem.package_id == package.id))
+        db.execute(delete(BestOffer).where(BestOffer.package_id == package.id))
+        db.execute(delete(PackageActivity).where(PackageActivity.package_id == package.id))
+        db.execute(delete(PackageHotel).where(PackageHotel.package_id == package.id))
+
+        pkg_days = db.execute(select(PackageDay).where(PackageDay.package_id == package.id)).scalars().all()
+        if pkg_days:
+            day_ids = [d.id for d in pkg_days]
+            db.execute(delete(PackageDayActivity).where(PackageDayActivity.package_day_id.in_(day_ids)))
+
         db.execute(delete(PackageDay).where(PackageDay.package_id == package.id))
         db.execute(delete(PackageDeparture).where(PackageDeparture.package_id == package.id))
         db.execute(delete(PackageImage).where(PackageImage.package_id == package.id))
@@ -500,6 +525,8 @@ def delete_package(
         # Soft-delete preserves financial history and audit trails
         package.deleted_at = datetime.now(timezone.utc)
         package.is_published = False
+        package.is_active = False
+        package_res.deleted_at = package.deleted_at
         action_name = "package_deactivated"
 
     record_audit_log(

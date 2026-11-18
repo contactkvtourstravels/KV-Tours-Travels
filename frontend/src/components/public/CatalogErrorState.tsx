@@ -2,7 +2,8 @@
 
 import React, { useState } from "react";
 import { AlertTriangle, RefreshCw, MessageCircle } from "lucide-react";
-import { getWhatsAppClickToChatUrl } from "@/lib/constants";
+import { getWhatsAppClickToChatUrl, getCleanWhatsAppNumber } from "@/lib/constants";
+import { useBranding } from "@/context/BrandingContext";
 
 interface CatalogErrorStateProps {
   title?: string;
@@ -13,13 +14,14 @@ interface CatalogErrorStateProps {
 }
 
 export function CatalogErrorState({
-  title = "Unable to Connect to Travel Catalog",
-  message = "We are currently having trouble retrieving the latest live travel data from our servers. Please check your connection or retry.",
+  title = "Connecting to Travel Services",
+  message = "Our cloud backend was resting and is currently waking up (takes ~30s on free hosting). Please wait a moment and click Retry to reconnect.",
   onRetry,
-  retryLabel = "Retry Now",
+  retryLabel = "Retry Connection",
   className = "",
 }: CatalogErrorStateProps) {
   const [retrying, setRetrying] = useState(false);
+  const { getWhatsAppUrl, displayName } = useBranding();
 
   const handleRetry = async () => {
     if (!onRetry) {
@@ -36,9 +38,8 @@ export function CatalogErrorState({
     }
   };
 
-  const whatsappUrl = getWhatsAppClickToChatUrl(
-    "+919442000000",
-    "Hello KV Tours & Travels, I had an issue loading journeys on your website and would like assistance with an inquiry."
+  const whatsappUrl = getWhatsAppUrl(
+    `Hello ${displayName || "KV Tours & Travels"}, I had an issue loading journeys on your website and would like assistance with an inquiry.`
   );
 
   return (

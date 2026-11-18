@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Sequence
-from sqlalchemy import text
+from sqlalchemy import MetaData, Table, select, text
 from alembic import op
 
 revision: str = "20261118_0013"
@@ -20,11 +20,18 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     conn = op.get_bind()
+    meta = MetaData()
+    site_settings = Table("site_settings", meta, autoload_with=conn)
 
     # 1. Update individual dummy contact rows in site_settings
     # Retrieve all rows and clean in Python to remain dialect-agnostic across Postgres & SQLite
     rows = conn.execute(
-        text("SELECT key, value FROM site_settings WHERE key IN ('contact_phone', 'whatsapp_number', 'support_whatsapp', 'agency_location', 'office_address', 'city', 'state')")
+        select(site_settings.c.key, site_settings.c.value).where(
+            site_settings.c.key.in_([
+                'contact_phone', 'whatsapp_number', 'support_whatsapp',
+                'agency_location', 'office_address', 'city', 'state'
+            ])
+        )
     ).fetchall()
 
     for row_key, row_val in rows:
@@ -48,13 +55,14 @@ def upgrade() -> None:
 
         if new_val is not None:
             conn.execute(
-                text("UPDATE site_settings SET value = :v WHERE key = :k"),
-                {"v": json.dumps(new_val) if conn.dialect.name == "postgresql" else new_val, "k": row_key},
+                site_settings.update()
+                .where(site_settings.c.key == row_key)
+                .values(value=new_val)
             )
 
     # 2. Inspect and cleanse JSON in page_content_contact
     contact_row = conn.execute(
-        text("SELECT value FROM site_settings WHERE key = 'page_content_contact'")
+        select(site_settings.c.value).where(site_settings.c.key == 'page_content_contact')
     ).fetchone()
 
     if contact_row and contact_row[0]:
@@ -86,13 +94,14 @@ def upgrade() -> None:
                 val["hero"] = hero
 
             conn.execute(
-                text("UPDATE site_settings SET value = :val WHERE key = 'page_content_contact'"),
-                {"val": json.dumps(val)},
+                site_settings.update()
+                .where(site_settings.c.key == 'page_content_contact')
+                .values(value=val)
             )
 
     # 3. Inspect and cleanse JSON in page_content_about
     about_row = conn.execute(
-        text("SELECT value FROM site_settings WHERE key = 'page_content_about'")
+        select(site_settings.c.value).where(site_settings.c.key == 'page_content_about')
     ).fetchone()
 
     if about_row and about_row[0]:
@@ -124,8 +133,9 @@ def upgrade() -> None:
                 val["hero"] = hero
 
             conn.execute(
-                text("UPDATE site_settings SET value = :val WHERE key = 'page_content_about'"),
-                {"val": json.dumps(val)},
+                site_settings.update()
+                .where(site_settings.c.key == 'page_content_about')
+                .values(value=val)
             )
 
 

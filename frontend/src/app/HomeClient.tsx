@@ -652,11 +652,12 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
             <div
               ref={carouselRef}
               onScroll={handleScrollUpdate}
-              className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 pt-1 snap-x snap-mandatory overscroll-x-contain touch-auto"
+              className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 pt-1 snap-x snap-proximity sm:snap-mandatory overscroll-contain sm:overscroll-x-contain touch-pan-y"
               style={{
                 scrollbarWidth: "none",
                 msOverflowStyle: "none",
                 WebkitOverflowScrolling: "touch",
+                touchAction: "pan-y",
               }}
             >
               {carouselDestinations.map((dest) => (

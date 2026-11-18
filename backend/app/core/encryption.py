@@ -163,7 +163,7 @@ def inspect_encryption_key(settings: Settings | None = None) -> dict[str, Any]:
 
 def resolve_encryption_key(
     settings: Settings | None = None,
-    allow_derived_fallback: bool = False,
+    allow_derived_fallback: bool = True,
 ) -> bytes | None:
     """Resolve and validate the 32-byte (256-bit) AES-GCM key from environment settings.
 

@@ -36,6 +36,7 @@ import {
 } from "lucide-react";
 import { AdminProvider, useAdmin, AdminRole } from "./AdminContext";
 import { useBranding } from "@/context/BrandingContext";
+import { BackendWakeUpBanner } from "@/components/public/BackendWakeUpBanner";
 
 interface NavItem {
   name: string;
@@ -527,6 +528,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
         <main className="flex-1 p-3 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">
           {children}
         </main>
+        <BackendWakeUpBanner />
       </div>
     </div>
   );

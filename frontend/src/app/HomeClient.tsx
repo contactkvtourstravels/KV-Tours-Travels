@@ -322,37 +322,12 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
     }
   };
 
-  // Synchronize scroll state, bounds, and desktop wheel event listener
+  // Synchronize scroll state and bounds on resize/tab change
   useEffect(() => {
     handleScrollUpdate();
     const handleResize = () => handleScrollUpdate();
     window.addEventListener("resize", handleResize);
-
-    const el = carouselRef.current;
-    if (!el) return () => window.removeEventListener("resize", handleResize);
-
-    const onWheelEvent = (e: WheelEvent) => {
-      // If user is already scrolling horizontally (e.g. trackpad), let native scroll handle it
-      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey) return;
-      const { scrollLeft, scrollWidth, clientWidth } = el;
-      const maxScroll = scrollWidth - clientWidth;
-      if (maxScroll <= 5) return;
-
-      const isScrollingDownOrRight = e.deltaY > 0;
-      const canScrollFurther = isScrollingDownOrRight ? scrollLeft < maxScroll - 5 : scrollLeft > 5;
-
-      if (canScrollFurther) {
-        e.preventDefault();
-        el.scrollLeft += e.deltaY * 1.2;
-        handleScrollUpdate();
-      }
-    };
-
-    el.addEventListener("wheel", onWheelEvent, { passive: false });
-    return () => {
-      window.removeEventListener("resize", handleResize);
-      el.removeEventListener("wheel", onWheelEvent);
-    };
+    return () => window.removeEventListener("resize", handleResize);
   }, [destFilter, carouselDestinations, handleScrollUpdate]);
 
   const showTrendingDestinations = pageContent?.sections_visibility?.trending_destinations ?? true;
@@ -758,7 +733,7 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUpOrLeave}
                 onMouseLeave={handleMouseUpOrLeave}
-                className={`flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none pb-4 pt-1 snap-x snap-proximity overscroll-x-auto select-none touch-pan-x touch-pan-y ${
+                className={`flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none pb-4 pt-1 snap-x snap-proximity select-none touch-pan-x touch-pan-y ${
                   isDragging ? "cursor-grabbing" : "cursor-grab"
                 }`}
                 style={{

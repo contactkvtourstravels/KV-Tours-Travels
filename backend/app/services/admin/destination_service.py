@@ -5,11 +5,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import desc, func, or_, select
+from sqlalchemy import delete, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError
 from app.models.catalog import Destination, Package
+from app.models.commerce import Booking
 from app.schemas.admin import (
     DestinationCreateRequest,
     DestinationResponse,
@@ -358,7 +359,7 @@ def delete_destination(
     current_admin_id: UUID,
     ip_address: str | None = None,
 ) -> DestinationResponse:
-    """Soft-delete/deactivate destination and record audit log."""
+    """Delete destination and record audit log. If no active bookings exist, hard-delete completely."""
     destination = db.execute(
         select(Destination).where(Destination.id == destination_id)
     ).scalar_one_or_none()
@@ -370,12 +371,57 @@ def delete_destination(
             message=f"Destination with ID {destination_id} was not found.",
         )
 
-    destination.deleted_at = datetime.now(timezone.utc)
-    destination.is_published = False
+    # Check for all packages referencing this destination
+    packages = db.execute(
+        select(Package).where(Package.destination_id == destination.id)
+    ).scalars().all()
+
+    package_count = len([p for p in packages if p.deleted_at is None])
+    res = serialize_destination(destination, package_count)
+    res.is_active = False
+    res.is_published = False
+
+    # Check if any bookings exist for packages under this destination
+    booking_count = 0
+    if packages:
+        booking_count = db.execute(
+            select(func.count(Booking.id)).where(
+                Booking.package_id.in_([p.id for p in packages])
+            )
+        ).scalar_one()
+
+    from app.models.catalog import (
+        Activity,
+        DestinationImage,
+        Hotel,
+        PackageDay,
+        PackageDeparture,
+        PackageImage,
+        Review,
+    )
+
+    if booking_count == 0:
+        # Delete packages under this destination first
+        for pkg in packages:
+            db.execute(delete(Review).where(Review.package_id == pkg.id))
+            db.execute(delete(PackageDay).where(PackageDay.package_id == pkg.id))
+            db.execute(delete(PackageDeparture).where(PackageDeparture.package_id == pkg.id))
+            db.execute(delete(PackageImage).where(PackageImage.package_id == pkg.id))
+            db.delete(pkg)
+
+        db.execute(delete(DestinationImage).where(DestinationImage.destination_id == destination.id))
+        db.execute(delete(Hotel).where(Hotel.destination_id == destination.id))
+        db.execute(delete(Activity).where(Activity.destination_id == destination.id))
+        db.delete(destination)
+        action_name = "destination_deleted"
+    else:
+        destination.deleted_at = datetime.now(timezone.utc)
+        destination.is_published = False
+        action_name = "destination_deactivated"
 
     record_audit_log(
         db=db,
-        action="destination_deactivated",
+        action=action_name,
         entity_type="destination",
         entity_id=str(destination.id),
         actor_user_id=current_admin_id,
@@ -383,13 +429,6 @@ def delete_destination(
         metadata={"slug": destination.slug, "name": destination.name},
     )
     db.commit()
-    catalog_cache.invalidate(["destinations"])
+    catalog_cache.invalidate(["destinations", "packages", "home"])
 
-    package_count = db.execute(
-        select(func.count(Package.id)).where(
-            Package.destination_id == destination.id,
-            Package.deleted_at.is_(None),
-        )
-    ).scalar_one()
-
-    return serialize_destination(destination, package_count)
+    return res

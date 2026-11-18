@@ -137,6 +137,11 @@ const nextConfig: NextConfig = {
         destination: "/admin/settings?tab=whatsapp",
         permanent: false,
       },
+      {
+        source: "/admin/audit_logs",
+        destination: "/admin/audit-logs",
+        permanent: true,
+      },
     ];
   },
   async rewrites() {

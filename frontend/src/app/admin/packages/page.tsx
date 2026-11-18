@@ -329,16 +329,16 @@ export default function PackagesAdminPage() {
   };
 
   const handleDelete = async (pkg: PackageItem) => {
-    if (!window.confirm(`Are you sure you want to deactivate package "${pkg.name}"?`)) {
+    if (!window.confirm(`Are you sure you want to delete package "${pkg.name}"? This will permanently remove it.`)) {
       return;
     }
     try {
       await adminApi.deletePackage(pkg.id);
-      setSuccessMessage(`Package "${pkg.name}" deactivated.`);
+      setSuccessMessage(`Package "${pkg.name}" deleted successfully.`);
       fetchPackages();
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to deactivate package.");
+      setError((err as Error).message || "Failed to delete package.");
     }
   };
 

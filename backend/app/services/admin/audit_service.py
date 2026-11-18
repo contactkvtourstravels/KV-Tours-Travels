@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 from typing import Any
 from uuid import UUID
@@ -30,20 +31,33 @@ SENSITIVE_KEYS: frozenset[str] = frozenset(
 )
 
 
-def sanitize_metadata(data: dict[str, Any] | None) -> dict[str, Any] | None:
+def sanitize_metadata(data: Any) -> dict[str, Any] | None:
     """Remove any sensitive fields, secrets, or credential material from audit metadata."""
     if not data:
         return None
 
+    if isinstance(data, str):
+        try:
+            parsed = json.loads(data)
+            if isinstance(parsed, dict):
+                data = parsed
+            else:
+                return {"info": str(data)}
+        except Exception:
+            return {"info": str(data)}
+
+    if not isinstance(data, dict):
+        return {"info": str(data)}
+
     cleaned: dict[str, Any] = {}
     for key, value in data.items():
-        lower_key = key.lower()
+        lower_key = str(key).lower()
         if any(sensitive in lower_key for sensitive in SENSITIVE_KEYS):
-            cleaned[key] = "[REDACTED]"
+            cleaned[str(key)] = "[REDACTED]"
         elif isinstance(value, dict):
-            cleaned[key] = sanitize_metadata(value)
+            cleaned[str(key)] = sanitize_metadata(value)
         else:
-            cleaned[key] = value
+            cleaned[str(key)] = value
     return cleaned
 
 
@@ -127,7 +141,7 @@ def list_audit_logs(
                 action=log.action,
                 entity_type=log.entity_type,
                 entity_id=log.entity_id,
-                ip_address=log.ip_address,
+                ip_address=str(log.ip_address) if log.ip_address is not None else None,
                 metadata_json=sanitize_metadata(log.metadata_json),
                 created_at=log.created_at,
             )

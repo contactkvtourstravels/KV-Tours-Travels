@@ -27,6 +27,7 @@ import {
 } from "@/lib/api";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { useBranding } from "@/context/BrandingContext";
+import { FormattedText } from "@/components/public/FormattedText";
 
 export default function BookingDetailPage({
   params,
@@ -304,9 +305,10 @@ export default function BookingDetailPage({
                       </span>
                     </div>
                     {day.description && (
-                      <p className="text-xs text-[#70757A] leading-relaxed">
-                        {day.description}
-                      </p>
+                      <FormattedText
+                        content={day.description}
+                        defaultParagraphClass="text-xs text-[#70757A] leading-relaxed"
+                      />
                     )}
                     {day.activities && day.activities.length > 0 && (
                       <div className="flex flex-wrap gap-2 pt-1.5">

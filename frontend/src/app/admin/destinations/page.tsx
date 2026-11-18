@@ -603,16 +603,16 @@ export default function DestinationsAdminPage() {
   };
 
   const handleDelete = async (dest: Destination) => {
-    if (!window.confirm(`Are you sure you want to deactivate destination "${dest.name}"?`)) {
+    if (!window.confirm(`Are you sure you want to delete destination "${dest.name}"? This will permanently remove it.`)) {
       return;
     }
     try {
       await adminApi.deleteDestination(dest.id);
-      setSuccessMessage(`Destination "${dest.name}" deactivated.`);
+      setSuccessMessage(`Destination "${dest.name}" deleted successfully.`);
       fetchDestinations();
       setTimeout(() => setSuccessMessage(null), 3000);
     } catch (err: unknown) {
-      setError((err as Error).message || "Failed to deactivate destination.");
+      setError((err as Error).message || "Failed to delete destination.");
     }
   };
 

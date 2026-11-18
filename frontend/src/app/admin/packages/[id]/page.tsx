@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { FormattedText } from "@/components/public/FormattedText";
 import {
   ArrowLeft,
   Package as PackageIcon,
@@ -1942,9 +1943,11 @@ export default function PackageEditorPage() {
                         <div>
                           <h4 className="text-base font-bold text-[#202124]">{day.title}</h4>
                           {day.description && (
-                            <p className="text-xs text-[#5F6368] mt-1 max-w-2xl leading-relaxed">
-                              {day.description}
-                            </p>
+                            <FormattedText
+                              content={day.description}
+                              defaultParagraphClass="text-xs text-[#5F6368] leading-relaxed"
+                              className="mt-1 max-w-2xl"
+                            />
                           )}
                         </div>
                       </div>
@@ -2571,12 +2574,15 @@ export default function PackageEditorPage() {
                   Description
                 </label>
                 <textarea
-                  rows={3}
+                  rows={4}
                   value={formDayDesc}
                   onChange={(e) => setFormDayDesc(e.target.value)}
-                  placeholder="Detailed schedule of the day..."
+                  placeholder="Detailed schedule of the day... Supports **bold**, bullet points (* or -), paragraphs, and links."
                   className="w-full px-3 py-2 bg-[#F7F7F5] border border-[#D3D8DF] rounded-xl text-xs text-[#202124] focus:outline-none focus:border-[#C5A880]"
                 />
+                <p className="text-[11px] text-[#5F6368] mt-1 font-normal">
+                  Formatting tip: Use <strong>**bold**</strong> for highlights, separate lines with enter, and start lines with <strong>*</strong> or <strong>•</strong> for bullet lists.
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">

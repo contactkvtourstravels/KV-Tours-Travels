@@ -23,6 +23,7 @@ import { publicCatalogApi, type PublicPackageDetail } from "@/lib/api";
 import { getInitialPackageDetail } from "@/lib/initialCatalog";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
+import { FormattedText } from "@/components/public/FormattedText";
 import { PackageDetailClientActions } from "./PackageDetailClientActions";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 
@@ -279,7 +280,10 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
                 </h2>
                 <div className="text-[#70757A] text-sm sm:text-base leading-relaxed space-y-4 font-light">
                   {pkg.description ? (
-                    <p className="whitespace-pre-line">{pkg.description}</p>
+                    <FormattedText
+                      content={pkg.description}
+                      defaultParagraphClass="text-[#70757A] text-sm sm:text-base leading-relaxed font-light"
+                    />
                   ) : (
                     <p>
                       Join {agencyName} on a handcrafted {pkg.duration_days}-day luxury journey through {pkg.destination_name}. From private airport greetings and handpicked accommodations to curated excursions, every moment is planned with elegance and care.
@@ -458,9 +462,10 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
                           </h3>
 
                           {day.description && (
-                            <p className="text-[#70757A] text-xs sm:text-sm leading-relaxed font-light">
-                              {day.description}
-                            </p>
+                            <FormattedText
+                              content={day.description}
+                              defaultParagraphClass="text-[#70757A] text-xs sm:text-sm leading-relaxed font-light"
+                            />
                           )}
 
                           {/* Accommodation & Transport Notes */}

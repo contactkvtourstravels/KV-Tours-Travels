@@ -5,11 +5,12 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import desc, func, or_, select
+from sqlalchemy import delete, desc, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.cache import catalog_cache
 from app.core.errors import ApiError
-from app.models.catalog import Destination, Package
+from app.models.catalog import Destination, Package, PackageDay, PackageDeparture, PackageImage, Review
 from app.models.commerce import Booking
 from app.schemas.admin import (
     PackageCreateRequest,
@@ -459,7 +460,7 @@ def delete_package(
     current_admin_id: UUID,
     ip_address: str | None = None,
 ) -> PackageResponse:
-    """Soft-delete/deactivate a package to preserve booking and itinerary history safely."""
+    """Delete a package. If no bookings exist, hard-delete completely; otherwise soft-delete to preserve bookings."""
     package = (
         db.execute(
             select(Package)
@@ -482,13 +483,28 @@ def delete_package(
         select(func.count(Booking.id)).where(Booking.package_id == package.id)
     ).scalar_one()
 
-    # Soft-delete preserves financial history and audit trails
-    package.deleted_at = datetime.now(timezone.utc)
-    package.is_published = False
+    # Pre-serialize response before removal and mark inactive
+    package_res = serialize_package(package)
+    package_res.is_active = False
+    package_res.is_published = False
+
+    if booking_count == 0 or package.deleted_at is not None:
+        # Hard delete package days, departures, images, reviews, and package
+        db.execute(delete(Review).where(Review.package_id == package.id))
+        db.execute(delete(PackageDay).where(PackageDay.package_id == package.id))
+        db.execute(delete(PackageDeparture).where(PackageDeparture.package_id == package.id))
+        db.execute(delete(PackageImage).where(PackageImage.package_id == package.id))
+        db.delete(package)
+        action_name = "package_deleted"
+    else:
+        # Soft-delete preserves financial history and audit trails
+        package.deleted_at = datetime.now(timezone.utc)
+        package.is_published = False
+        action_name = "package_deactivated"
 
     record_audit_log(
         db=db,
-        action="package_deactivated",
+        action=action_name,
         entity_type="package",
         entity_id=str(package.id),
         actor_user_id=current_admin_id,
@@ -500,5 +516,6 @@ def delete_package(
         },
     )
     db.commit()
+    catalog_cache.invalidate(["packages", "destinations", "home"])
 
-    return get_package_by_id(db, package.id)
+    return package_res

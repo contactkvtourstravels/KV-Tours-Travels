@@ -7,6 +7,7 @@ import { publicCatalogApi, type PublicDestinationDetail, type PublicPackageListI
 import { getInitialDestinationDetail, INITIAL_PACKAGES } from "@/lib/initialCatalog";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
+import { FormattedText } from "@/components/public/FormattedText";
 import { TravelImage } from "@/components/public/TravelImage";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 
@@ -258,7 +259,10 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
                 </h2>
                 <div className="mt-6 text-[#70757A] text-sm sm:text-base leading-relaxed space-y-4 font-light">
                   {destination.description ? (
-                    <p className="whitespace-pre-line">{destination.description}</p>
+                    <FormattedText
+                      content={destination.description}
+                      defaultParagraphClass="text-[#70757A] text-sm sm:text-base leading-relaxed font-light"
+                    />
                   ) : (
                     <p>
                       Immerse yourself in {destination.name}. Whether you seek relaxation, thrilling outdoor experiences, or rich cultural exploration, our Coimbatore concierge customizes every single detail of your itinerary.

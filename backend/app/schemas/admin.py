@@ -109,17 +109,17 @@ class AdminDashboardMetricsResponse(BaseModel):
 
 
 class AuditLogResponse(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     id: UUID
-    actor_user_id: UUID | None
-    actor_email: str | None
-    actor_name: str | None
+    actor_user_id: UUID | None = None
+    actor_email: str | None = None
+    actor_name: str | None = None
     action: str
     entity_type: str
-    entity_id: str | None
-    ip_address: str | None
-    metadata_json: dict[str, Any] | None
+    entity_id: str | None = None
+    ip_address: str | None = None
+    metadata_json: dict[str, Any] | Any | None = None
     created_at: datetime
 
 

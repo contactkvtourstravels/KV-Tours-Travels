@@ -294,6 +294,7 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
 
   // Mouse drag-to-scroll handlers for PC users
   const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
     if (!carouselRef.current) return;
     isMouseDownRef.current = true;
     hasDraggedRef.current = false;
@@ -757,14 +758,14 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUpOrLeave}
                 onMouseLeave={handleMouseUpOrLeave}
-                className={`flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none pb-4 pt-1 snap-x snap-proximity overscroll-x-auto select-none touch-pan-y ${
+                className={`flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none pb-4 pt-1 snap-x snap-proximity overscroll-x-auto select-none touch-pan-x touch-pan-y ${
                   isDragging ? "cursor-grabbing" : "cursor-grab"
                 }`}
                 style={{
                   scrollbarWidth: "none",
                   msOverflowStyle: "none",
                   WebkitOverflowScrolling: "touch",
-                  touchAction: "pan-y",
+                  touchAction: "pan-x pan-y",
                 }}
               >
                 {carouselDestinations.map((dest) => (

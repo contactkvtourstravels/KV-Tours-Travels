@@ -27,7 +27,8 @@ import { CatalogErrorState } from "@/components/public/CatalogErrorState";
 const DESTINATION_FALLBACKS: Record<string, string> = {
   maldives: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1200&q=80",
   lakshadweep: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
-  kazakhstan: "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+  kazakhstan: "/images/destinations/kazakhstan.jpg",
+  almaty: "/images/destinations/kazakhstan.jpg",
   manali: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?auto=format&fit=crop&w=1200&q=80",
   default: "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=1200&q=80",
 };

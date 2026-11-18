@@ -86,6 +86,12 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
   const carouselRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const isMouseDownRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftPosRef = useRef(0);
+  const hasDraggedRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Quick Inquiry Modal state
   const [inquiryModalOpen, setInquiryModalOpen] = useState(false);
@@ -256,17 +262,23 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
     return [...featuredList, ...remainder].slice(0, 6);
   }, [packages, featuredPkgIds]);
 
-  // Carousel navigation controls
-  const handleScrollUpdate = () => {
+  // Carousel navigation and drag-to-scroll controls
+  const handleScrollUpdate = useCallback(() => {
     if (!carouselRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+    const maxScroll = scrollWidth - clientWidth;
     setCanScrollLeft(scrollLeft > 10);
-    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
-  };
+    setCanScrollRight(scrollLeft < maxScroll - 10);
+    if (maxScroll > 0) {
+      setScrollProgress((scrollLeft / maxScroll) * 100);
+    } else {
+      setScrollProgress(0);
+    }
+  }, []);
 
   const scrollCarousel = (direction: "left" | "right") => {
     if (!carouselRef.current) return;
-    const scrollAmount = 360;
+    const scrollAmount = Math.max(340, Math.floor(carouselRef.current.clientWidth * 0.7));
     carouselRef.current.scrollBy({
       left: direction === "left" ? -scrollAmount : scrollAmount,
       behavior: "smooth",
@@ -279,6 +291,68 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
       carouselRef.current.scrollTo({ left: 0, behavior: "smooth" });
     }
   };
+
+  // Mouse drag-to-scroll handlers for PC users
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!carouselRef.current) return;
+    isMouseDownRef.current = true;
+    hasDraggedRef.current = false;
+    startXRef.current = e.pageX - carouselRef.current.offsetLeft;
+    scrollLeftPosRef.current = carouselRef.current.scrollLeft;
+    setIsDragging(true);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isMouseDownRef.current || !carouselRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - carouselRef.current.offsetLeft;
+    const walk = (x - startXRef.current) * 1.5;
+    if (Math.abs(walk) > 5) {
+      hasDraggedRef.current = true;
+    }
+    carouselRef.current.scrollLeft = scrollLeftPosRef.current - walk;
+    handleScrollUpdate();
+  };
+
+  const handleMouseUpOrLeave = () => {
+    if (isMouseDownRef.current) {
+      isMouseDownRef.current = false;
+      setIsDragging(false);
+    }
+  };
+
+  // Synchronize scroll state, bounds, and desktop wheel event listener
+  useEffect(() => {
+    handleScrollUpdate();
+    const handleResize = () => handleScrollUpdate();
+    window.addEventListener("resize", handleResize);
+
+    const el = carouselRef.current;
+    if (!el) return () => window.removeEventListener("resize", handleResize);
+
+    const onWheelEvent = (e: WheelEvent) => {
+      // If user is already scrolling horizontally (e.g. trackpad), let native scroll handle it
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY) || e.shiftKey) return;
+      const { scrollLeft, scrollWidth, clientWidth } = el;
+      const maxScroll = scrollWidth - clientWidth;
+      if (maxScroll <= 5) return;
+
+      const isScrollingDownOrRight = e.deltaY > 0;
+      const canScrollFurther = isScrollingDownOrRight ? scrollLeft < maxScroll - 5 : scrollLeft > 5;
+
+      if (canScrollFurther) {
+        e.preventDefault();
+        el.scrollLeft += e.deltaY * 1.2;
+        handleScrollUpdate();
+      }
+    };
+
+    el.addEventListener("wheel", onWheelEvent, { passive: false });
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      el.removeEventListener("wheel", onWheelEvent);
+    };
+  }, [destFilter, carouselDestinations, handleScrollUpdate]);
 
   const showTrendingDestinations = pageContent?.sections_visibility?.trending_destinations ?? true;
   const bestOffersEnabled =
@@ -649,73 +723,128 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
               </Link>
             </div>
           ) : (
-            <div
-              ref={carouselRef}
-              onScroll={handleScrollUpdate}
-              className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none scroll-smooth pb-4 pt-1 snap-x snap-proximity sm:snap-mandatory overscroll-contain sm:overscroll-x-contain touch-pan-y"
-              style={{
-                scrollbarWidth: "none",
-                msOverflowStyle: "none",
-                WebkitOverflowScrolling: "touch",
-                touchAction: "pan-y",
-              }}
-            >
-              {carouselDestinations.map((dest) => (
-                <Link
-                  key={dest.id}
-                  href={`/destinations/${dest.slug}`}
-                  className="group relative w-[78vw] max-w-[310px] sm:w-[330px] md:w-[350px] aspect-[3/4] sm:aspect-auto sm:h-[490px] rounded-3xl shrink-0 overflow-hidden border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-between p-5 sm:p-6 shadow-sm hover:shadow-2xl bg-[#202124] snap-start cursor-pointer"
-                >
-                  {/* Destination Cover Image */}
-                  <TravelImage
-                    src={getDestinationImg(dest)}
-                    alt={dest.name}
-                    fill
-                    fallbackSlug={dest.slug}
-                    sizes="(max-width: 768px) 290px, (max-width: 1200px) 330px, 350px"
-                    className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
-                  />
-                  {/* Subtle Dark Vignette Overlay for Readable Contrast */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/20 group-hover:from-black/95 transition-colors duration-500" />
+            <div className="relative group/carousel">
+              {/* Floating Prev Button for Desktop/Tablet */}
+              <button
+                type="button"
+                onClick={() => scrollCarousel("left")}
+                disabled={!canScrollLeft}
+                aria-label="Previous destination"
+                className={`hidden md:flex absolute -left-3 lg:-left-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 lg:w-12 lg:h-12 rounded-full border border-[#E5E7EB] bg-white/95 backdrop-blur-md shadow-xl text-[#202124] items-center justify-center transition-all duration-300 hover:border-[#DFBA73] hover:scale-105 active:scale-95 ${
+                  canScrollLeft ? "opacity-100 hover:bg-[#F7F7F5]" : "opacity-0 pointer-events-none"
+                }`}
+              >
+                <ChevronLeft className="w-5 h-5 lg:w-6 lg:h-6 text-[#202124]" />
+              </button>
 
-                  {/* Top Badges */}
-                  <div className="relative z-10 flex items-center justify-between">
-                    <span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white/95 text-[11px] uppercase tracking-wider font-semibold">
-                      {dest.country}
-                    </span>
-                    {dest.package_count > 0 && (
-                      <span className="px-2.5 py-1 rounded-full bg-[#DFBA73]/90 text-[#1B1E22] text-[10px] uppercase tracking-wider font-bold">
-                        {dest.package_count} {dest.package_count === 1 ? "Trip" : "Trips"}
-                      </span>
-                    )}
-                  </div>
+              {/* Floating Next Button for Desktop/Tablet */}
+              <button
+                type="button"
+                onClick={() => scrollCarousel("right")}
+                disabled={!canScrollRight}
+                aria-label="Next destination"
+                className={`hidden md:flex absolute -right-3 lg:-right-5 top-1/2 -translate-y-1/2 z-20 w-11 h-11 lg:w-12 lg:h-12 rounded-full border border-[#E5E7EB] bg-white/95 backdrop-blur-md shadow-xl text-[#202124] items-center justify-center transition-all duration-300 hover:border-[#DFBA73] hover:scale-105 active:scale-95 ${
+                  canScrollRight ? "opacity-100 hover:bg-[#F7F7F5]" : "opacity-0 pointer-events-none"
+                }`}
+              >
+                <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6 text-[#202124]" />
+              </button>
 
-                  {/* Bottom Content Info */}
-                  <div className="relative z-10">
-                    {dest.region && (
-                      <span className="text-[11px] uppercase tracking-widest text-[#DFBA73] font-semibold block mb-1">
-                        {dest.region}
-                      </span>
-                    )}
-                    <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white group-hover:text-[#F3E8D6] transition-colors leading-tight">
-                      {dest.name}
-                    </h3>
-                    {dest.short_description && (
-                      <p className="text-white/80 text-xs mt-2 line-clamp-2 font-light leading-relaxed">
-                        {dest.short_description}
-                      </p>
-                    )}
+              <div
+                ref={carouselRef}
+                onScroll={handleScrollUpdate}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUpOrLeave}
+                onMouseLeave={handleMouseUpOrLeave}
+                className={`flex gap-4 sm:gap-6 overflow-x-auto scrollbar-none pb-4 pt-1 snap-x snap-proximity overscroll-x-auto select-none touch-pan-y ${
+                  isDragging ? "cursor-grabbing" : "cursor-grab"
+                }`}
+                style={{
+                  scrollbarWidth: "none",
+                  msOverflowStyle: "none",
+                  WebkitOverflowScrolling: "touch",
+                  touchAction: "pan-y",
+                }}
+              >
+                {carouselDestinations.map((dest) => (
+                  <Link
+                    key={dest.id}
+                    href={`/destinations/${dest.slug}`}
+                    draggable={false}
+                    onClick={(e) => {
+                      if (hasDraggedRef.current) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }
+                    }}
+                    className="group relative w-[78vw] max-w-[310px] sm:w-[330px] md:w-[350px] aspect-[3/4] sm:aspect-auto sm:h-[490px] rounded-3xl shrink-0 overflow-hidden border border-[#E5E7EB] hover:border-[#C5A880]/70 transition-all duration-500 flex flex-col justify-between p-5 sm:p-6 shadow-sm hover:shadow-2xl bg-[#202124] snap-start"
+                  >
+                    {/* Destination Cover Image */}
+                    <TravelImage
+                      src={getDestinationImg(dest)}
+                      alt={dest.name}
+                      fill
+                      fallbackSlug={dest.slug}
+                      draggable={false}
+                      sizes="(max-width: 768px) 290px, (max-width: 1200px) 330px, 350px"
+                      className="object-cover object-center group-hover:scale-105 transition-transform duration-700 pointer-events-none"
+                    />
+                    {/* Subtle Dark Vignette Overlay for Readable Contrast */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-black/20 group-hover:from-black/95 transition-colors duration-500 pointer-events-none" />
 
-                    {/* Interactive Action Bar */}
-                    <div className="mt-5 pt-3.5 border-t border-white/15 flex items-center justify-between text-xs text-[#DFBA73] font-semibold">
-                      <span>View Itineraries</span>
-                      <span className="w-8 h-8 rounded-full bg-white/10 group-hover:bg-[#DFBA73] text-white group-hover:text-[#1B1E22] flex items-center justify-center transition-all group-hover:translate-x-1">
-                        <ArrowRight className="w-4 h-4" />
+                    {/* Top Badges */}
+                    <div className="relative z-10 flex items-center justify-between">
+                      <span className="px-3 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/20 text-white/95 text-[11px] uppercase tracking-wider font-semibold">
+                        {dest.country}
                       </span>
+                      {dest.package_count > 0 && (
+                        <span className="px-2.5 py-1 rounded-full bg-[#DFBA73]/90 text-[#1B1E22] text-[10px] uppercase tracking-wider font-bold">
+                          {dest.package_count} {dest.package_count === 1 ? "Trip" : "Trips"}
+                        </span>
+                      )}
                     </div>
-                  </div>
-                </Link>
-              ))}
+
+                    {/* Bottom Content Info */}
+                    <div className="relative z-10">
+                      {dest.region && (
+                        <span className="text-[11px] uppercase tracking-widest text-[#DFBA73] font-semibold block mb-1">
+                          {dest.region}
+                        </span>
+                      )}
+                      <h3 className="text-2xl sm:text-3xl font-serif font-bold text-white group-hover:text-[#F3E8D6] transition-colors leading-tight">
+                        {dest.name}
+                      </h3>
+                      {dest.short_description && (
+                        <p className="text-white/80 text-xs mt-2 line-clamp-2 font-light leading-relaxed">
+                          {dest.short_description}
+                        </p>
+                      )}
+
+                      {/* Interactive Action Bar */}
+                      <div className="mt-5 pt-3.5 border-t border-white/15 flex items-center justify-between text-xs text-[#DFBA73] font-semibold">
+                        <span>View Itineraries</span>
+                        <span className="w-8 h-8 rounded-full bg-white/10 group-hover:bg-[#DFBA73] text-white group-hover:text-[#1B1E22] flex items-center justify-center transition-all group-hover:translate-x-1">
+                          <ArrowRight className="w-4 h-4" />
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              {/* Visual Scroll Track for Desktop/Tablet */}
+              <div className="hidden sm:flex items-center justify-center gap-3 mt-4">
+                <div className="w-48 h-1 bg-[#E5E7EB] rounded-full overflow-hidden relative">
+                  <div
+                    className="h-full bg-[#DFBA73] rounded-full transition-all duration-150"
+                    style={{
+                      width: "25%",
+                      transform: `translateX(${Math.min(300, scrollProgress * 3)}%)`,
+                    }}
+                  />
+                </div>
+              </div>
             </div>
           )}
 

@@ -146,7 +146,7 @@ DESTINATIONS_DATA = [
         "travel_type": "International Winter Wonderland",
         "short_description": "Spectacular snowbound Tian Shan peaks, Shymbulak ski slopes, Kok Tobe lights, and dramatic Charyn Canyon.",
         "description": "Almaty combines Central Asian culture with alpine winter majesty. Experience cable car rides to high mountain passes, frozen waterfalls, the dramatic red rock formations of Charyn Canyon (Central Asia's Grand Canyon), geothermal hot springs, and fairy-tale festive street illumination.",
-        "cover_image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "/images/destinations/kazakhstan.jpg",
         "highlights_json": ["Shymbulak Mountain Resort", "Charyn Canyon Valley of Castles", "Kok Tobe Panoramic View", "Alma Arasan Hot Springs"],
         "travel_guide_json": {"best_time_to_visit": "December to February for Winter Snow", "ideal_duration": "6 Days"},
     },
@@ -742,7 +742,7 @@ PACKAGES_DATA = [
         "b2b_price": Decimal("50219.00"),
         "min_pack": 4,
         "max_pack": 12,
-        "cover_image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+        "cover_image_url": "/images/packages/kazakhstan.jpg",
         "short_description": "Christmas & New Year under snowy Tian Shan skies: Kok Tobe, Shymbulak ski heights, Alma Arasan hot springs, and Charyn Canyon.",
         "description": (
             "Where Snow Meets the Soul: A holiday journey beyond the ordinary script. Spend 6 days immersed in Kazakhstan's snow-framed mountains, glowing festive winter streets, high-altitude cable cars at Shymbulak (3,200 m), geothermal hot springs in Alma Arasan gorge, and the red rock Valley of Castles at Charyn Canyon.\n\n"

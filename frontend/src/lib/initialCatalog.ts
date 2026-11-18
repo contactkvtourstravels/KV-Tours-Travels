@@ -42,11 +42,11 @@ export const INITIAL_DESTINATIONS: PublicDestinationListItem[] = [
     "state_or_city": null,
     "category": "Offbeat Vacation",
     "travel_type": "International Winter Wonderland",
-    "cover_image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+    "cover_image_url": "/images/destinations/kazakhstan.jpg",
     "display_order": 0,
     "short_description": "Spectacular snowbound Tian Shan peaks, Shymbulak ski slopes, Kok Tobe lights, and dramatic Charyn Canyon.",
     "featured_image": {
-      "image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+      "image_url": "/images/destinations/kazakhstan.jpg",
       "alt_text": "Almaty & Tian Shan scenic landscape",
       "is_featured": true,
       "sort_order": 0
@@ -330,7 +330,7 @@ export const INITIAL_PACKAGES: PublicPackageListItem[] = [
     "destination_slug": "almaty-kazakhstan",
     "category": "Offbeat vacation",
     "travel_type": "International Winter Expedition",
-    "cover_image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+    "cover_image_url": "/images/destinations/kazakhstan.jpg",
     "base_price": 55799.0,
     "currency": "INR",
     "duration_days": 6,
@@ -338,7 +338,7 @@ export const INITIAL_PACKAGES: PublicPackageListItem[] = [
     "minimum_travellers": 4,
     "maximum_travellers": 12,
     "featured_image": {
-      "image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+      "image_url": "/images/destinations/kazakhstan.jpg",
       "alt_text": "Kazakstan : Winter Edition tour package",
       "is_featured": true,
       "sort_order": 0
@@ -836,7 +836,7 @@ export const INITIAL_DEPARTURES: PublicDepartureListItem[] = [
     "destination_name": "Almaty & Tian Shan",
     "destination_slug": "almaty-kazakhstan",
     "featured_image": {
-      "image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+      "image_url": "/images/destinations/kazakhstan.jpg",
       "alt_text": "Kazakstan : Winter Edition tour package",
       "is_featured": true,
       "sort_order": 0
@@ -1141,7 +1141,7 @@ export const INITIAL_DESTINATION_DETAILS: Record<string, PublicDestinationDetail
     "state_or_city": null,
     "category": "Offbeat Vacation",
     "travel_type": "International Winter Wonderland",
-    "cover_image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+    "cover_image_url": "/images/destinations/kazakhstan.jpg",
     "short_description": "Spectacular snowbound Tian Shan peaks, Shymbulak ski slopes, Kok Tobe lights, and dramatic Charyn Canyon.",
     "description": "Almaty combines Central Asian culture with alpine winter majesty. Experience cable car rides to high mountain passes, frozen waterfalls, the dramatic red rock formations of Charyn Canyon (Central Asia's Grand Canyon), geothermal hot springs, and fairy-tale festive street illumination.",
     "highlights": [
@@ -1169,7 +1169,7 @@ export const INITIAL_DESTINATION_DETAILS: Record<string, PublicDestinationDetail
     "faqs": [],
     "images": [
       {
-        "image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+        "image_url": "/images/destinations/kazakhstan.jpg",
         "alt_text": "Almaty & Tian Shan scenic landscape",
         "is_featured": true,
         "sort_order": 0
@@ -1874,7 +1874,7 @@ export const INITIAL_PACKAGE_DETAILS: Record<string, PublicPackageDetail> = {
     "travel_type": "International Winter Expedition",
     "difficulty_level": "Easy to Moderate",
     "departure_location": "Almaty International Airport (ALA)",
-    "cover_image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+    "cover_image_url": "/images/destinations/kazakhstan.jpg",
     "inclusions": [
       "5 Nights 4\u2605 Hotel Accommodation in Central Almaty",
       "Round-trip Airport Transfers (Almaty International Airport)",
@@ -1906,7 +1906,7 @@ export const INITIAL_PACKAGE_DETAILS: Record<string, PublicPackageDetail> = {
     "seo_description": null,
     "images": [
       {
-        "image_url": "https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?auto=format&fit=crop&w=1200&q=80",
+        "image_url": "/images/destinations/kazakhstan.jpg",
         "alt_text": "Kazakstan : Winter Edition tour package",
         "is_featured": true,
         "sort_order": 0

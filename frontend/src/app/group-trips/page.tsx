@@ -8,7 +8,9 @@ import {
 import { GroupTripsClient } from "./GroupTripsClient";
 import { PublicLayout } from "@/components/public/PublicLayout";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -21,15 +23,17 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function GroupTripsPage() {
   let departures: PublicDepartureListItem[] = [];
   let content: GroupTripsPageContent | null = null;
+  let serverError = false;
 
   try {
     const [deps, contentRes] = await Promise.all([
       publicCatalogApi.getAllDepartures(),
       publicCatalogApi.getPageContent<GroupTripsPageContent>("group-trips", false).catch(() => null),
     ]);
-    departures = deps;
+    departures = Array.isArray(deps) ? deps : [];
     content = contentRes?.content || null;
   } catch (err) {
+    serverError = true;
     console.warn("Could not pre-fetch departures during SSR:", err);
   }
 
@@ -46,6 +50,7 @@ export default async function GroupTripsPage() {
       <GroupTripsClient
         initialDepartures={departures}
         initialContent={content}
+        initialError={serverError}
       />
     </Suspense>
   );

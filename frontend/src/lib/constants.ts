@@ -5,15 +5,17 @@
 
 export const AGENCY_NAME = process.env.NEXT_PUBLIC_AGENCY_NAME || "KV Tours & Travels";
 export const AGENCY_SHORT_NAME = process.env.NEXT_PUBLIC_AGENCY_SHORT_NAME || "KV Tours";
-export const AGENCY_LOCATION = process.env.NEXT_PUBLIC_AGENCY_LOCATION || "India";
-export const AGENCY_OFFICE_ADDRESS = process.env.NEXT_PUBLIC_AGENCY_OFFICE_ADDRESS || "Headquarters, India";
+export const AGENCY_LOCATION = process.env.NEXT_PUBLIC_AGENCY_LOCATION || "Coimbatore, Tamil Nadu, India";
+export const AGENCY_OFFICE_ADDRESS =
+  process.env.NEXT_PUBLIC_AGENCY_OFFICE_ADDRESS ||
+  "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012";
 
 export const DEFAULT_CONTACT_EMAIL =
   process.env.NEXT_PUBLIC_CONTACT_EMAIL || "contact.kvtourstravels@gmail.com";
 export const DEFAULT_BUSINESS_PHONE =
-  process.env.NEXT_PUBLIC_BUSINESS_PHONE || "+91 94420 00000";
+  process.env.NEXT_PUBLIC_BUSINESS_PHONE || "";
 export const DEFAULT_WHATSAPP_NUMBER =
-  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+919442000000";
+  process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "";
 
 /**
  * Safely normalizes phone number to E.164 digits without leading '+'.
@@ -51,17 +53,22 @@ export function normalizeWhatsAppNumber(
 
 /**
  * Returns digits-only telephone string suitable for WhatsApp wa.me links.
+ * Returns empty string if no valid number or if placeholder dummy digits are detected.
  */
 export function getCleanWhatsAppNumber(
   rawPhone?: string | null,
   rawCountryCode: string = "+91"
 ): string {
   const normalized = normalizeWhatsAppNumber(rawPhone, rawCountryCode);
-  return normalized || "919442000000";
+  if (!normalized || normalized.includes("9442000000") || /^0+$/.test(normalized)) {
+    return "";
+  }
+  return normalized;
 }
 
 /**
  * Constructs a click-to-chat WhatsApp URL with optional message and country code.
+ * Returns empty string if no valid phone number is configured.
  */
 export function getWhatsAppClickToChatUrl(
   phone?: string | null,
@@ -69,6 +76,7 @@ export function getWhatsAppClickToChatUrl(
   countryCode: string = "+91"
 ): string {
   const clean = getCleanWhatsAppNumber(phone, countryCode);
+  if (!clean) return "";
   const encodedMsg = message ? encodeURIComponent(message) : "";
   return `https://wa.me/${clean}${encodedMsg ? `?text=${encodedMsg}` : ""}`;
 }

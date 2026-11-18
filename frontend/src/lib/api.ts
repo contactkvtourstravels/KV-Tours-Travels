@@ -1547,7 +1547,7 @@ export function clearClientCatalogCache(): void {
   if (typeof window !== "undefined") {
     try {
       Object.keys(sessionStorage).forEach((key) => {
-        if (key.startsWith("kv_catalog_")) {
+        if (key.startsWith("kv_catalog_") || key.startsWith("kv_live_")) {
           sessionStorage.removeItem(key);
         }
       });

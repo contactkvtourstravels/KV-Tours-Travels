@@ -1422,7 +1422,7 @@ export default function AgencyProfileSection({
                   value={contactPhone}
                   onChange={(e) => setContactPhone(e.target.value)}
                   disabled={!canEdit}
-                  placeholder="+91 94420 00000"
+                  placeholder="+91 98765 43210"
                   className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-[#202124] focus:outline-none focus:ring-2 focus:ring-[#24292F] ${
                     errors.contactPhone ? "border-red-500 bg-red-50/20" : "border-[#D3D8DF] bg-white"
                   }`}
@@ -1452,7 +1452,7 @@ export default function AgencyProfileSection({
                   value={supportWhatsapp}
                   onChange={(e) => setSupportWhatsapp(e.target.value)}
                   disabled={!canEdit}
-                  placeholder="+91 94420 00000"
+                  placeholder="+91 98765 43210"
                   className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-[#202124] focus:outline-none focus:ring-2 focus:ring-[#24292F] ${
                     errors.supportWhatsapp ? "border-red-500 bg-red-50/20" : "border-[#D3D8DF] bg-white"
                   }`}
@@ -1469,7 +1469,7 @@ export default function AgencyProfileSection({
                   value={emergencyPhone}
                   onChange={(e) => setEmergencyPhone(e.target.value)}
                   disabled={!canEdit}
-                  placeholder="+91 94420 99999"
+                  placeholder="+91 98765 99999"
                   className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-[#202124] focus:outline-none focus:ring-2 focus:ring-[#24292F] ${
                     errors.emergencyPhone ? "border-red-500 bg-red-50/20" : "border-[#D3D8DF] bg-white"
                   }`}
@@ -2105,7 +2105,7 @@ export default function AgencyProfileSection({
                   </p>
                   <p className="flex items-center gap-2">
                     <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: brandSecondaryColor }} />
-                    <span>{contactPhone || "+91 94420 00000"} {secondaryPhone ? `• ${secondaryPhone}` : ""}</span>
+                    <span>{contactPhone || "Not configured"} {secondaryPhone ? `• ${secondaryPhone}` : ""}</span>
                   </p>
                   <p className="flex items-center gap-2">
                     <Mail className="w-3.5 h-3.5 shrink-0" style={{ color: brandSecondaryColor }} />

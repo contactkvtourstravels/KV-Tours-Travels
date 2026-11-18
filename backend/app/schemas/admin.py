@@ -878,7 +878,7 @@ class AdminSiteSettingsResponse(BaseModel):
     currency: str = "INR"
 
     # Contact Details
-    contact_phone: str = "+91 94420 00000"
+    contact_phone: str = ""
     secondary_phone: str | None = None
     support_whatsapp: str | None = None
     emergency_phone: str | None = None
@@ -902,7 +902,7 @@ class AdminSiteSettingsResponse(BaseModel):
     office_contact_instructions: str | None = None
 
     # WhatsApp Click-to-Chat
-    whatsapp_number: str = "+919442000000"
+    whatsapp_number: str = ""
     whatsapp_country_code: str = "+91"
     whatsapp_prefilled_message: str = "Hi KV Tours & Travels, I am interested in planning a trip."
     whatsapp_package_message: str = "Hi KV Tours & Travels, I am interested in this package."

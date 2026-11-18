@@ -4,11 +4,11 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Clock, Compass, MapPin, MessageCircle, Users } from "lucide-react";
 import { publicCatalogApi, type PublicDestinationDetail, type PublicPackageListItem } from "@/lib/api";
-import { getInitialDestinationDetail, INITIAL_PACKAGES } from "@/lib/initialCatalog";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { FormattedText } from "@/components/public/FormattedText";
 import { TravelImage } from "@/components/public/TravelImage";
+import { CatalogErrorState } from "@/components/public/CatalogErrorState";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 
 export const dynamic = "force-dynamic";
@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
   const slug = decodeURIComponent(rawSlug).trim().toLowerCase().replace(/\s+/g, "-");
   try {
     const [dest, settings] = await Promise.all([
-      publicCatalogApi.getDestination(slug).catch(() => publicCatalogApi.getDestination(rawSlug).catch(() => getInitialDestinationDetail(slug))),
+      publicCatalogApi.getDestination(slug).catch(() => (rawSlug !== slug ? publicCatalogApi.getDestination(rawSlug).catch(() => null) : null)),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
     if (!dest) {
@@ -66,43 +66,53 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
 export default async function DestinationDetailPage({ params }: DestinationPageProps) {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug).trim().toLowerCase().replace(/\s+/g, "-");
-  let destination: PublicDestinationDetail;
+  let destination: PublicDestinationDetail | null = null;
   let packages: PublicPackageListItem[] = [];
   let agencyName = "KV Tours & Travels";
-  let whatsappNumber: string | undefined = "+919442000000";
+  let whatsappNumber: string | undefined = undefined;
   let whatsappCountryCode = "+91";
   let agencyCity = "Coimbatore";
   let whatsappEnabled = true;
   let waUrl = "";
+  let fetchError = false;
+  let is404 = false;
 
   try {
     const [destData, packagesData, settingsData] = await Promise.all([
-      publicCatalogApi.getDestination(slug).catch(() => publicCatalogApi.getDestination(rawSlug).catch(() => getInitialDestinationDetail(slug))),
-      publicCatalogApi.getPackages({ destination_slug: slug }).catch(() =>
-        INITIAL_PACKAGES.filter((p) => p.destination_slug === slug || p.destination_slug === rawSlug)
-      ),
+      publicCatalogApi.getDestination(slug).catch(async (err: any) => {
+        if (err?.status === 404) {
+          if (rawSlug !== slug) {
+            try {
+              return await publicCatalogApi.getDestination(rawSlug);
+            } catch (rawErr: any) {
+              if (rawErr?.status === 404) is404 = true;
+              throw rawErr;
+            }
+          }
+          is404 = true;
+          return null;
+        }
+        throw err;
+      }),
+      publicCatalogApi.getPackages({ destination_slug: slug }).catch(() => []),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
 
     if (!destData) {
-      const fallback = getInitialDestinationDetail(slug);
-      if (!fallback) notFound();
-      destination = fallback;
+      if (is404) notFound();
+      fetchError = true;
     } else {
       destination = destData;
+      packages = Array.isArray(packagesData) ? packagesData : [];
     }
 
-    packages = packagesData && packagesData.length > 0
-      ? packagesData
-      : INITIAL_PACKAGES.filter((p) => p.destination_slug === slug);
-
     agencyName = settingsData?.public_display_name || settingsData?.agency_name || "KV Tours & Travels";
-    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || "+919442000000";
+    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || undefined;
     whatsappCountryCode = settingsData?.whatsapp_country_code || "+91";
     agencyCity = settingsData?.city || "Coimbatore";
     whatsappEnabled = settingsData?.whatsapp_enabled !== false;
 
-    waUrl = whatsappEnabled
+    waUrl = whatsappEnabled && destination
       ? getWhatsAppClickToChatUrl(
           whatsappNumber,
           settingsData?.whatsapp_destination_message?.replace("{destination_name}", destination.name) ||
@@ -110,15 +120,24 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
           whatsappCountryCode
         )
       : "";
-  } catch {
-    const fallback = getInitialDestinationDetail(slug);
-    if (!fallback) notFound();
-    destination = fallback;
-    packages = INITIAL_PACKAGES.filter((p) => p.destination_slug === slug);
-    waUrl = getWhatsAppClickToChatUrl(
-      whatsappNumber,
-      `Hi ${agencyName}, I am interested in traveling to ${destination.name}. Please share customized package options.`,
-      whatsappCountryCode
+  } catch (err: any) {
+    if (is404 || err?.status === 404) {
+      notFound();
+    }
+    fetchError = true;
+  }
+
+  if (fetchError || !destination) {
+    return (
+      <PublicLayout>
+        <div className="min-h-[70vh] flex items-center justify-center px-4 py-20 bg-[#F7F7F5]">
+          <CatalogErrorState
+            title="Unable to Load Destination Details"
+            message="We could not connect to the live catalog database to retrieve this destination guide. Please verify your connection or reload."
+            retryLabel="Reload Destination"
+          />
+        </div>
+      </PublicLayout>
     );
   }
 

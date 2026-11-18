@@ -66,10 +66,10 @@ class Settings(BaseSettings):
 
     # Public Agency & WhatsApp Configuration
     agency_name: str = "KV Tours & Travels"
-    agency_location: str = "Headquarters, India"
-    whatsapp_number: str = "+919442000000"
+    agency_location: str = "Coimbatore, Tamil Nadu, India"
+    whatsapp_number: str = ""
     contact_email: str = "contact.kvtourstravels@gmail.com"
-    contact_phone: str = "+91 94420 00000"
+    contact_phone: str = ""
 
     # Razorpay Payment Gateway Settings (Test / Sandbox defaults)
     razorpay_key_id: str = "rzp_test_placeholder_key"

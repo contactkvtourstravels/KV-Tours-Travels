@@ -8,7 +8,9 @@ import {
 } from "@/lib/api";
 import { PackagesClient } from "./PackagesClient";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -22,6 +24,7 @@ export default async function PackagesPage() {
   let packages: PublicPackageListItem[] = [];
   let destinations: PublicDestinationListItem[] = [];
   let content: PackagesPageContent | null = null;
+  let serverError = false;
 
   try {
     const [pkgs, dests, contentRes] = await Promise.all([
@@ -29,10 +32,11 @@ export default async function PackagesPage() {
       publicCatalogApi.getDestinations(undefined),
       publicCatalogApi.getPageContent<PackagesPageContent>("packages", false).catch(() => null),
     ]);
-    packages = pkgs;
-    destinations = dests;
+    packages = Array.isArray(pkgs) ? pkgs : [];
+    destinations = Array.isArray(dests) ? dests : [];
     content = contentRes?.content || null;
   } catch (err) {
+    serverError = true;
     console.warn("Could not pre-fetch packages during SSR:", err);
   }
 
@@ -42,6 +46,7 @@ export default async function PackagesPage() {
         initialPackages={packages}
         initialDestinations={destinations}
         initialContent={content}
+        initialError={serverError}
       />
     </Suspense>
   );

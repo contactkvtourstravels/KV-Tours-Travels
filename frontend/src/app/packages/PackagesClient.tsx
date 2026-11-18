@@ -11,14 +11,11 @@ import {
   type PublicPackageListItem,
   type PackagesPageContent,
 } from "@/lib/api";
-import {
-  INITIAL_PACKAGES,
-  INITIAL_DESTINATIONS,
-} from "@/lib/initialCatalog";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { QuickInquiryModal } from "@/components/public/QuickInquiryModal";
 import { TravelImage } from "@/components/public/TravelImage";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
+import { CatalogErrorState } from "@/components/public/CatalogErrorState";
 
 const ITEMS_PER_PAGE = 12;
 
@@ -26,19 +23,20 @@ export interface PackagesClientProps {
   initialPackages?: PublicPackageListItem[];
   initialDestinations?: PublicDestinationListItem[];
   initialContent?: PackagesPageContent | null;
+  initialError?: boolean;
 }
 
 export function PackagesClient({
   initialPackages,
   initialDestinations,
   initialContent,
+  initialError = false,
 }: PackagesClientProps) {
   const searchParams = useSearchParams();
   const isPreview = searchParams.get("preview") === "true";
 
   const hasServerData = Boolean(initialPackages?.length);
 
-  // Pre-hydrated with live database catalog for instant 0ms first paint
   const [packages, setPackages] = useState<PublicPackageListItem[]>(
     initialPackages?.length ? initialPackages : []
   );
@@ -48,7 +46,10 @@ export function PackagesClient({
   const [pageContent, setPageContent] = useState<PackagesPageContent | null>(
     initialContent || null
   );
-  const [loading, setLoading] = useState(!hasServerData);
+  const [loading, setLoading] = useState(!hasServerData && !initialError);
+  const [error, setError] = useState<string | null>(
+    initialError ? "Unable to connect to live package catalog. Please check your connection or retry." : null
+  );
 
   // Filters
   const [classificationTab, setClassificationTab] = useState<"all" | "domestic" | "international">("all");
@@ -61,28 +62,31 @@ export function PackagesClient({
   const [inquiryModalOpen, setInquiryModalOpen] = useState(false);
   const [selectedPkg, setSelectedPkg] = useState<{ id: string; name: string } | null>(null);
 
-  useEffect(() => {
-    if (initialPackages?.length && !isPreview) {
-      return;
-    }
-
-    async function loadCatalog() {
-      try {
-        const [pkgs, dests, contentRes] = await Promise.all([
-          publicCatalogApi.getPackages(),
-          publicCatalogApi.getDestinations(),
-          publicCatalogApi.getPageContent<PackagesPageContent>("packages", isPreview).catch(() => null),
-        ]);
-        if (Array.isArray(pkgs) && pkgs.length > 0) setPackages(pkgs);
-        if (Array.isArray(dests) && dests.length > 0) setDestinations(dests);
-        if (contentRes?.content) {
-          setPageContent(contentRes.content);
-        }
-      } catch {
-        // Handled silently
-      } finally {
-        setLoading(false);
+  const loadCatalog = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [pkgs, dests, contentRes] = await Promise.all([
+        publicCatalogApi.getPackages(),
+        publicCatalogApi.getDestinations(),
+        publicCatalogApi.getPageContent<PackagesPageContent>("packages", isPreview).catch(() => null),
+      ]);
+      setPackages(Array.isArray(pkgs) ? pkgs : []);
+      setDestinations(Array.isArray(dests) ? dests : []);
+      if (contentRes?.content) {
+        setPageContent(contentRes.content);
       }
+    } catch (err) {
+      console.error("Failed to load packages:", err);
+      setError("Unable to load travel packages right now. Please check your connection and retry.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (initialPackages?.length && !initialError && !isPreview) {
+      return;
     }
     loadCatalog();
   }, [isPreview]);
@@ -327,6 +331,13 @@ export function PackagesClient({
                 <div key={i} className="h-[460px] rounded-3xl bg-[#F3F4F4] animate-pulse border border-[#E4E5E7]" />
               ))}
             </div>
+          ) : error ? (
+            <CatalogErrorState
+              title="Unable to Load Packages"
+              message={error}
+              onRetry={loadCatalog}
+              retryLabel="Retry Packages"
+            />
           ) : filteredPackages.length === 0 ? (
             <div className="text-center py-20 px-4 rounded-3xl border border-[#E4E5E7] bg-[#F7F7F5]">
               <Compass className="w-12 h-12 text-[#5F6368]/50 mx-auto mb-3" />

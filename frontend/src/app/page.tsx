@@ -4,12 +4,14 @@ import { publicCatalogApi, type PublicHomeFeed } from "@/lib/api";
 import { HomeClient } from "./HomeClient";
 import { PublicLayout } from "@/components/public/PublicLayout";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const feed = await publicCatalogApi.getHomeFeed(false, {
-      next: { tags: ["catalog", "home_feed"], revalidate: 60 },
+      cache: "no-store",
     });
     const title =
       feed?.content?.seo_title ||
@@ -39,11 +41,14 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   let homeFeed: PublicHomeFeed | null = null;
+  let serverError = false;
+
   try {
     homeFeed = await publicCatalogApi.getHomeFeed(false, {
-      next: { tags: ["catalog", "home_feed"], revalidate: 60 },
+      cache: "no-store",
     });
   } catch (err) {
+    serverError = true;
     console.warn("Could not pre-fetch home-feed during server render, will hydrate on client:", err);
   }
 
@@ -57,7 +62,7 @@ export default async function HomePage() {
         </PublicLayout>
       }
     >
-      <HomeClient initialFeed={homeFeed} />
+      <HomeClient initialFeed={homeFeed} initialError={serverError} />
     </Suspense>
   );
 }

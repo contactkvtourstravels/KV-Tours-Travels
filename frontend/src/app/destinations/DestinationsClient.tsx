@@ -10,22 +10,24 @@ import {
   type PublicDestinationListItem,
   type DestinationsPageContent,
 } from "@/lib/api";
-import { INITIAL_DESTINATIONS } from "@/lib/initialCatalog";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { TravelImage } from "@/components/public/TravelImage";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 import { useBranding } from "@/context/BrandingContext";
+import { CatalogErrorState } from "@/components/public/CatalogErrorState";
 
 const ITEMS_PER_PAGE = 12;
 
 export interface DestinationsClientProps {
   initialDestinations?: PublicDestinationListItem[];
   initialContent?: DestinationsPageContent | null;
+  initialError?: boolean;
 }
 
 export function DestinationsClient({
   initialDestinations,
   initialContent,
+  initialError = false,
 }: DestinationsClientProps) {
   const { displayName } = useBranding();
   const searchParams = useSearchParams();
@@ -33,39 +35,44 @@ export function DestinationsClient({
 
   const hasServerData = Boolean(initialDestinations?.length);
 
-  // Pre-hydrated with live database destinations for instant 0ms first paint
   const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(
     initialDestinations?.length ? initialDestinations : []
   );
   const [pageContent, setPageContent] = useState<DestinationsPageContent | null>(
     initialContent || null
   );
-  const [loading, setLoading] = useState(!hasServerData);
+  const [loading, setLoading] = useState(!hasServerData && !initialError);
+  const [error, setError] = useState<string | null>(
+    initialError ? "Unable to connect to live destination catalog. Please check your connection or retry." : null
+  );
   const [search, setSearch] = useState("");
   const [classificationTab, setClassificationTab] = useState<"all" | "domestic" | "international">("all");
   const [selectedCountry, setSelectedCountry] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
 
-  useEffect(() => {
-    if (initialDestinations?.length && !isPreview) {
-      return;
-    }
-
-    async function fetchDestinations() {
-      try {
-        const [data, contentRes] = await Promise.all([
-          publicCatalogApi.getDestinations(),
-          publicCatalogApi.getPageContent<DestinationsPageContent>("destinations", isPreview).catch(() => null),
-        ]);
-        if (Array.isArray(data) && data.length > 0) setDestinations(data);
-        if (contentRes?.content) {
-          setPageContent(contentRes.content);
-        }
-      } catch {
-        // Fallback gracefully
-      } finally {
-        setLoading(false);
+  const fetchDestinations = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [data, contentRes] = await Promise.all([
+        publicCatalogApi.getDestinations(),
+        publicCatalogApi.getPageContent<DestinationsPageContent>("destinations", isPreview).catch(() => null),
+      ]);
+      setDestinations(Array.isArray(data) ? data : []);
+      if (contentRes?.content) {
+        setPageContent(contentRes.content);
       }
+    } catch (err) {
+      console.error("Failed to fetch destinations:", err);
+      setError("Unable to load destinations right now. Please check your connection and retry.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (initialDestinations?.length && !initialError && !isPreview) {
+      return;
     }
     fetchDestinations();
   }, [isPreview]);
@@ -273,6 +280,13 @@ export function DestinationsClient({
                 <div key={i} className="h-96 rounded-3xl bg-[#F3F4F4] animate-pulse border border-[#E4E5E7]" />
               ))}
             </div>
+          ) : error ? (
+            <CatalogErrorState
+              title="Unable to Load Destinations"
+              message={error}
+              onRetry={fetchDestinations}
+              retryLabel="Retry Destinations"
+            />
           ) : filteredDestinations.length === 0 ? (
             <div className="text-center py-20 px-4 rounded-3xl border border-[#E4E5E7] bg-[#F7F7F5]">
               <Compass className="w-12 h-12 text-[#5F6368]/50 mx-auto mb-3" />

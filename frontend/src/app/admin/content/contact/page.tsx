@@ -565,7 +565,7 @@ export default function AdminContactContentPage() {
                         cards: { ...content.cards, primary_phone: e.target.value },
                       })
                     }
-                    placeholder="+91 94420 00000"
+                    placeholder="+91 98765 43210"
                     className="w-full px-3 py-2 rounded-xl border border-[#E4E5E7] bg-white text-sm text-[#202124]"
                   />
                 </div>

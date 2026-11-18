@@ -20,10 +20,10 @@ import {
   X,
 } from "lucide-react";
 import { publicCatalogApi, type PublicPackageDetail } from "@/lib/api";
-import { getInitialPackageDetail } from "@/lib/initialCatalog";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { FormattedText } from "@/components/public/FormattedText";
+import { CatalogErrorState } from "@/components/public/CatalogErrorState";
 import { PackageDetailClientActions } from "./PackageDetailClientActions";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PackagePageProps): Promise<Me
   const slug = decodeURIComponent(rawSlug).trim().toLowerCase().replace(/\s+/g, "-");
   try {
     const [pkg, settings] = await Promise.all([
-      publicCatalogApi.getPackage(slug).catch(() => publicCatalogApi.getPackage(rawSlug).catch(() => getInitialPackageDetail(slug))),
+      publicCatalogApi.getPackage(slug).catch(() => (rawSlug !== slug ? publicCatalogApi.getPackage(rawSlug).catch(() => null) : null)),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
     if (!pkg) {
@@ -83,24 +83,39 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug).trim().toLowerCase().replace(/\s+/g, "-");
 
-  let pkg: PublicPackageDetail;
+  let pkg: PublicPackageDetail | null = null;
   let onlinePaymentsEnabled = false;
   let maintenanceMsg: string | undefined;
   let agencyName = "KV Tours & Travels";
-  let whatsappNumber: string | undefined = "+919442000000";
+  let whatsappNumber: string | undefined = undefined;
   let whatsappCountryCode = "+91";
   let whatsappEnabled = true;
+  let fetchError = false;
+  let is404 = false;
 
   try {
     const [pkgData, settingsData] = await Promise.all([
-      publicCatalogApi.getPackage(slug).catch(() => publicCatalogApi.getPackage(rawSlug).catch(() => getInitialPackageDetail(slug))),
+      publicCatalogApi.getPackage(slug).catch(async (err: any) => {
+        if (err?.status === 404) {
+          if (rawSlug !== slug) {
+            try {
+              return await publicCatalogApi.getPackage(rawSlug);
+            } catch (rawErr: any) {
+              if (rawErr?.status === 404) is404 = true;
+              throw rawErr;
+            }
+          }
+          is404 = true;
+          return null;
+        }
+        throw err;
+      }),
       publicCatalogApi.getSettings().catch(() => null),
     ]);
 
     if (!pkgData) {
-      const fallback = getInitialPackageDetail(slug);
-      if (!fallback) notFound();
-      pkg = fallback;
+      if (is404) notFound();
+      fetchError = true;
     } else {
       pkg = pkgData;
     }
@@ -108,13 +123,28 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
     onlinePaymentsEnabled = Boolean(settingsData?.online_payments_enabled);
     maintenanceMsg = settingsData?.online_payments_maintenance_message;
     agencyName = settingsData?.public_display_name || settingsData?.agency_name || "KV Tours & Travels";
-    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || "+919442000000";
+    whatsappNumber = settingsData?.whatsapp_number || settingsData?.support_whatsapp || undefined;
     whatsappCountryCode = settingsData?.whatsapp_country_code || "+91";
     whatsappEnabled = settingsData?.whatsapp_enabled !== false && settingsData?.whatsapp_show_on_package_pages !== false;
-  } catch {
-    const fallback = getInitialPackageDetail(slug);
-    if (!fallback) notFound();
-    pkg = fallback;
+  } catch (err: any) {
+    if (is404 || err?.status === 404) {
+      notFound();
+    }
+    fetchError = true;
+  }
+
+  if (fetchError || !pkg) {
+    return (
+      <PublicLayout>
+        <div className="min-h-[70vh] flex items-center justify-center px-4 py-20 bg-[#F7F7F5]">
+          <CatalogErrorState
+            title="Unable to Load Journey Details"
+            message="We could not connect to the live catalog database to retrieve this tour package. Please verify your connection or reload."
+            retryLabel="Reload Package"
+          />
+        </div>
+      </PublicLayout>
+    );
   }
 
   const waUrl = whatsappEnabled

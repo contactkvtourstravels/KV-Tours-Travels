@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -34,9 +34,6 @@ import {
   type PublicHomeFeed,
 } from "@/lib/api";
 import {
-  INITIAL_DESTINATIONS,
-  INITIAL_PACKAGES,
-  INITIAL_DEPARTURES,
   INITIAL_HOME_CONTENT,
 } from "@/lib/initialCatalog";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
@@ -45,30 +42,29 @@ import { TravelImage } from "@/components/public/TravelImage";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { QuickInquiryModal } from "@/components/public/QuickInquiryModal";
 import { BestOffersSection } from "@/components/public/BestOffersSection";
-
-const DEFAULT_HOME_PAGE_CONTENT: HomePageContent = INITIAL_HOME_CONTENT;
+import { CatalogErrorState } from "@/components/public/CatalogErrorState";
 
 export interface HomeClientProps {
   initialFeed?: PublicHomeFeed | null;
+  initialError?: boolean;
 }
 
-export function HomeClient({ initialFeed }: HomeClientProps) {
+export function HomeClient({ initialFeed, initialError = false }: HomeClientProps) {
   const searchParams = useSearchParams();
   const isPreview = searchParams?.get("preview") === "true";
 
   const hasServerData = Boolean(
-    initialFeed?.destinations?.length && initialFeed?.packages?.length
+    initialFeed?.destinations?.length || initialFeed?.packages?.length
   );
 
-  // Pre-hydrated with live database catalog for instant 0ms first paint without stale flash
   const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(
-    initialFeed?.destinations?.length ? initialFeed.destinations : []
+    initialFeed?.destinations || []
   );
   const [packages, setPackages] = useState<PublicPackageListItem[]>(
-    initialFeed?.packages?.length ? initialFeed.packages : []
+    initialFeed?.packages || []
   );
   const [departures, setDepartures] = useState<PublicDepartureListItem[]>(
-    initialFeed?.departures?.length ? initialFeed.departures : []
+    initialFeed?.departures || []
   );
   const [settings, setSettings] = useState<PublicSiteSettings | null>(
     initialFeed?.settings || null
@@ -78,49 +74,10 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
       ? { ...INITIAL_HOME_CONTENT, ...initialFeed.content }
       : INITIAL_HOME_CONTENT
   );
-  const [loading, setLoading] = useState(!hasServerData);
-
-  // Restore active session data instantly if server pre-fetch timed out
-  useEffect(() => {
-    if (typeof window === "undefined" || hasServerData) return;
-    try {
-      const cached = sessionStorage.getItem("kv_live_home_feed");
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (parsed?.destinations?.length && parsed?.packages?.length) {
-          setDestinations(parsed.destinations);
-          setPackages(parsed.packages);
-          if (parsed.departures?.length) setDepartures(parsed.departures);
-          if (parsed.settings) setSettings(parsed.settings);
-          if (parsed.content) setPageContent((prev) => ({ ...prev, ...parsed.content }));
-          setLoading(false);
-        }
-      }
-    } catch {
-      // Ignore session storage errors
-    }
-  }, [hasServerData]);
-
-  // Persist live feed to session storage
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    if (destinations.length > 0 && packages.length > 0) {
-      try {
-        sessionStorage.setItem(
-          "kv_live_home_feed",
-          JSON.stringify({
-            destinations,
-            packages,
-            departures,
-            settings,
-            content: pageContent,
-          })
-        );
-      } catch {
-        // Ignore session quota
-      }
-    }
-  }, [destinations, packages, departures, settings, pageContent]);
+  const [loading, setLoading] = useState(!hasServerData && !initialError);
+  const [error, setError] = useState<string | null>(
+    initialError ? "Unable to connect to live catalog service. Please check your connection or retry." : null
+  );
 
   // Trending Destinations Category Filter ("international" | "domestic")
   const [destFilter, setDestFilter] = useState<"international" | "domestic">("domestic");
@@ -134,61 +91,69 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
   const [inquiryModalOpen, setInquiryModalOpen] = useState(false);
   const [selectedPkg, setSelectedPkg] = useState<{ id: string; name: string } | null>(null);
 
-  useEffect(() => {
-    // If server already supplied authoritative live database feed and user isn't in preview mode, skip waterfall
-    if (initialFeed && !isPreview) {
-      return;
-    }
-
-    async function loadData() {
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const feed = await publicCatalogApi.getHomeFeed(isPreview, {
+        cache: "no-store",
+      });
+      if (feed) {
+        setDestinations(Array.isArray(feed.destinations) ? feed.destinations : []);
+        setPackages(Array.isArray(feed.packages) ? feed.packages : []);
+        setDepartures(Array.isArray(feed.departures) ? feed.departures : []);
+        if (feed.settings) setSettings(feed.settings);
+        if (feed.content) {
+          setPageContent((prev) => ({ ...prev, ...feed.content }));
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to fetch live home feed directly:", err);
       try {
-        const [destsRes, pkgsRes, depsRes, setsRes, contentRes] = await Promise.allSettled([
+        const [destsRes, pkgsRes, depsRes, setsRes, contentRes] = await Promise.all([
           publicCatalogApi.getDestinations(),
           publicCatalogApi.getPackages(),
-          publicCatalogApi.getAllDepartures(),
-          publicCatalogApi.getSettings(),
-          publicCatalogApi.getPageContent<HomePageContent>("home", isPreview),
+          publicCatalogApi.getAllDepartures().catch(() => []),
+          publicCatalogApi.getSettings().catch(() => null),
+          publicCatalogApi.getPageContent<HomePageContent>("home", isPreview).catch(() => null),
         ]);
-
-        if (destsRes.status === "fulfilled" && Array.isArray(destsRes.value) && destsRes.value.length > 0) {
-          setDestinations(destsRes.value);
-        }
-        if (pkgsRes.status === "fulfilled" && Array.isArray(pkgsRes.value) && pkgsRes.value.length > 0) {
-          setPackages(pkgsRes.value);
-        }
-        if (depsRes.status === "fulfilled" && Array.isArray(depsRes.value) && depsRes.value.length > 0) {
-          setDepartures(depsRes.value);
-        }
-        if (setsRes.status === "fulfilled" && setsRes.value) {
-          setSettings(setsRes.value);
-        }
-        if (contentRes.status === "fulfilled" && contentRes.value?.content) {
-          const fresh = contentRes.value.content;
+        setDestinations(Array.isArray(destsRes) ? destsRes : []);
+        setPackages(Array.isArray(pkgsRes) ? pkgsRes : []);
+        setDepartures(Array.isArray(depsRes) ? depsRes : []);
+        if (setsRes) setSettings(setsRes);
+        if (contentRes?.content) {
           setPageContent((prev) => ({
             ...prev,
-            ...fresh,
+            ...contentRes.content,
             hero: {
               ...prev.hero,
-              ...(fresh.hero || {}),
+              ...(contentRes.content?.hero || {}),
             },
             sections_visibility: {
               ...prev.sections_visibility,
-              ...(fresh.sections_visibility || {}),
+              ...(contentRes.content?.sections_visibility || {}),
             },
             featured_content: {
               ...prev.featured_content,
-              ...(fresh.featured_content || {}),
+              ...(contentRes.content?.featured_content || {}),
             },
           }));
         }
-      } catch {
-        // Fallbacks handled gracefully
-      } finally {
-        setLoading(false);
+      } catch (innerErr) {
+        console.error("Live catalog connection failed:", innerErr);
+        setError("Unable to retrieve catalog data. Please check your network connection or verify that the backend is active.");
       }
+    } finally {
+      setLoading(false);
+    }
+  }, [isPreview]);
+
+  useEffect(() => {
+    if (initialFeed && !initialError && !isPreview) {
+      return;
     }
     loadData();
-  }, [isPreview]);
+  }, [initialFeed, initialError, isPreview, loadData]);
 
   // Synchronize dynamic SEO metadata from authoritative pageContent or site settings
   useEffect(() => {
@@ -660,6 +625,13 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
                 />
               ))}
             </div>
+          ) : error && destinations.length === 0 ? (
+            <CatalogErrorState
+              title="Unable to Load Destinations"
+              message={error}
+              onRetry={loadData}
+              retryLabel="Retry Destinations"
+            />
           ) : filteredDestinations.length === 0 ? (
             <div className="text-center py-16 px-6 rounded-3xl border border-[#E5E7EB] bg-[#F7F7F5] max-w-2xl mx-auto">
               <Compass className="w-10 h-10 text-[#C5A880] mx-auto mb-3" />
@@ -805,6 +777,13 @@ export function HomeClient({ initialFeed }: HomeClientProps) {
                 />
               ))}
             </div>
+          ) : error && packages.length === 0 ? (
+            <CatalogErrorState
+              title="Unable to Load Packages"
+              message={error}
+              onRetry={loadData}
+              retryLabel="Retry Packages"
+            />
           ) : packages.length === 0 ? (
             <div className="text-center py-16 px-6 rounded-3xl border border-[#E5E7EB] bg-white max-w-2xl mx-auto">
               <Plane className="w-10 h-10 text-[#C5A880] mx-auto mb-3" />

@@ -7,7 +7,9 @@ import {
 } from "@/lib/api";
 import { DestinationsClient } from "./DestinationsClient";
 
-export const revalidate = 60;
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -20,15 +22,17 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function DestinationsPage() {
   let destinations: PublicDestinationListItem[] = [];
   let content: DestinationsPageContent | null = null;
+  let serverError = false;
 
   try {
     const [dests, contentRes] = await Promise.all([
       publicCatalogApi.getDestinations(undefined),
       publicCatalogApi.getPageContent<DestinationsPageContent>("destinations", false).catch(() => null),
     ]);
-    destinations = dests;
+    destinations = Array.isArray(dests) ? dests : [];
     content = contentRes?.content || null;
   } catch (err) {
+    serverError = true;
     console.warn("Could not pre-fetch destinations during SSR:", err);
   }
 
@@ -37,6 +41,7 @@ export default async function DestinationsPage() {
       <DestinationsClient
         initialDestinations={destinations}
         initialContent={content}
+        initialError={serverError}
       />
     </Suspense>
   );

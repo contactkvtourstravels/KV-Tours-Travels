@@ -17,12 +17,12 @@ import {
   type PublicDepartureListItem,
   type GroupTripsPageContent,
 } from "@/lib/api";
-import { INITIAL_DEPARTURES } from "@/lib/initialCatalog";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { TravelImage } from "@/components/public/TravelImage";
 import { getSafeImageUrl } from "@/lib/images";
 import { QuickInquiryModal } from "@/components/public/QuickInquiryModal";
 import { useBranding } from "@/context/BrandingContext";
+import { CatalogErrorState } from "@/components/public/CatalogErrorState";
 
 const DESTINATION_FALLBACKS: Record<string, string> = {
   maldives: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=1200&q=80",
@@ -35,11 +35,13 @@ const DESTINATION_FALLBACKS: Record<string, string> = {
 export interface GroupTripsClientProps {
   initialDepartures?: PublicDepartureListItem[];
   initialContent?: GroupTripsPageContent | null;
+  initialError?: boolean;
 }
 
 export function GroupTripsClient({
   initialDepartures,
   initialContent,
+  initialError = false,
 }: GroupTripsClientProps) {
   const { displayName, getWhatsAppUrl, whatsappEnabled } = useBranding();
   const searchParams = useSearchParams();
@@ -47,39 +49,44 @@ export function GroupTripsClient({
 
   const hasServerData = Boolean(initialDepartures?.length);
 
-  // Pre-hydrated with live database departures for instant 0ms first paint
   const [departures, setDepartures] = useState<PublicDepartureListItem[]>(
     initialDepartures?.length ? initialDepartures : []
   );
   const [pageContent, setPageContent] = useState<GroupTripsPageContent | null>(
     initialContent || null
   );
-  const [loading, setLoading] = useState(!hasServerData);
+  const [loading, setLoading] = useState(!hasServerData && !initialError);
+  const [error, setError] = useState<string | null>(
+    initialError ? "Unable to connect to live departures catalog. Please check your connection or retry." : null
+  );
 
   // Inquiry modal
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedPkg, setSelectedPkg] = useState<{ id: string; name: string } | null>(null);
 
-  useEffect(() => {
-    if (initialDepartures?.length && !isPreview) {
-      return;
-    }
-
-    async function loadData() {
-      try {
-        const [data, contentRes] = await Promise.all([
-          publicCatalogApi.getAllDepartures(),
-          publicCatalogApi.getPageContent<GroupTripsPageContent>("group-trips", isPreview).catch(() => null),
-        ]);
-        if (Array.isArray(data) && data.length > 0) setDepartures(data);
-        if (contentRes?.content) {
-          setPageContent(contentRes.content);
-        }
-      } catch {
-        // Handled silently
-      } finally {
-        setLoading(false);
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [data, contentRes] = await Promise.all([
+        publicCatalogApi.getAllDepartures(),
+        publicCatalogApi.getPageContent<GroupTripsPageContent>("group-trips", isPreview).catch(() => null),
+      ]);
+      setDepartures(Array.isArray(data) ? data : []);
+      if (contentRes?.content) {
+        setPageContent(contentRes.content);
       }
+    } catch (err) {
+      console.error("Failed to load departures:", err);
+      setError("Unable to load group departures right now. Please check your connection and retry.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (initialDepartures?.length && !initialError && !isPreview) {
+      return;
     }
     loadData();
   }, [isPreview]);
@@ -193,6 +200,13 @@ export function GroupTripsClient({
                 <div key={i} className="h-[480px] rounded-3xl bg-[#F3F4F4] animate-pulse border border-[#E4E5E7]" />
               ))}
             </div>
+          ) : error ? (
+            <CatalogErrorState
+              title="Unable to Load Group Departures"
+              message={error}
+              onRetry={loadData}
+              retryLabel="Retry Departures"
+            />
           ) : departures.length === 0 ? (
             <div className="text-center py-20 px-4 rounded-3xl border border-[#E4E5E7] bg-[#F7F7F5]">
               <Calendar className="w-12 h-12 text-[#24292F]/60 mx-auto mb-3" />

@@ -72,13 +72,13 @@ const DEFAULT_SETTINGS: PublicSiteSettings = {
   short_name: "KV Tours",
   tagline: "Curated Journeys & Bespoke Expeditions",
   logo_url: "/logo.png",
-  agency_location: "India",
-  office_address: "",
+  agency_location: "Coimbatore, Tamil Nadu, India",
+  office_address: "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
   city: "Coimbatore",
   state: "Tamil Nadu",
   contact_email: "contact.kvtourstravels@gmail.com",
-  contact_phone: "+91 94420 00000",
-  whatsapp_number: "+919442000000",
+  contact_phone: "",
+  whatsapp_number: "",
   currency: "INR",
   instagram_handle: "",
 };
@@ -355,15 +355,22 @@ export function BrandingProvider({
   }, [shortName, displayName]);
 
   const phone = useMemo(() => {
-    return settings?.contact_phone || DEFAULT_BUSINESS_PHONE;
+    const raw = settings?.contact_phone || DEFAULT_BUSINESS_PHONE;
+    if (!raw || raw.includes("94420") || raw.includes("00000") || /^0+$/.test(raw.replace(/\D/g, ""))) {
+      return "";
+    }
+    return raw;
   }, [settings?.contact_phone]);
 
   const whatsapp = useMemo(() => {
-    return (
+    const raw =
       settings?.whatsapp_number ||
       settings?.support_whatsapp ||
-      DEFAULT_WHATSAPP_NUMBER
-    );
+      DEFAULT_WHATSAPP_NUMBER;
+    if (!raw || raw.includes("94420") || raw.includes("00000") || /^0+$/.test(raw.replace(/\D/g, ""))) {
+      return "";
+    }
+    return raw;
   }, [settings?.whatsapp_number, settings?.support_whatsapp]);
 
   const whatsappCountryCode = useMemo(() => {
@@ -407,15 +414,19 @@ export function BrandingProvider({
   }, [settings?.contact_email]);
 
   const address = useMemo(() => {
-    return settings?.office_address || settings?.public_office_address || "";
+    const raw = settings?.office_address || settings?.public_office_address;
+    if (!raw || raw.includes("Headquarters, India")) {
+      return "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012";
+    }
+    return raw;
   }, [settings?.office_address, settings?.public_office_address]);
 
   const city = useMemo(() => {
-    return settings?.city || "";
+    return settings?.city || "Coimbatore";
   }, [settings?.city]);
 
   const state = useMemo(() => {
-    return settings?.state || "";
+    return settings?.state || "Tamil Nadu";
   }, [settings?.state]);
 
   const country = useMemo(() => {

@@ -32,10 +32,16 @@ logger = logging.getLogger(__name__)
 
 def get_default_about_content(agency_name: str, city: str, address: str) -> dict[str, Any]:
     """Generate rich default initial content for the About Page."""
+    clean_city = city.strip() if city and city.strip() else "Coimbatore"
+    clean_address = (
+        address.strip()
+        if address and address.strip() and "Headquarters" not in address
+        else "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+    )
     return {
         "hero": {
             "show_section": True,
-            "eyebrow": f"{city} Born • Worldwide Curated",
+            "eyebrow": f"{clean_city} Born • Worldwide Curated",
             "heading": "",  # Fallback to f"About {agency_name}"
             "description": "Crafting bespoke international holidays, signature group escapes, and domestic expeditions with genuine care and meticulous attention to detail.",
             "background_image_url": None,
@@ -43,15 +49,15 @@ def get_default_about_content(agency_name: str, city: str, address: str) -> dict
         "story": {
             "show_section": True,
             "eyebrow": "Our Origin & Heart",
-            "title": "",  # Fallback to f"Rooted in {city}, Inspired by the World"
+            "title": "",  # Fallback to f"Rooted in {clean_city}, Inspired by the World"
             "paragraphs": [
-                f"{agency_name} was established in {city} to offer discerning travelers a refreshing alternative to impersonal booking portals and rigid group tours.",
+                f"{agency_name} was established in {clean_city} to offer discerning travelers a refreshing alternative to impersonal booking portals and rigid group tours.",
                 "We believe that travel is deeply personal. Whether it is stepping onto the pristine atolls of the Maldives, discovering the lagoons of Lakshadweep, traversing the snowy landscapes of Kazakhstan, or breathing the pine air of Manali, every journey should feel effortless and memorable.",
             ],
             "image_url": None,
             "image_position": "right",
             "office_card_title": f"{agency_name} Concierge Office",
-            "office_card_description": f"Headquartered at {address}, our team provides face-to-face consultations as well as digital planning for clients across South India and beyond.",
+            "office_card_description": f"Headquartered at {clean_address}, our team provides face-to-face consultations as well as digital planning for clients across South India and beyond.",
         },
         "mission_vision": {
             "show_section": True,
@@ -142,27 +148,34 @@ def get_default_about_content(agency_name: str, city: str, address: str) -> dict
 
 def get_default_contact_content(agency_name: str, city: str, address: str, phone: str, email: str, hours: str) -> dict[str, Any]:
     """Generate rich default initial content for the Contact Page."""
+    clean_city = city.strip() if city and city.strip() else "Coimbatore"
+    clean_address = (
+        address.strip()
+        if address and address.strip() and "Headquarters" not in address
+        else "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+    )
+    clean_phone = phone.strip() if phone and not ("94420" in phone or "00000" in phone) else ""
     return {
         "hero": {
             "show_section": True,
-            "eyebrow": f"{city} Concierge",
+            "eyebrow": f"{clean_city} Concierge",
             "heading": "Connect With Our Travel Experts",
             "description": "Have questions regarding upcoming departures, custom itineraries, or visa requirements? We are here to guide you every step of the way.",
         },
         "cards": {
             "show_section": True,
             "office_card_title": "Visit Our Office",
-            "office_card_heading": f"{city} Head Office",
-            "office_address": address,
+            "office_card_heading": f"{clean_city} Head Office",
+            "office_address": clean_address,
             "operating_hours": hours or "Mon – Sat: 09:30 AM – 07:30 PM IST",
             "phone_card_title": "Direct Inquiries",
             "phone_card_heading": "Call & Email",
-            "primary_phone": phone,
+            "primary_phone": clean_phone,
             "secondary_phone": None,
             "emergency_phone": None,
-            "contact_email": email,
+            "contact_email": email or "contact.kvtourstravels@gmail.com",
             "whatsapp_card_title": "Fast WhatsApp Assistance",
-            "whatsapp_card_description": f"Need quick departure availability, brochure PDFs, or urgent quotes? Our {city} team is active on WhatsApp daily.",
+            "whatsapp_card_description": f"Need quick departure availability, brochure PDFs, or urgent quotes? Our {clean_city} team is active on WhatsApp daily.",
             "whatsapp_button_text": "Chat on WhatsApp",
         },
         "form": {
@@ -383,15 +396,15 @@ def _get_agency_context(db: Session) -> dict[str, Any]:
         "legal_business_name": pub.legal_business_name or agency_display,
         "short_name": pub.short_name or agency_display,
         "tagline": pub.tagline,
-        "city": pub.city or "Palakkad",
-        "state": pub.state or "Kerala",
-        "office_address": pub.office_address,
-        "contact_phone": pub.contact_phone,
+        "city": pub.city or "Coimbatore",
+        "state": pub.state or "Tamil Nadu",
+        "office_address": pub.office_address or "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
+        "contact_phone": pub.contact_phone if pub.contact_phone and not ("94420" in pub.contact_phone or "00000" in pub.contact_phone) else "",
         "secondary_phone": pub.secondary_phone,
         "emergency_phone": pub.emergency_phone,
-        "contact_email": pub.contact_email,
-        "support_whatsapp": pub.support_whatsapp or pub.whatsapp_number,
-        "whatsapp_number": pub.whatsapp_number,
+        "contact_email": pub.contact_email or "contact.kvtourstravels@gmail.com",
+        "support_whatsapp": pub.support_whatsapp if pub.support_whatsapp and not ("94420" in pub.support_whatsapp or "00000" in pub.support_whatsapp) else "",
+        "whatsapp_number": pub.whatsapp_number if pub.whatsapp_number and not ("94420" in pub.whatsapp_number or "00000" in pub.whatsapp_number) else "",
         "operating_hours": pub.operating_hours,
         "brand_primary_color": pub.brand_primary_color or "#24292F",
         "brand_secondary_color": pub.brand_secondary_color or "#C5A880",

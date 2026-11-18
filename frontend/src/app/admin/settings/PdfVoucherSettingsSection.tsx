@@ -55,12 +55,12 @@ export default function PdfVoucherSettingsSection({
     settings.pdf_office_address ||
       settings.office_address ||
       settings.registered_office_address ||
-      "Headquarters, India"
+      "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
   );
 
   const [contactInfo, setContactInfo] = useState(
     settings.pdf_contact_info ||
-      `Concierge Desk: ${settings.contact_phone || "+91 94420 00000"} | ${settings.contact_email || "contact.kvtourstravels@gmail.com"} | ${settings.website_url || "www.kvtours.in"}`
+      `Concierge Desk: ${settings.contact_phone || "Contact via Website"} | ${settings.contact_email || "contact.kvtourstravels@gmail.com"} | ${settings.website_url || "www.kvtours.in"}`
   );
 
   const [badgeLabel, setBadgeLabel] = useState(
@@ -83,7 +83,7 @@ export default function PdfVoucherSettingsSection({
 
   const [helplineInfo, setHelplineInfo] = useState(
     settings.pdf_helpline_info ||
-      `${settings.agency_location || "Operations"} Desk: ${settings.contact_phone || "+91 94420 00000"} | Priority WhatsApp Desk: ${settings.whatsapp_number || "+91 94420 00000"} | ${settings.contact_email || "contact.kvtourstravels@gmail.com"}`
+      `${settings.agency_location || "Operations"} Desk: ${settings.contact_phone || settings.contact_email || "contact.kvtourstravels@gmail.com"}${settings.whatsapp_number ? ` | Priority WhatsApp Desk: ${settings.whatsapp_number}` : ""} | ${settings.contact_email || "contact.kvtourstravels@gmail.com"}`
   );
 
   const [footerDeclaration, setFooterDeclaration] = useState(
@@ -144,10 +144,10 @@ export default function PdfVoucherSettingsSection({
       settings.office_address ||
         settings.registered_office_address ||
         settings.public_office_address ||
-        "Headquarters, India"
+        "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
     );
 
-    const deskPhone = settings.contact_phone || "+91 94420 00000";
+    const deskPhone = settings.contact_phone || "Contact via Website";
     const deskEmail = settings.booking_email || settings.contact_email || "contact.kvtourstravels@gmail.com";
     const deskWeb = settings.website_url || "www.kvtours.in";
     setContactInfo(`Concierge Desk: ${deskPhone} | ${deskEmail} | ${deskWeb}`);
@@ -162,10 +162,10 @@ export default function PdfVoucherSettingsSection({
       "Scheduled chauffeured transfers and curated excursions are confirmed as per the booked itinerary. Your travel host details will be notified 24 hours prior to departure."
     );
 
-    const waNum = settings.whatsapp_number || settings.support_whatsapp || "+91 94420 00000";
+    const waNum = settings.whatsapp_number || settings.support_whatsapp || "";
     const loc = settings.agency_location || "Operations";
     setHelplineInfo(
-      `${loc} Desk: ${deskPhone} | Priority WhatsApp: ${waNum} | ${deskEmail}`
+      `${loc} Desk: ${deskPhone}${waNum ? ` | Priority WhatsApp: ${waNum}` : ""} | ${deskEmail}`
     );
 
     setFooterDeclaration(
@@ -176,8 +176,8 @@ export default function PdfVoucherSettingsSection({
   const handleResetDefaults = () => {
     setHeaderTitle("KV TOURS & TRAVELS");
     setHeaderSubtitle("BESPOKE LUXURY & ADVENTURE JOURNEYS • OPERATIONS HUB");
-    setOfficeAddress("Headquarters, India");
-    setContactInfo("Concierge Desk: +91 94420 00000 | contact.kvtourstravels@gmail.com | www.kvtours.in");
+    setOfficeAddress("Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012");
+    setContactInfo("Concierge Desk: contact.kvtourstravels@gmail.com | www.kvtours.in");
     setBadgeLabel("Official Travel Voucher & Receipt");
     setLogoUrl("");
     setCheckinInstructions(
@@ -187,7 +187,7 @@ export default function PdfVoucherSettingsSection({
       "Scheduled chauffeured transfers and curated excursions are confirmed as per the booked itinerary. Your travel host details will be notified 24 hours prior to departure."
     );
     setHelplineInfo(
-      "Operations Desk: +91 94420 00000 | Priority WhatsApp: +91 94420 00000 | contact.kvtourstravels@gmail.com"
+      "Operations Desk: contact.kvtourstravels@gmail.com | www.kvtours.in"
     );
     setFooterDeclaration(
       "KV TOURS & TRAVELS OPERATIONS • OFFICIAL TRAVEL VOUCHER\nComputer-generated authoritative travel document • Valid without physical signature"

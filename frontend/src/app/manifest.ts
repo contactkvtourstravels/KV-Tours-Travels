@@ -8,9 +8,32 @@ export default function manifest(): MetadataRoute.Manifest {
       "Curated luxury holidays, international group departures, and bespoke travel concierge by KV Tours & Travels.",
     start_url: "/",
     display: "standalone",
-    background_color: "#24292F",
-    theme_color: "#24292F",
+    background_color: "#0B0C0E",
+    theme_color: "#DFBA73",
     icons: [
+      {
+        src: "/logo.png",
+        sizes: "825x825",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/apple-touch-icon.png",
+        sizes: "180x180",
+        type: "image/png",
+      },
       {
         src: "/favicon.ico",
         sizes: "any",

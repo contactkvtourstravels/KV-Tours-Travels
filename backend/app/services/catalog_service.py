@@ -889,8 +889,8 @@ def get_public_settings(db: Session) -> PublicSiteSettings:
         admin_panel_name=str(overrides.get("admin_panel_name")) if overrides.get("admin_panel_name") else None,
         admin_portal_subtitle=str(overrides.get("admin_portal_subtitle")) if overrides.get("admin_portal_subtitle") else None,
         tagline=str(overrides["tagline"]) if "tagline" in overrides and overrides["tagline"] is not None else "Your Journey. Our Expertise.",
-        logo_url=str(overrides["logo_url"]) if "logo_url" in overrides and overrides["logo_url"] is not None else None,
-        favicon_url=str(overrides["favicon_url"]) if "favicon_url" in overrides and overrides["favicon_url"] is not None else None,
+        logo_url=str(overrides["logo_url"]) if "logo_url" in overrides and overrides["logo_url"] is not None else "/logo.png",
+        favicon_url=str(overrides["favicon_url"]) if "favicon_url" in overrides and overrides["favicon_url"] is not None else (str(overrides.get("logo_url")) if overrides.get("logo_url") else "/logo.png"),
         business_description=str(overrides.get("business_description")) if overrides.get("business_description") else None,
         registered_office_address=str(overrides.get("registered_office_address")) if overrides.get("registered_office_address") else None,
         office_address=str(

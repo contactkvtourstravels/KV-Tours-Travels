@@ -53,12 +53,16 @@ export async function generateMetadata(): Promise<Metadata> {
     other: {
       "copyright": `© ${displayName}. All rights reserved.`,
     },
-    icons: settings?.favicon_url
-      ? [
-        { rel: "icon", url: settings.favicon_url },
-        { rel: "shortcut icon", url: settings.favicon_url },
-      ]
-      : undefined,
+    icons: {
+      icon: [
+        { url: settings?.favicon_url || "/logo.png", type: "image/png" },
+        { url: settings?.favicon_url || "/favicon.ico", sizes: "any" },
+      ],
+      shortcut: [settings?.favicon_url || "/logo.png"],
+      apple: [
+        { url: settings?.favicon_url || "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      ],
+    },
     openGraph: {
       title: siteTitle,
       description: siteDescription,

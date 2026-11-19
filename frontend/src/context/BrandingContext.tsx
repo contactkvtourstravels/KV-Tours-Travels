@@ -72,6 +72,7 @@ const DEFAULT_SETTINGS: PublicSiteSettings = {
   short_name: "KV Tours",
   tagline: "Curated Journeys & Bespoke Expeditions",
   logo_url: "/logo.png",
+  favicon_url: "/logo.png",
   agency_location: "Coimbatore, Tamil Nadu, India",
   office_address: "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
   city: "Coimbatore",
@@ -116,15 +117,20 @@ function applyThemeTokens(primary?: string | null, secondary?: string | null, ac
 }
 
 function applyFavicon(faviconUrl?: string | null) {
-  if (typeof document === "undefined" || !faviconUrl) return;
+  if (typeof document === "undefined") return;
+  const targetUrl = faviconUrl || "/logo.png";
   try {
-    let link: HTMLLinkElement | null = document.querySelector("link[rel*='icon']");
-    if (!link) {
-      link = document.createElement("link");
+    const iconLinks = document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']");
+    if (iconLinks.length > 0) {
+      iconLinks.forEach((link) => {
+        link.href = targetUrl;
+      });
+    } else {
+      const link = document.createElement("link");
       link.rel = "shortcut icon";
+      link.href = targetUrl;
       document.getElementsByTagName("head")[0].appendChild(link);
     }
-    link.href = faviconUrl;
   } catch (err) {
     console.warn("Could not update favicon:", err);
   }
@@ -236,9 +242,7 @@ export function BrandingProvider({
       settings.brand_secondary_color,
       settings.brand_accent_color
     );
-    if (settings.favicon_url) {
-      applyFavicon(settings.favicon_url);
-    }
+    applyFavicon(settings.favicon_url || "/logo.png");
     const name = settings.public_display_name || settings.agency_name;
     if (name) {
       applyDocumentTitle(name, settings.tagline);
@@ -285,9 +289,7 @@ export function BrandingProvider({
           next.brand_secondary_color,
           next.brand_accent_color
         );
-        if (next.favicon_url) {
-          applyFavicon(next.favicon_url);
-        }
+        applyFavicon(next.favicon_url || "/logo.png");
         const name = next.public_display_name || next.agency_name;
         if (name) {
           applyDocumentTitle(name, next.tagline);

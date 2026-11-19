@@ -22,7 +22,9 @@ export function PremiumLoadingScreen() {
   useEffect(() => {
     const unsubscribe = subscribeToBackendWakeUp((newState) => {
       setState(newState);
-      if (newState.isWakingUp || newState.isLagging) {
+      if (newState.source === "lag" || newState.isLagging || newState.source === "initial") {
+        setIsMinimized(true);
+      } else if (newState.isWakingUp) {
         setIsMinimized(false);
       }
     });

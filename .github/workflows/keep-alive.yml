@@ -17,7 +17,7 @@ jobs:
             TARGET_URL="https://travel-agency-kdrs.onrender.com"
           fi
           echo "Pinging $TARGET_URL/api/v1/health/ready to keep database connection alive..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "$TARGET_URL/api/v1/health/ready" || true)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 50 "$TARGET_URL/api/v1/health/ready" || true)
           echo "Database readiness status code: $STATUS"
 
       - name: Ping Public Home Feed (Pre-warms Catalog Cache)
@@ -27,12 +27,12 @@ jobs:
             TARGET_URL="https://travel-agency-kdrs.onrender.com"
           fi
           echo "Pinging $TARGET_URL/api/v1/public/home-feed..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "$TARGET_URL/api/v1/public/home-feed" || true)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 50 "$TARGET_URL/api/v1/public/home-feed" || true)
           echo "Home feed status code: $STATUS"
 
       - name: Ping Frontend Keep-Alive
         run: |
           echo "Pinging https://kv-tours-travels.vercel.app/api/keep-alive..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "https://kv-tours-travels.vercel.app/api/keep-alive" || true)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 50 "https://kv-tours-travels.vercel.app/api/keep-alive" || true)
           echo "Received frontend status code: $STATUS"
 

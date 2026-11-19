@@ -1706,7 +1706,7 @@ export async function apiRequest<T>(
     const maxRetries = isSafeGet && !isServer ? (options.maxRetries ?? 2) : 0;
     const timeoutMs = options.timeoutMs ?? (
       isServer
-        ? 8000
+        ? 1500
         : (isSafeGet ? 35000 : 30000)
     );
 
@@ -2968,13 +2968,16 @@ export const publicCatalogApi = {
     );
   },
 
-  getDestinations: async (params?: {
-    country?: string;
-    travel_type?: string;
-    is_featured?: boolean;
-    limit?: number;
-    offset?: number;
-  }): Promise<PublicDestinationListItem[]> => {
+  getDestinations: async (
+    params?: {
+      country?: string;
+      travel_type?: string;
+      is_featured?: boolean;
+      limit?: number;
+      offset?: number;
+    },
+    options?: ApiRequestOptions
+  ): Promise<PublicDestinationListItem[]> => {
     const query = new URLSearchParams();
     if (params?.country) query.set("country", params.country);
     if (params?.travel_type) query.set("travel_type", params.travel_type);
@@ -2982,21 +2985,24 @@ export const publicCatalogApi = {
     if (params?.limit !== undefined) query.set("limit", String(params.limit));
     if (params?.offset !== undefined) query.set("offset", String(params.offset));
     const qs = query.toString();
-    return await apiRequest<PublicDestinationListItem[]>(`/destinations${qs ? `?${qs}` : ""}`);
+    return await apiRequest<PublicDestinationListItem[]>(`/destinations${qs ? `?${qs}` : ""}`, options);
   },
 
   getDestination: async (slug: string): Promise<PublicDestinationDetail> => {
     return await apiRequest<PublicDestinationDetail>(`/destinations/${slug}`);
   },
 
-  getPackages: async (params?: {
-    destination_slug?: string;
-    travel_type?: string;
-    category?: string;
-    is_featured?: boolean;
-    limit?: number;
-    offset?: number;
-  }): Promise<PublicPackageListItem[]> => {
+  getPackages: async (
+    params?: {
+      destination_slug?: string;
+      travel_type?: string;
+      category?: string;
+      is_featured?: boolean;
+      limit?: number;
+      offset?: number;
+    },
+    options?: ApiRequestOptions
+  ): Promise<PublicPackageListItem[]> => {
     const query = new URLSearchParams();
     if (params?.destination_slug) query.set("destination_slug", params.destination_slug);
     if (params?.travel_type) query.set("travel_type", params.travel_type);
@@ -3005,7 +3011,7 @@ export const publicCatalogApi = {
     if (params?.limit !== undefined) query.set("limit", String(params.limit));
     if (params?.offset !== undefined) query.set("offset", String(params.offset));
     const qs = query.toString();
-    return await apiRequest<PublicPackageListItem[]>(`/packages${qs ? `?${qs}` : ""}`);
+    return await apiRequest<PublicPackageListItem[]>(`/packages${qs ? `?${qs}` : ""}`, options);
   },
 
   getPackage: async (slug: string): Promise<PublicPackageDetail> => {
@@ -3024,8 +3030,8 @@ export const publicCatalogApi = {
     return await apiRequest<PublicDepartureListItem[]>("/departures");
   },
 
-  getSettings: async (): Promise<PublicSiteSettings> => {
-    return await apiRequest<PublicSiteSettings>("/settings");
+  getSettings: async (options?: ApiRequestOptions): Promise<PublicSiteSettings> => {
+    return await apiRequest<PublicSiteSettings>("/settings", options);
   },
 
   submitInquiry: async (payload: PublicInquiryCreate): Promise<PublicInquiryResponse> => {
@@ -3048,10 +3054,12 @@ export const publicCatalogApi = {
 
   getPageContent: async <T = Record<string, unknown>>(
     slug: string,
-    preview: boolean = false
+    preview: boolean = false,
+    options?: ApiRequestOptions
   ): Promise<PublicPageResponse<T>> => {
     return await apiRequest<PublicPageResponse<T>>(
-      `/content/pages/${slug}${preview ? "?preview=true" : ""}`
+      `/content/pages/${slug}${preview ? "?preview=true" : ""}`,
+      options
     );
   },
 

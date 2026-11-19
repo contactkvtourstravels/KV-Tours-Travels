@@ -7,9 +7,7 @@ import {
 } from "@/lib/api";
 import { DestinationsClient } from "./DestinationsClient";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -26,8 +24,8 @@ export default async function DestinationsPage() {
 
   try {
     const [dests, contentRes] = await Promise.all([
-      publicCatalogApi.getDestinations(undefined),
-      publicCatalogApi.getPageContent<DestinationsPageContent>("destinations", false).catch(() => null),
+      publicCatalogApi.getDestinations(undefined, { timeoutMs: 1500 }),
+      publicCatalogApi.getPageContent<DestinationsPageContent>("destinations", false, { timeoutMs: 1500 }).catch(() => null),
     ]);
     destinations = Array.isArray(dests) ? dests : [];
     content = contentRes?.content || null;

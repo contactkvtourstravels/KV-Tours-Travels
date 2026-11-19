@@ -6,18 +6,33 @@ import { DEFAULT_BUSINESS_PHONE } from "@/lib/constants";
 import { publicCatalogApi, type PublicSiteSettings } from "@/lib/api";
 import { BrandingProvider } from "@/context/BrandingContext";
 
-// Real-time zero-delay updates: always fetch fresh settings and branding from live database
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+// High-performance edge SWR caching: instant response for users, revalidated in background
+export const revalidate = 60;
+
+let cachedServerSettings: PublicSiteSettings | null = null;
+let lastSettingsFetchTime = 0;
+const SETTINGS_CACHE_TTL_MS = 60_000;
+
+async function getCachedSettings(): Promise<PublicSiteSettings | null> {
+  const now = Date.now();
+  if (cachedServerSettings && now - lastSettingsFetchTime < SETTINGS_CACHE_TTL_MS) {
+    return cachedServerSettings;
+  }
+  try {
+    const fresh = await publicCatalogApi.getSettings({ timeoutMs: 1200 });
+    if (fresh) {
+      cachedServerSettings = fresh;
+      lastSettingsFetchTime = now;
+      return fresh;
+    }
+  } catch {
+    // If cloud database is cold-starting, fail-fast without blocking page render
+  }
+  return cachedServerSettings;
+}
 
 export async function generateMetadata(): Promise<Metadata> {
-  let settings: PublicSiteSettings | null = null;
-  try {
-    settings = await publicCatalogApi.getSettings();
-  } catch {
-    // Graceful fallback during isolated builds or cold starts
-  }
+  const settings = await getCachedSettings();
 
   const displayName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
   const tagline = settings?.tagline || "Luxury & Adventure Journeys";
@@ -90,12 +105,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  let settings: PublicSiteSettings | null = null;
-  try {
-    settings = await publicCatalogApi.getSettings();
-  } catch {
-    // Graceful fallback during build or initial startup
-  }
+  const settings = await getCachedSettings();
 
   const displayName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
   const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";

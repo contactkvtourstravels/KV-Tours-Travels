@@ -9,7 +9,7 @@ export const revalidate = 60; // Cache on Vercel edge for 60 seconds; revalidate
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const feed = await publicCatalogApi.getHomeFeed(false, {
-      timeoutMs: 2000,
+      timeoutMs: 1200,
     });
     const title =
       feed?.content?.seo_title ||
@@ -43,7 +43,7 @@ export default async function HomePage() {
 
   try {
     homeFeed = await publicCatalogApi.getHomeFeed(false, {
-      timeoutMs: 5000,
+      timeoutMs: 1500,
     });
   } catch (err) {
     serverError = true;

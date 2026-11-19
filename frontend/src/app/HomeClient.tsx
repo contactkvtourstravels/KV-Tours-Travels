@@ -182,19 +182,10 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
         .catch(() => {});
       return;
     }
-    notifyBackendWakeUp({
-      isWakingUp: true,
-      source: "initial",
-      message: "Curating bespoke journeys & connecting live database...",
-    });
-    // Strict 10-second ceiling: website is guaranteed to be fully visible within 10s
-    const ceilingTimer = setTimeout(() => {
-      notifyBackendWakeUp({ isWakingUp: false, isLagging: false });
-    }, 10000);
-
-    loadData().finally(() => {
-      clearTimeout(ceilingTimer);
-      notifyBackendWakeUp({ isWakingUp: false, isLagging: false });
+    // The initial luxury catalog is already mounted and interactive (0ms delay).
+    // Silently revalidate fresh data from live database in background without blocking the UI.
+    loadData().catch((err) => {
+      console.warn("Background catalog revalidation deferred:", err);
     });
   }, [initialFeed, initialError, isPreview, loadData]);
 

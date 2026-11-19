@@ -4,6 +4,7 @@ import { Footer } from "./Footer";
 import { FloatingWhatsApp } from "./FloatingWhatsApp";
 import { BackendWakeUpBanner } from "./BackendWakeUpBanner";
 import { PremiumLoadingScreen } from "./PremiumLoadingScreen";
+import { BackendKeepAliveBeacon } from "./BackendKeepAliveBeacon";
 
 interface PublicLayoutProps {
   children: ReactNode;
@@ -28,6 +29,7 @@ export function PublicLayout({ children, transparentHeader = false }: PublicLayo
       <div className="print:hidden">
         <BackendWakeUpBanner />
         <PremiumLoadingScreen />
+        <BackendKeepAliveBeacon />
       </div>
     </div>
   );

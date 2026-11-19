@@ -8,9 +8,7 @@ import {
 } from "@/lib/api";
 import { PackagesClient } from "./PackagesClient";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -28,9 +26,9 @@ export default async function PackagesPage() {
 
   try {
     const [pkgs, dests, contentRes] = await Promise.all([
-      publicCatalogApi.getPackages(undefined),
-      publicCatalogApi.getDestinations(undefined),
-      publicCatalogApi.getPageContent<PackagesPageContent>("packages", false).catch(() => null),
+      publicCatalogApi.getPackages(undefined, { timeoutMs: 1500 }),
+      publicCatalogApi.getDestinations(undefined, { timeoutMs: 1500 }),
+      publicCatalogApi.getPageContent<PackagesPageContent>("packages", false, { timeoutMs: 1500 }).catch(() => null),
     ]);
     packages = Array.isArray(pkgs) ? pkgs : [];
     destinations = Array.isArray(dests) ? dests : [];

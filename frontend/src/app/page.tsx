@@ -43,7 +43,7 @@ export default async function HomePage() {
 
   try {
     homeFeed = await publicCatalogApi.getHomeFeed(false, {
-      timeoutMs: 2500,
+      timeoutMs: 5000,
     });
   } catch (err) {
     serverError = true;

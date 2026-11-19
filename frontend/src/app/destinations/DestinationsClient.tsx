@@ -10,6 +10,7 @@ import {
   type PublicDestinationListItem,
   type DestinationsPageContent,
 } from "@/lib/api";
+import { INITIAL_DESTINATIONS } from "@/lib/initialCatalog";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { TravelImage } from "@/components/public/TravelImage";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
@@ -36,12 +37,12 @@ export function DestinationsClient({
   const hasServerData = Boolean(initialDestinations?.length);
 
   const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(
-    initialDestinations?.length ? initialDestinations : []
+    initialDestinations?.length ? initialDestinations : INITIAL_DESTINATIONS
   );
   const [pageContent, setPageContent] = useState<DestinationsPageContent | null>(
     initialContent || null
   );
-  const [loading, setLoading] = useState(!hasServerData && !initialError);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     initialError ? "Unable to connect to live destination catalog. Please check your connection or retry." : null
   );

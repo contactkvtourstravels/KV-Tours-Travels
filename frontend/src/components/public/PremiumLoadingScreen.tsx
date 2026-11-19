@@ -45,6 +45,14 @@ export function PremiumLoadingScreen() {
     };
   }, [state.isWakingUp, state.isLagging]);
 
+  // Guaranteed 10-second ceiling: Automatically reveal website within 10 seconds
+  // so the user is never blocked, even if cloud database/backend is still warming up
+  useEffect(() => {
+    if (elapsedSeconds >= 10 && !isMinimized) {
+      setIsMinimized(true);
+    }
+  }, [elapsedSeconds, isMinimized]);
+
   const isVisible = state.isWakingUp || state.isLagging;
 
   if (!isVisible) {
@@ -102,7 +110,7 @@ export function PremiumLoadingScreen() {
     <div
       role="status"
       aria-live="polite"
-      className="fixed inset-0 z-[99999] bg-[#0B0C0E]/94 backdrop-blur-2xl flex flex-col items-center justify-center p-6 text-center select-none animate-in fade-in duration-500 overflow-hidden"
+      className="fixed inset-0 z-[99999] bg-[#0B0C0E] flex flex-col items-center justify-center p-6 text-center select-none animate-in fade-in duration-300 overflow-hidden transform-gpu"
     >
       {/* Ambient Radial Golden Glow */}
       <div className="absolute w-[440px] h-[440px] rounded-full bg-[#DFBA73]/12 blur-[100px] pointer-events-none" />
@@ -146,13 +154,16 @@ export function PremiumLoadingScreen() {
       </div>
 
       {/* Luxury Metallic Gold Shimmer Progress Bar */}
-      <div className="w-64 sm:w-72 h-1 bg-white/10 rounded-full overflow-hidden relative mt-6 shadow-inner">
+      <div className="w-64 sm:w-72 h-1 bg-white/10 rounded-full overflow-hidden relative mt-6 shadow-inner transform-gpu">
         <div className="h-full w-1/2 bg-gradient-to-r from-transparent via-[#DFBA73] via-[#F3E8D6] to-transparent animate-shimmer-slide rounded-full" />
       </div>
 
-      {/* Elapsed Time & Active Badge */}
-      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-[#DFBA73]/25 text-xs text-[#DFBA73] font-medium mt-5 shadow-sm">
-        <span className="w-2 h-2 rounded-full bg-[#DFBA73] animate-ping" />
+      {/* Elapsed Time & Active Badge - Solid containment prevents mobile compositor tile bugs */}
+      <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#16181B] border border-[#DFBA73]/30 text-xs text-[#DFBA73] font-medium mt-5 shadow-sm">
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#DFBA73] opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-[#DFBA73]" />
+        </span>
         <span>Active Connection • {elapsedSeconds}s elapsed</span>
       </div>
 

@@ -330,7 +330,7 @@ export const INITIAL_PACKAGES: PublicPackageListItem[] = [
     "destination_slug": "almaty-kazakhstan",
     "category": "Offbeat vacation",
     "travel_type": "International Winter Expedition",
-    "cover_image_url": "/images/destinations/kazakhstan.jpg",
+    "cover_image_url": "/images/packages/kazakhstan.jpg",
     "base_price": 55799.0,
     "currency": "INR",
     "duration_days": 6,
@@ -338,7 +338,7 @@ export const INITIAL_PACKAGES: PublicPackageListItem[] = [
     "minimum_travellers": 4,
     "maximum_travellers": 12,
     "featured_image": {
-      "image_url": "/images/destinations/kazakhstan.jpg",
+      "image_url": "/images/packages/kazakhstan.jpg",
       "alt_text": "Kazakstan : Winter Edition tour package",
       "is_featured": true,
       "sort_order": 0
@@ -1874,7 +1874,7 @@ export const INITIAL_PACKAGE_DETAILS: Record<string, PublicPackageDetail> = {
     "travel_type": "International Winter Expedition",
     "difficulty_level": "Easy to Moderate",
     "departure_location": "Almaty International Airport (ALA)",
-    "cover_image_url": "/images/destinations/kazakhstan.jpg",
+    "cover_image_url": "/images/packages/kazakhstan.jpg",
     "inclusions": [
       "5 Nights 4\u2605 Hotel Accommodation in Central Almaty",
       "Round-trip Airport Transfers (Almaty International Airport)",
@@ -1906,7 +1906,7 @@ export const INITIAL_PACKAGE_DETAILS: Record<string, PublicPackageDetail> = {
     "seo_description": null,
     "images": [
       {
-        "image_url": "/images/destinations/kazakhstan.jpg",
+        "image_url": "/images/packages/kazakhstan.jpg",
         "alt_text": "Kazakstan : Winter Edition tour package",
         "is_featured": true,
         "sort_order": 0

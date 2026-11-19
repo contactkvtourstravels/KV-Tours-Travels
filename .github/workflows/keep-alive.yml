@@ -1,28 +1,38 @@
-name: Keep Render Backend Alive
+name: Keep Render Backend & Neon Database Alive
 
 on:
   schedule:
-    # Runs every 14 minutes (Render free tier sleeps after 15 minutes of inactivity)
-    - cron: "*/14 * * * *"
+    # Runs every 5 minutes to prevent Neon compute (5-min idle) and Render (15-min idle) from sleeping
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Backend Health Endpoint
+      - name: Ping Backend Readiness (Keeps Neon Database Active)
         run: |
           TARGET_URL="${{ secrets.RENDER_BACKEND_URL }}"
           if [ -z "$TARGET_URL" ]; then
             TARGET_URL="https://travel-agency-kdrs.onrender.com"
           fi
-          echo "Pinging $TARGET_URL/api/v1/health..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "$TARGET_URL/api/v1/health" || true)
-          echo "Received backend status code: $STATUS"
+          echo "Pinging $TARGET_URL/api/v1/health/ready to keep database connection alive..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "$TARGET_URL/api/v1/health/ready" || true)
+          echo "Database readiness status code: $STATUS"
+
+      - name: Ping Public Home Feed (Pre-warms Catalog Cache)
+        run: |
+          TARGET_URL="${{ secrets.RENDER_BACKEND_URL }}"
+          if [ -z "$TARGET_URL" ]; then
+            TARGET_URL="https://travel-agency-kdrs.onrender.com"
+          fi
+          echo "Pinging $TARGET_URL/api/v1/public/home-feed..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "$TARGET_URL/api/v1/public/home-feed" || true)
+          echo "Home feed status code: $STATUS"
 
       - name: Ping Frontend Keep-Alive
         run: |
           echo "Pinging https://kv-tours-travels.vercel.app/api/keep-alive..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 "https://kv-tours-travels.vercel.app/api/keep-alive" || true)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 25 "https://kv-tours-travels.vercel.app/api/keep-alive" || true)
           echo "Received frontend status code: $STATUS"
 

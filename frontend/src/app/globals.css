@@ -257,10 +257,12 @@ body {
 
 .animate-shimmer-slide {
   animation: shimmer-slide 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
 }
 
 .animate-spin-slow {
   animation: spin-slow 16s linear infinite;
+  will-change: transform;
 }
 
 .animate-pulse-subtle {

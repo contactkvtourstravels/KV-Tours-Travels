@@ -16,7 +16,7 @@ export async function GET() {
     "https://travel-agency-kdrs.onrender.com";
 
   const backendUrl = rawBackendUrl.replace(/\/+$/, "");
-  const healthEndpoint = `${backendUrl}/api/v1/health`;
+  const healthEndpoint = `${backendUrl}/api/v1/health/ready`;
 
   try {
     const startTime = Date.now();

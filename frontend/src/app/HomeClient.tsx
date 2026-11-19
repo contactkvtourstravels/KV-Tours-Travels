@@ -36,6 +36,9 @@ import {
 } from "@/lib/api";
 import {
   INITIAL_HOME_CONTENT,
+  INITIAL_DESTINATIONS,
+  INITIAL_PACKAGES,
+  INITIAL_DEPARTURES,
 } from "@/lib/initialCatalog";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
@@ -59,13 +62,13 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
   );
 
   const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(
-    initialFeed?.destinations || []
+    initialFeed?.destinations?.length ? initialFeed.destinations : INITIAL_DESTINATIONS
   );
   const [packages, setPackages] = useState<PublicPackageListItem[]>(
-    initialFeed?.packages || []
+    initialFeed?.packages?.length ? initialFeed.packages : INITIAL_PACKAGES
   );
   const [departures, setDepartures] = useState<PublicDepartureListItem[]>(
-    initialFeed?.departures || []
+    initialFeed?.departures?.length ? initialFeed.departures : INITIAL_DEPARTURES
   );
   const [settings, setSettings] = useState<PublicSiteSettings | null>(
     initialFeed?.settings || null
@@ -75,7 +78,7 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
       ? { ...INITIAL_HOME_CONTENT, ...initialFeed.content }
       : INITIAL_HOME_CONTENT
   );
-  const [loading, setLoading] = useState(!hasServerData && !initialError);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     initialError ? "Unable to connect to live catalog service. Please check your connection or retry." : null
   );
@@ -184,7 +187,13 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
       source: "initial",
       message: "Curating bespoke journeys & connecting live database...",
     });
+    // Strict 10-second ceiling: website is guaranteed to be fully visible within 10s
+    const ceilingTimer = setTimeout(() => {
+      notifyBackendWakeUp({ isWakingUp: false, isLagging: false });
+    }, 10000);
+
     loadData().finally(() => {
+      clearTimeout(ceilingTimer);
       notifyBackendWakeUp({ isWakingUp: false, isLagging: false });
     });
   }, [initialFeed, initialError, isPreview, loadData]);

@@ -11,6 +11,7 @@ import {
   type PublicPackageListItem,
   type PackagesPageContent,
 } from "@/lib/api";
+import { INITIAL_PACKAGES, INITIAL_DESTINATIONS } from "@/lib/initialCatalog";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { QuickInquiryModal } from "@/components/public/QuickInquiryModal";
 import { TravelImage } from "@/components/public/TravelImage";
@@ -38,15 +39,15 @@ export function PackagesClient({
   const hasServerData = Boolean(initialPackages?.length);
 
   const [packages, setPackages] = useState<PublicPackageListItem[]>(
-    initialPackages?.length ? initialPackages : []
+    initialPackages?.length ? initialPackages : INITIAL_PACKAGES
   );
   const [destinations, setDestinations] = useState<PublicDestinationListItem[]>(
-    initialDestinations?.length ? initialDestinations : []
+    initialDestinations?.length ? initialDestinations : INITIAL_DESTINATIONS
   );
   const [pageContent, setPageContent] = useState<PackagesPageContent | null>(
     initialContent || null
   );
-  const [loading, setLoading] = useState(!hasServerData && !initialError);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     initialError ? "Unable to connect to live package catalog. Please check your connection or retry." : null
   );

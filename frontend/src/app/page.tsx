@@ -4,14 +4,12 @@ import { publicCatalogApi, type PublicHomeFeed } from "@/lib/api";
 import { HomeClient } from "./HomeClient";
 import { PublicLayout } from "@/components/public/PublicLayout";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+export const revalidate = 60; // Cache on Vercel edge for 60 seconds; revalidate in background
 
 export async function generateMetadata(): Promise<Metadata> {
   try {
     const feed = await publicCatalogApi.getHomeFeed(false, {
-      cache: "no-store",
+      timeoutMs: 2000,
     });
     const title =
       feed?.content?.seo_title ||
@@ -45,7 +43,7 @@ export default async function HomePage() {
 
   try {
     homeFeed = await publicCatalogApi.getHomeFeed(false, {
-      cache: "no-store",
+      timeoutMs: 2500,
     });
   } catch (err) {
     serverError = true;

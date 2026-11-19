@@ -61,6 +61,28 @@ def sanitize_metadata(data: Any) -> dict[str, Any] | None:
     return cleaned
 
 
+def sanitize_ip(ip: str | None) -> str | None:
+    """Sanitize IP address string from request headers, stripping ports and proxy chains."""
+    if not ip or not isinstance(ip, str):
+        return None
+    ip_str = ip.strip()
+    if not ip_str:
+        return None
+    # If comma-separated (e.g. "client, proxy1, proxy2"), take the client IP
+    if "," in ip_str:
+        ip_str = ip_str.split(",")[0].strip()
+    # Strip port if present in IPv4 (e.g. 1.2.3.4:8080)
+    if ":" in ip_str and not ip_str.endswith("]"):
+        if ip_str.count(":") == 1:
+            ip_str = ip_str.split(":")[0].strip()
+    # Strip brackets from IPv6 (e.g. [2001:db8::1] -> 2001:db8::1)
+    if ip_str.startswith("[") and "]" in ip_str:
+        ip_str = ip_str[1:ip_str.index("]")]
+    # Limit length for database column safety
+    clean = ip_str[:45].strip()
+    return clean if clean else None
+
+
 def record_audit_log(
     db: Session,
     action: str,
@@ -69,20 +91,31 @@ def record_audit_log(
     actor_user_id: UUID | None = None,
     ip_address: str | None = None,
     metadata: dict[str, Any] | None = None,
-) -> AuditLog:
-    """Persist an immutable audit log record with sanitized metadata."""
-    safe_metadata = sanitize_metadata(metadata)
-    entry = AuditLog(
-        action=action[:100],
-        entity_type=entity_type[:100],
-        entity_id=str(entity_id)[:100] if entity_id else None,
-        actor_user_id=actor_user_id,
-        ip_address=ip_address,
-        metadata_json=safe_metadata,
-    )
-    db.add(entry)
-    db.flush()
-    return entry
+) -> AuditLog | None:
+    """Persist an immutable audit log record with sanitized metadata.
+    
+    Resilient: audit log write failures never crash the primary business operation.
+    """
+    try:
+        safe_metadata = sanitize_metadata(metadata)
+        safe_ip = sanitize_ip(ip_address)
+        entry = AuditLog(
+            action=action[:100],
+            entity_type=entity_type[:100],
+            entity_id=str(entity_id)[:100] if entity_id else None,
+            actor_user_id=actor_user_id,
+            ip_address=safe_ip,
+            metadata_json=safe_metadata,
+        )
+        db.add(entry)
+        db.flush()
+        return entry
+    except Exception as exc:
+        import logging
+        logging.getLogger(__name__).warning(
+            "Failed to record audit log (%s on %s): %s", action, entity_type, exc
+        )
+        return None
 
 
 def list_audit_logs(

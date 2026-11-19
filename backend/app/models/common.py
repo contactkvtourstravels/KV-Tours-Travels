@@ -5,7 +5,7 @@ from sqlalchemy.dialects.postgresql import INET, JSONB
 
 MONEY = Numeric(precision=14, scale=2, asdecimal=True)
 JSON_DOCUMENT = JSON().with_variant(JSONB(), "postgresql")
-IP_ADDRESS = String(45).with_variant(INET(), "postgresql")
+IP_ADDRESS = String(45)
 
 
 def currency_check(

@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import {
   publicCatalogApi,
+  notifyBackendWakeUp,
   type PublicDepartureListItem,
   type PublicDestinationListItem,
   type PublicPackageListItem,
@@ -158,7 +159,14 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
     if (initialFeed && !initialError && !isPreview) {
       return;
     }
-    loadData();
+    notifyBackendWakeUp({
+      isWakingUp: true,
+      source: "initial",
+      message: "Curating bespoke journeys & connecting live database...",
+    });
+    loadData().finally(() => {
+      notifyBackendWakeUp({ isWakingUp: false, isLagging: false });
+    });
   }, [initialFeed, initialError, isPreview, loadData]);
 
   // Synchronize dynamic SEO metadata from authoritative pageContent or site settings

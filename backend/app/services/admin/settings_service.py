@@ -99,12 +99,21 @@ def _store_secret(db: Session, key: str, plaintext: str, description: str) -> No
     clean_val = plaintext.strip()
     key_bytes = resolve_encryption_key(get_settings(), allow_derived_fallback=True)
     if not key_bytes or len(key_bytes) != 32:
-        from fastapi import HTTPException
-        raise HTTPException(
+        from app.core.errors import ApiError
+        raise ApiError(
             status_code=400,
-            detail=f"Cannot encrypt secret {key}: 32-byte encryption key could not be resolved from environment or SECRET_KEY.",
+            code="ENCRYPTION_KEY_UNAVAILABLE",
+            message=f"Cannot encrypt secret {key}: server encryption key could not be resolved from environment or SECRET_KEY.",
         )
-    stored_val = encrypt_secret(clean_val, key_bytes)
+    try:
+        stored_val = encrypt_secret(clean_val, key_bytes)
+    except Exception as exc:
+        from app.core.errors import ApiError
+        raise ApiError(
+            status_code=400,
+            code="ENCRYPTION_FAILED",
+            message=f"Encryption failed for {key}: {str(exc)}",
+        )
 
     row = db.get(SiteSetting, key)
     if row is None:
@@ -698,25 +707,27 @@ def update_admin_settings(
         sec_val = getattr(payload, sec_key, None)
         if sec_val is not None:
             clean_sec = sec_val.strip()
-            # If the user left it blank or sent a masked placeholder (e.g. 're_••••' or '••••'),
-            # preserve the existing stored secret and never overwrite with an empty value.
-            if not clean_sec or "•" in clean_sec or clean_sec.startswith("••••"):
+            # If the user left it blank or sent a masked placeholder (e.g. 're_••••', '••••', or '****'),
+            # preserve the existing stored secret and never overwrite with an empty or masked value.
+            if not clean_sec or "•" in clean_sec or "*" in clean_sec or clean_sec.startswith("••••") or clean_sec.startswith("****"):
                 continue
 
             # Validate specific secret formats
             if sec_key == "resend_api_key":
                 if not clean_sec.startswith("re_"):
-                    from fastapi import HTTPException
-                    raise HTTPException(
+                    from app.core.errors import ApiError
+                    raise ApiError(
                         status_code=400,
-                        detail="Resend API keys must begin with 're_'.",
+                        code="INVALID_API_KEY",
+                        message="Resend API keys must begin with 're_'.",
                     )
             elif sec_key == "resend_webhook_signing_secret":
                 if not (clean_sec.startswith("whsec_") or len(clean_sec) >= 16):
-                    from fastapi import HTTPException
-                    raise HTTPException(
+                    from app.core.errors import ApiError
+                    raise ApiError(
                         status_code=400,
-                        detail="Resend Webhook secrets must begin with 'whsec_' or be a valid signing secret.",
+                        code="INVALID_WEBHOOK_SECRET",
+                        message="Resend Webhook secrets must begin with 'whsec_' or be a valid signing secret.",
                     )
 
             _store_secret(db, sec_key, clean_sec, sec_desc)

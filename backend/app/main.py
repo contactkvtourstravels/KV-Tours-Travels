@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -249,11 +249,27 @@ async def handle_http_error(_: Request, exc: StarletteHTTPException) -> JSONResp
     )
 
 
+@app.exception_handler(HTTPException)
+async def handle_fastapi_http_error(_: Request, exc: HTTPException) -> JSONResponse:
+    detail = exc.detail if isinstance(exc.detail, str) else "Request failed"
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"error": {"code": "HTTP_ERROR", "message": detail}},
+        headers=exc.headers,
+    )
+
+
 @app.exception_handler(Exception)
 async def handle_unexpected_error(_: Request, exc: Exception) -> JSONResponse:
     logger.error(
         "Unhandled request error", exc_info=(type(exc), exc, exc.__traceback__)
     )
+    # If the exception is an HTTPException or has a status_code, don't mask it as a generic 500
+    if hasattr(exc, "status_code") and hasattr(exc, "detail"):
+        return JSONResponse(
+            status_code=getattr(exc, "status_code", 500),
+            content={"error": {"code": "HTTP_ERROR", "message": str(getattr(exc, "detail", "Request failed"))}},
+        )
     # Never leak internal exceptions, DB credentials, or stack traces to clients
     message = "An unexpected server error occurred."
     return JSONResponse(

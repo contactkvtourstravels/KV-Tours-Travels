@@ -341,14 +341,16 @@ export default function ResendEmailSection({
         admin_notification_email: adminNotificationEmail.trim() || undefined,
       };
 
-      // Only pass API key if the user entered a new key; blank preserves existing key!
-      if (apiKey.trim()) {
-        payload.resend_api_key = apiKey.trim();
+      // Only pass API key if the user entered a real new key; blank or masked preserves existing key!
+      const cleanKey = apiKey.trim();
+      if (cleanKey && !cleanKey.includes("•") && !cleanKey.includes("*")) {
+        payload.resend_api_key = cleanKey;
       }
 
-      // Only pass webhook secret if the user entered a new secret
-      if (webhookSecret.trim()) {
-        payload.resend_webhook_signing_secret = webhookSecret.trim();
+      // Only pass webhook secret if the user entered a real new secret
+      const cleanSecret = webhookSecret.trim();
+      if (cleanSecret && !cleanSecret.includes("•") && !cleanSecret.includes("*")) {
+        payload.resend_webhook_signing_secret = cleanSecret;
       }
 
       const updated = await adminApi.updateSettings(payload);
@@ -423,9 +425,21 @@ export default function ResendEmailSection({
         )}
 
         {errors.global && (
-          <div className="mt-4 p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-medium flex items-center gap-2 animate-fadeIn">
-            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-            <span>{errors.global}</span>
+          <div className="mt-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs font-medium flex items-center justify-between gap-3 animate-fadeIn">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>{errors.global}</span>
+            </div>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="px-3 py-1 bg-white hover:bg-rose-100 border border-rose-300 text-rose-900 rounded-lg text-xs font-bold transition shadow-2xs cursor-pointer shrink-0 disabled:opacity-50"
+              >
+                {saving ? "Retrying..." : "Retry"}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -746,6 +760,12 @@ export default function ResendEmailSection({
               <div className="relative">
                 <input
                   type={showApiKey ? "text" : "password"}
+                  name="resend_api_key_field"
+                  id="resend_api_key_field"
+                  autoComplete="new-password"
+                  data-1p-ignore="true"
+                  data-lpignore="true"
+                  data-form-type="other"
                   value={apiKey}
                   onChange={(e) => setApiKey(e.target.value)}
                   disabled={!canEdit}
@@ -835,6 +855,18 @@ export default function ResendEmailSection({
             <p className="text-[11px] text-[#5F6368]">
               Verified custom domain address or <code className="font-mono text-[#202124]">onboarding@resend.dev</code> for testing without DNS.
             </p>
+
+            {senderEmail.toLowerCase().includes("@gmail.com") && (
+              <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Resend does not permit outbound delivery from @gmail.com.</p>
+                  <p className="text-[#5F6368] mt-0.5">
+                    For transactional emails, switch outbound sender to <button type="button" onClick={() => setSenderEmail("onboarding@resend.dev")} className="font-bold underline text-amber-950">onboarding@resend.dev</button> (free instant testing) or a verified custom domain. Replies will still be routed to your Gmail inbox.
+                  </p>
+                </div>
+              </div>
+            )}
 
           {/* Customer Reply-To */}
           <div className="space-y-1.5">
@@ -1067,6 +1099,12 @@ export default function ResendEmailSection({
                     <div className="relative">
                       <input
                         type={showWebhookSecret ? "text" : "password"}
+                        name="resend_webhook_secret_field"
+                        id="resend_webhook_secret_field"
+                        autoComplete="new-password"
+                        data-1p-ignore="true"
+                        data-lpignore="true"
+                        data-form-type="other"
                         value={webhookSecret}
                         onChange={(e) => setWebhookSecret(e.target.value)}
                         disabled={!canEdit}

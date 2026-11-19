@@ -1526,23 +1526,35 @@ export function clearCachedCsrfToken(): void {
 
 export interface BackendWakeUpState {
   isWakingUp: boolean;
+  isLagging?: boolean;
   attempt?: number;
   maxRetries?: number;
   failed?: boolean;
   message?: string;
+  source?: "wakeup" | "lag" | "timeout" | "initial";
 }
+
+let activeClientRequestsCount = 0;
+let clientLagTimer: ReturnType<typeof setTimeout> | null = null;
+let currentWakeUpState: BackendWakeUpState = { isWakingUp: false };
 
 const wakeUpListeners = new Set<(state: BackendWakeUpState) => void>();
 
 export function subscribeToBackendWakeUp(listener: (state: BackendWakeUpState) => void): () => void {
   wakeUpListeners.add(listener);
+  try {
+    listener(currentWakeUpState);
+  } catch {
+    // Ignore initial listener error
+  }
   return () => wakeUpListeners.delete(listener);
 }
 
 export function notifyBackendWakeUp(state: BackendWakeUpState): void {
+  currentWakeUpState = { ...currentWakeUpState, ...state };
   wakeUpListeners.forEach((fn) => {
     try {
-      fn(state);
+      fn(currentWakeUpState);
     } catch {
       // Ignore listener error
     }
@@ -1841,15 +1853,51 @@ export async function apiRequest<T>(
     throw new Error("Unable to complete request. Please retry.");
   };
 
+  const runWithLatencyTracking = async <R>(fn: () => Promise<R>): Promise<R> => {
+    if (isServer) {
+      return await fn();
+    }
+
+    activeClientRequestsCount++;
+    if (activeClientRequestsCount === 1 && !clientLagTimer && !currentWakeUpState.isWakingUp) {
+      clientLagTimer = setTimeout(() => {
+        if (activeClientRequestsCount > 0 && !currentWakeUpState.isWakingUp) {
+          notifyBackendWakeUp({
+            isWakingUp: true,
+            isLagging: true,
+            source: "lag",
+            message: "Establishing live cloud connection with KV Tours...",
+          });
+        }
+      }, 1800);
+    }
+
+    try {
+      const res = await fn();
+      return res;
+    } finally {
+      activeClientRequestsCount = Math.max(0, activeClientRequestsCount - 1);
+      if (activeClientRequestsCount === 0) {
+        if (clientLagTimer) {
+          clearTimeout(clientLagTimer);
+          clientLagTimer = null;
+        }
+        if (currentWakeUpState.isWakingUp || currentWakeUpState.isLagging) {
+          notifyBackendWakeUp({ isWakingUp: false, isLagging: false, failed: false });
+        }
+      }
+    }
+  };
+
   if (!isServer && canCache) {
-    const promise = executeFetch().finally(() => {
+    const promise = runWithLatencyTracking(() => executeFetch()).finally(() => {
       inFlightApiRequests.delete(cleanPath);
     });
     inFlightApiRequests.set(cleanPath, promise);
     return await promise;
   }
 
-  return await executeFetch();
+  return await runWithLatencyTracking(() => executeFetch());
 }
 
 /**

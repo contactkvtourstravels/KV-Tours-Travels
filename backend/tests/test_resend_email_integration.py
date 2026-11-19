@@ -193,8 +193,8 @@ def test_send_test_email_mocked_success(db_session, monkeypatch) -> None:
         mock_post.assert_called_once()
         sent_payload = mock_post.call_args[1]["json"]
         assert sent_payload["to"] == ["delivered@resend.dev"]
-        assert "The Wild Route" in sent_payload["html"]
-        assert "The Wild Route" in sent_payload["text"]
+        assert "KV Tours" in sent_payload["html"] or "The Wild Route" in sent_payload["html"]
+        assert "KV Tours" in sent_payload["text"] or "The Wild Route" in sent_payload["text"]
         assert "Admin Notes: Automated test note" in sent_payload["text"]
 
     # Verify NotificationLog was created

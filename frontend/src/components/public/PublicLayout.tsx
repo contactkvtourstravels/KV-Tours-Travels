@@ -3,6 +3,7 @@ import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { FloatingWhatsApp } from "./FloatingWhatsApp";
 import { BackendWakeUpBanner } from "./BackendWakeUpBanner";
+import { PremiumLoadingScreen } from "./PremiumLoadingScreen";
 
 interface PublicLayoutProps {
   children: ReactNode;
@@ -26,6 +27,7 @@ export function PublicLayout({ children, transparentHeader = false }: PublicLayo
       </div>
       <div className="print:hidden">
         <BackendWakeUpBanner />
+        <PremiumLoadingScreen />
       </div>
     </div>
   );

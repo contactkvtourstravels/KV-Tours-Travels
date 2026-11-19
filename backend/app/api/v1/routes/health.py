@@ -1,6 +1,7 @@
 """Health and readiness endpoints for container and load balancer probes."""
 
 import logging
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
@@ -14,12 +15,17 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 DbSession = Annotated[Session, Depends(get_db_session)]
+SERVICE_NAME = "travel-agency-backend"
 
 
 @router.get("/health", summary="API liveness probe")
 def health_check() -> dict[str, str]:
     """Report that the API process is responsive; does not assert external dependencies."""
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "service": SERVICE_NAME,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 
 @router.get("/health/ready", summary="API readiness probe")

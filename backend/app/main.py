@@ -14,6 +14,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.staticfiles import StaticFiles
 
 from app.api.v1.router import api_router
+from app.api.v1.routes.health import health_check
 from app.core.config import get_settings
 from app.core.errors import ApiError
 from app.core.logging import configure_logging
@@ -176,6 +177,7 @@ app.add_middleware(
 )
 
 app.include_router(api_router, prefix="/api/v1")
+app.add_api_route("/health", health_check, methods=["GET"], tags=["health"], summary="Root liveness probe")
 
 # Mount static storage for media assets (images, documents)
 uploads_dir = Path(__file__).resolve().parent.parent / "static" / "uploads"

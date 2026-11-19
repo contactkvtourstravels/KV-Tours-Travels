@@ -1,0 +1,66 @@
+name: Render Backend Keep-Alive & Discord Monitor
+
+on:
+  schedule:
+    # Executes every 10 minutes (6 runs/hour) to keep Render Free Tier and Neon database awake
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+    inputs:
+      force_notify:
+        description: "Force Discord notification even if backend status has not changed"
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  monitor:
+    name: Probe Render Health & Notify Discord
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout Monitoring Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Restore Previous Health State Cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .monitor-state
+          key: monitor-state-${{ github.run_id }}
+          restore-keys: |
+            monitor-state-
+
+      - name: Run Health Probe & Keep-Alive
+        env:
+          RENDER_HEALTH_URL: ${{ secrets.RENDER_HEALTH_URL }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          MONITOR_SECRET: ${{ secrets.MONITOR_SECRET }}
+          IS_MANUAL_TRIGGER: ${{ github.event_name == 'workflow_dispatch' && (inputs.force_notify == true || inputs.force_notify == 'true') }}
+          STATE_FILE_PATH: .monitor-state/state.json
+          TIMEOUT_SECONDS: "35"
+        run: |
+          python monitor.py
+
+      - name: Save Updated Health State Cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: .monitor-state
+          key: monitor-state-${{ github.run_id }}
+
+      - name: Upload State Artifact for Audit
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: monitor-state-audit
+          path: .monitor-state/state.json
+          retention-days: 7

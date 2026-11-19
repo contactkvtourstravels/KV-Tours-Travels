@@ -101,7 +101,7 @@ export function PackagesClient({
             setDestinations(freshDests);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
       return;
     }
     loadCatalog();
@@ -206,26 +206,23 @@ export function PackagesClient({
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <div
-            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs uppercase tracking-widest font-semibold mb-4 shadow-2xs ${
-              bannerImg
+            className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border text-xs uppercase tracking-widest font-semibold mb-4 shadow-2xs ${bannerImg
                 ? "bg-white/20 text-white border-white/30 backdrop-blur-md"
                 : "bg-white text-[#24292F] border-[#D3D8DF]"
-            }`}
+              }`}
           >
             <Sparkles className={`w-3.5 h-3.5 ${bannerImg ? "text-white" : "text-[#5F6368]"}`} />
             <span>{heroEyebrow}</span>
           </div>
           <h1
-            className={`text-3xl sm:text-5xl lg:text-6xl font-serif font-bold tracking-tight ${
-              bannerImg ? "text-white drop-shadow-sm" : "text-[#202124]"
-            }`}
+            className={`text-3xl sm:text-5xl lg:text-6xl font-serif font-bold tracking-tight ${bannerImg ? "text-white drop-shadow-sm" : "text-[#202124]"
+              }`}
           >
             {heroHeading}
           </h1>
           <p
-            className={`mt-4 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed ${
-              bannerImg ? "text-white/90 drop-shadow-xs" : "text-[#70757A]"
-            }`}
+            className={`mt-4 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed ${bannerImg ? "text-white/90 drop-shadow-xs" : "text-[#70757A]"
+              }`}
           >
             {heroDescription}
           </p>
@@ -238,11 +235,10 @@ export function PackagesClient({
                 setClassificationTab("all");
                 setSelectedDest("all");
               }}
-              className={`px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-bold transition-all shadow-xs ${
-                classificationTab === "all"
+              className={`px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-bold transition-all shadow-xs ${classificationTab === "all"
                   ? "bg-[#24292F] text-white"
                   : "bg-white text-[#5F6368] hover:text-[#202124] hover:bg-[#F3F4F4] border border-[#E4E5E7]"
-              }`}
+                }`}
             >
               All Packages ({counts.all})
             </button>
@@ -252,11 +248,10 @@ export function PackagesClient({
                 setClassificationTab("domestic");
                 setSelectedDest("all");
               }}
-              className={`px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-bold transition-all shadow-xs ${
-                classificationTab === "domestic"
+              className={`px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-bold transition-all shadow-xs ${classificationTab === "domestic"
                   ? "bg-[#DFBA73] text-[#1B1E22]"
                   : "bg-white text-[#5F6368] hover:text-[#202124] hover:bg-[#F3F4F4] border border-[#E4E5E7]"
-              }`}
+                }`}
             >
               India Domestic ({counts.domestic})
             </button>
@@ -266,11 +261,10 @@ export function PackagesClient({
                 setClassificationTab("international");
                 setSelectedDest("all");
               }}
-              className={`px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-bold transition-all shadow-xs ${
-                classificationTab === "international"
+              className={`px-5 py-2.5 rounded-full text-xs uppercase tracking-wider font-bold transition-all shadow-xs ${classificationTab === "international"
                   ? "bg-[#DFBA73] text-[#1B1E22]"
                   : "bg-white text-[#5F6368] hover:text-[#202124] hover:bg-[#F3F4F4] border border-[#E4E5E7]"
-              }`}
+                }`}
             >
               International ({counts.international})
             </button>
@@ -473,11 +467,10 @@ export function PackagesClient({
                             key={pageNum}
                             type="button"
                             onClick={() => setCurrentPage(pageNum)}
-                            className={`w-9 h-9 rounded-full text-xs font-semibold transition-all ${
-                              currentPage === pageNum
+                            className={`w-9 h-9 rounded-full text-xs font-semibold transition-all ${currentPage === pageNum
                                 ? "bg-[#24292F] text-white shadow-xs"
                                 : "text-[#70757A] hover:bg-[#F3F4F4] hover:text-[#202124]"
-                            }`}
+                              }`}
                           >
                             {pageNum}
                           </button>

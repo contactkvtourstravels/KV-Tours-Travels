@@ -39,3 +39,4 @@ def downgrade() -> None:
                 "ALTER TABLE audit_logs ALTER COLUMN ip_address TYPE inet USING ip_address::inet;"
             )
         )
+

@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.cache import catalog_cache, trigger_nextjs_revalidation
 from app.core.errors import ApiError
 from app.models.catalog import Package, PackageDeparture
 from app.models.commerce import Booking
@@ -222,6 +223,8 @@ def create_departure(
         },
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("departures")
     return get_departure_by_id(db, departure.id)
 
 
@@ -370,6 +373,8 @@ def update_departure(
         metadata={"changes": changes},
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("departures")
     return get_departure_by_id(db, dep.id)
 
 
@@ -411,6 +416,8 @@ def delete_or_cancel_departure(
             },
         )
         db.commit()
+        catalog_cache.clear()
+        trigger_nextjs_revalidation("departures")
         return get_departure_by_id(db, dep.id)
 
     # No bookings: safe deletion
@@ -429,4 +436,6 @@ def delete_or_cancel_departure(
     dep.status = "cancelled"
     db.delete(dep)
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("departures")
     return serialize_departure(dep)

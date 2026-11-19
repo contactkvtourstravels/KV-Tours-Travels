@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.cache import catalog_cache, trigger_nextjs_revalidation
 from app.core.errors import ApiError
 from app.models.catalog import (
     Activity,
@@ -146,6 +147,8 @@ def create_package_day(
         },
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
 
     # Re-fetch with relationships
     return get_package_day(db, package_id, day.id)
@@ -241,6 +244,8 @@ def update_package_day(
         metadata={"package_id": str(package_id), "changes": changes},
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
     return get_package_day(db, package_id, day.id)
 
 
@@ -275,6 +280,8 @@ def delete_package_day(
     )
     db.delete(day)
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
 
 
 def add_day_activity(
@@ -346,6 +353,8 @@ def add_day_activity(
         },
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
     return get_package_day(db, package_id, day_id)
 
 
@@ -385,6 +394,8 @@ def remove_day_activity(
     )
     db.delete(link)
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
     return get_package_day(db, package_id, day_id)
 
 
@@ -451,5 +462,7 @@ def reorder_package_itinerary(
         },
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
 
     return list_package_itinerary(db, package_id)

@@ -11,7 +11,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.core.cache import catalog_cache
+from app.core.cache import catalog_cache, trigger_nextjs_revalidation
 from app.models.catalog import BestOffer, Package
 from app.models.content import AuditLog, SiteSetting
 from app.schemas.offers import (
@@ -174,7 +174,10 @@ class OffersService:
         )
         db.add(audit)
         db.commit()
-        catalog_cache.invalidate(["offers", "settings"])
+        catalog_cache.clear()
+        trigger_nextjs_revalidation("offers")
+        catalog_cache.clear()
+        trigger_nextjs_revalidation("offers")
         logger.info(
             "Best Offers master toggle updated to %s by user %s", enabled, actor_id
         )
@@ -648,6 +651,10 @@ class OffersService:
         )
         db.add(audit)
         db.commit()
+        catalog_cache.clear()
+        trigger_nextjs_revalidation("offers")
+        catalog_cache.clear()
+        trigger_nextjs_revalidation("offers")
         db.refresh(offer)
         return offer
 
@@ -743,6 +750,10 @@ class OffersService:
         )
         db.add(audit)
         db.commit()
+        catalog_cache.clear()
+        trigger_nextjs_revalidation("offers")
+        catalog_cache.clear()
+        trigger_nextjs_revalidation("offers")
         db.refresh(offer)
         return offer
 
@@ -794,6 +805,8 @@ class OffersService:
         )
         db.add(audit)
         db.commit()
+        catalog_cache.clear()
+        trigger_nextjs_revalidation("offers")
 
     @classmethod
     def validate_offer_for_booking(

@@ -86,6 +86,21 @@ export function PackagesClient({
 
   useEffect(() => {
     if (initialPackages?.length && !initialError && !isPreview) {
+      // Background revalidation: keep initial packages visible immediately without spinner,
+      // but query live catalog to seamlessly reflect any fresh admin mutations
+      Promise.all([
+        publicCatalogApi.getPackages(),
+        publicCatalogApi.getDestinations(),
+      ])
+        .then(([freshPkgs, freshDests]) => {
+          if (Array.isArray(freshPkgs) && freshPkgs.length > 0) {
+            setPackages(freshPkgs);
+          }
+          if (Array.isArray(freshDests) && freshDests.length > 0) {
+            setDestinations(freshDests);
+          }
+        })
+        .catch(() => {});
       return;
     }
     loadCatalog();

@@ -157,6 +157,26 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
 
   useEffect(() => {
     if (initialFeed && !initialError && !isPreview) {
+      // Background revalidation: keep initial feed instantly visible,
+      // but fetch live database updates in background to reflect any admin edits
+      publicCatalogApi
+        .getHomeFeed(false, { cache: "no-store" })
+        .then((freshFeed) => {
+          if (freshFeed) {
+            if (Array.isArray(freshFeed.destinations) && freshFeed.destinations.length > 0) {
+              setDestinations(freshFeed.destinations);
+            }
+            if (Array.isArray(freshFeed.packages) && freshFeed.packages.length > 0) {
+              setPackages(freshFeed.packages);
+            }
+            if (Array.isArray(freshFeed.departures) && freshFeed.departures.length > 0) {
+              setDepartures(freshFeed.departures);
+            }
+            if (freshFeed.settings) setSettings(freshFeed.settings);
+            if (freshFeed.content) setPageContent((prev) => ({ ...prev, ...freshFeed.content }));
+          }
+        })
+        .catch(() => {});
       return;
     }
     notifyBackendWakeUp({

@@ -13,6 +13,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.core.cache import catalog_cache, trigger_nextjs_revalidation
 from app.models.content import AuditLog, SiteSetting
 from app.schemas.content import (
     AboutPageContent,
@@ -715,6 +716,8 @@ def update_admin_page(
     )
 
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("content")
     db.refresh(row)
 
     return get_admin_page(db, canon)
@@ -766,6 +769,8 @@ def publish_admin_page(
     )
 
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("content")
     db.refresh(row)
     return get_admin_page(db, canon)
 
@@ -804,6 +809,8 @@ def discard_admin_page_draft(
     )
 
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("content")
     db.refresh(row)
     return get_admin_page(db, canon)
 

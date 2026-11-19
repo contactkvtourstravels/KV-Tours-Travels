@@ -9,7 +9,7 @@ from sqlalchemy import delete, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.core.errors import ApiError
-from app.models.catalog import Destination, Package
+from app.models.catalog import Destination, DestinationImage, Package
 from app.models.commerce import Booking
 from app.schemas.admin import (
     DestinationCreateRequest,
@@ -19,7 +19,7 @@ from app.schemas.admin import (
 )
 from app.services.admin.audit_service import record_audit_log
 from app.services.admin.utils import generate_unique_slug, paginate, slugify
-from app.core.cache import catalog_cache
+from app.core.cache import catalog_cache, trigger_nextjs_revalidation
 
 
 def serialize_destination(
@@ -215,7 +215,8 @@ def create_destination(
         },
     )
     db.commit()
-    catalog_cache.invalidate(["destinations"])
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("destinations")
     return serialize_destination(destination, 0)
 
 
@@ -285,9 +286,42 @@ def update_destination(
             payload.travel_type.strip() if payload.travel_type else None
         )
     if payload.cover_image_url is not None:
-        destination.cover_image_url = (
-            payload.cover_image_url.strip() if payload.cover_image_url else None
-        )
+        clean_cover = payload.cover_image_url.strip() if payload.cover_image_url else None
+        destination.cover_image_url = clean_cover
+        if clean_cover:
+            # Synchronize DestinationImage table so featured image never displays stale photo
+            featured_images = (
+                db.execute(
+                    select(DestinationImage).where(
+                        DestinationImage.destination_id == destination.id,
+                        DestinationImage.is_featured.is_(True),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            if featured_images:
+                for f in featured_images:
+                    f.image_url = clean_cover
+            else:
+                existing_img = db.execute(
+                    select(DestinationImage).where(
+                        DestinationImage.destination_id == destination.id,
+                        DestinationImage.image_url == clean_cover,
+                    )
+                ).scalars().first()
+                if existing_img:
+                    existing_img.is_featured = True
+                else:
+                    db.add(
+                        DestinationImage(
+                            destination_id=destination.id,
+                            image_url=clean_cover,
+                            alt_text=f"{destination.name} cover photo",
+                            is_featured=True,
+                            sort_order=1,
+                        )
+                    )
     if payload.display_order is not None:
         destination.display_order = payload.display_order
     if payload.highlights_json is not None:
@@ -341,7 +375,8 @@ def update_destination(
         metadata={"changes": changes},
     )
     db.commit()
-    catalog_cache.invalidate(["destinations"])
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("destinations")
 
     package_count = db.execute(
         select(func.count(Package.id)).where(
@@ -464,6 +499,7 @@ def delete_destination(
         metadata={"slug": destination.slug, "name": destination.name},
     )
     db.commit()
-    catalog_cache.invalidate(["destinations", "packages", "home"])
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("destinations")
 
     return res

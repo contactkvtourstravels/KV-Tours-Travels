@@ -72,6 +72,12 @@ export function DestinationsClient({
 
   useEffect(() => {
     if (initialDestinations?.length && !initialError && !isPreview) {
+      // Background revalidation to reflect admin updates without blocking spinner
+      publicCatalogApi.getDestinations().then((freshDests) => {
+        if (Array.isArray(freshDests) && freshDests.length > 0) {
+          setDestinations(freshDests);
+        }
+      }).catch(() => {});
       return;
     }
     fetchDestinations();

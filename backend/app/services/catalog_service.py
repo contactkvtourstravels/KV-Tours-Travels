@@ -95,9 +95,9 @@ def get_public_destinations(
     results: list[PublicDestinationListItem] = []
     for d in destinations:
         featured_img: PublicImageItem | None = None
-        # Check if an admin uploaded/marked an image as featured in destination_images
+        # Prioritize package direct cover_image_url, then admin featured gallery image, then sorted gallery
         admin_featured = next((img for img in d.images if img.is_featured), None)
-        effective_cover = admin_featured.image_url if admin_featured else d.cover_image_url
+        effective_cover = d.cover_image_url or (admin_featured.image_url if admin_featured else None)
         if not effective_cover and d.images:
             sorted_imgs = sorted(
                 d.images, key=lambda i: (not i.is_featured, i.sort_order)
@@ -163,7 +163,7 @@ def get_public_destination_by_slug(db: Session, slug: str) -> PublicDestinationD
         )
 
     admin_featured = next((img for img in dest.images if img.is_featured), None)
-    effective_cover = admin_featured.image_url if admin_featured else dest.cover_image_url
+    effective_cover = dest.cover_image_url or (admin_featured.image_url if admin_featured else None)
     if not effective_cover and dest.images:
         sorted_imgs = sorted(dest.images, key=lambda i: (not i.is_featured, i.sort_order))
         effective_cover = sorted_imgs[0].image_url
@@ -269,7 +269,7 @@ def get_public_packages(
     for p in packages:
         featured_img: PublicImageItem | None = None
         admin_featured = next((img for img in p.images if img.is_featured), None)
-        effective_cover = admin_featured.image_url if admin_featured else p.cover_image_url
+        effective_cover = p.cover_image_url or (admin_featured.image_url if admin_featured else None)
         if not effective_cover and p.images:
             sorted_imgs = sorted(
                 p.images, key=lambda i: (not i.is_featured, i.sort_order)
@@ -350,7 +350,7 @@ def get_public_package_by_slug(db: Session, slug: str) -> PublicPackageDetail:
         )
 
     admin_featured = next((img for img in pkg.images if img.is_featured), None)
-    effective_cover = admin_featured.image_url if admin_featured else pkg.cover_image_url
+    effective_cover = pkg.cover_image_url or (admin_featured.image_url if admin_featured else None)
     if not effective_cover and pkg.images:
         sorted_imgs = sorted(pkg.images, key=lambda i: (not i.is_featured, i.sort_order))
         effective_cover = sorted_imgs[0].image_url
@@ -682,7 +682,7 @@ def get_public_all_departures(db: Session) -> list[PublicDepartureListItem]:
         pkg = dep.package
         featured_img: PublicImageItem | None = None
         admin_featured = next((img for img in pkg.images if img.is_featured), None)
-        effective_cover = admin_featured.image_url if admin_featured else pkg.cover_image_url
+        effective_cover = pkg.cover_image_url or (admin_featured.image_url if admin_featured else None)
         if not effective_cover and pkg.images:
             sorted_imgs = sorted(
                 pkg.images, key=lambda i: (not i.is_featured, i.sort_order)

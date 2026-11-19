@@ -39,24 +39,50 @@ export async function POST(request: NextRequest) {
     const revalidated: string[] = [];
 
     if (targetTag) {
-      revalidateTag(targetTag, { expire: 0 });
-      revalidated.push(`tag:${targetTag}`);
+      try {
+        revalidateTag(targetTag, { expire: 0 });
+        revalidated.push(`tag:${targetTag}`);
+      } catch (tagErr) {
+        console.warn(`Could not revalidate tag ${targetTag}:`, tagErr);
+      }
     }
 
-    if (targetPath) {
-      revalidatePath(targetPath);
-      revalidated.push(`path:${targetPath}`);
-    }
-
-    // Default purge for catalog updates if nothing specific passed
-    if (!targetTag && !targetPath) {
+    // Always invalidate common catalog tags to ensure consistency
+    try {
       revalidateTag("catalog", { expire: 0 });
       revalidateTag("home_feed", { expire: 0 });
-      revalidatePath("/");
-      revalidatePath("/packages");
-      revalidatePath("/destinations");
-      revalidatePath("/group-trips");
-      revalidated.push("catalog", "home_feed", "/", "/packages", "/destinations", "/group-trips");
+      revalidateTag("packages", { expire: 0 });
+      revalidateTag("destinations", { expire: 0 });
+      revalidated.push("tags:catalog,home_feed,packages,destinations");
+    } catch {}
+
+    const pathsToPurge = new Set<string>([
+      "/",
+      "/packages",
+      "/destinations",
+      "/group-trips",
+      "/about",
+      "/contact",
+    ]);
+    if (targetPath) {
+      pathsToPurge.add(targetPath);
+    }
+
+    for (const p of pathsToPurge) {
+      try {
+        revalidatePath(p, "page");
+        revalidated.push(`path:${p}`);
+      } catch (pathErr) {
+        console.warn(`Could not revalidate path ${p}:`, pathErr);
+      }
+    }
+
+    // Purge root layout tree to flush edge caches across all static routes
+    try {
+      revalidatePath("/", "layout");
+      revalidated.push("layout:/");
+    } catch (layoutErr) {
+      console.warn("Could not revalidate layout /:", layoutErr);
     }
 
     return NextResponse.json({

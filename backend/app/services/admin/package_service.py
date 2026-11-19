@@ -8,7 +8,7 @@ from uuid import UUID
 from sqlalchemy import delete, desc, func, or_, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.core.cache import catalog_cache
+from app.core.cache import catalog_cache, trigger_nextjs_revalidation
 from app.core.errors import ApiError
 from app.models.catalog import Destination, Package, PackageDay, PackageDeparture, PackageImage, Review
 from app.models.commerce import Booking
@@ -255,6 +255,8 @@ def create_package(
         },
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
 
     # Re-query with destination loaded
     return get_package_by_id(db, package.id)
@@ -389,9 +391,42 @@ def update_package(
             payload.departure_location.strip() if payload.departure_location else None
         )
     if payload.cover_image_url is not None:
-        package.cover_image_url = (
-            payload.cover_image_url.strip() if payload.cover_image_url else None
-        )
+        clean_cover = payload.cover_image_url.strip() if payload.cover_image_url else None
+        package.cover_image_url = clean_cover
+        if clean_cover:
+            # Synchronize PackageImage table so featured image never displays stale photo
+            featured_images = (
+                db.execute(
+                    select(PackageImage).where(
+                        PackageImage.package_id == package.id,
+                        PackageImage.is_featured.is_(True),
+                    )
+                )
+                .scalars()
+                .all()
+            )
+            if featured_images:
+                for f in featured_images:
+                    f.image_url = clean_cover
+            else:
+                existing_img = db.execute(
+                    select(PackageImage).where(
+                        PackageImage.package_id == package.id,
+                        PackageImage.image_url == clean_cover,
+                    )
+                ).scalars().first()
+                if existing_img:
+                    existing_img.is_featured = True
+                else:
+                    db.add(
+                        PackageImage(
+                            package_id=package.id,
+                            image_url=clean_cover,
+                            alt_text=f"{package.name} cover photo",
+                            is_featured=True,
+                            sort_order=1,
+                        )
+                    )
     if payload.inclusions_json is not None:
         package.inclusions_json = payload.inclusions_json
     if payload.exclusions_json is not None:
@@ -450,6 +485,8 @@ def update_package(
         metadata={"changes": changes},
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
 
     return get_package_by_id(db, package.id)
 
@@ -543,6 +580,7 @@ def delete_package(
         },
     )
     db.commit()
-    catalog_cache.invalidate(["packages", "destinations", "home"])
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
 
     return package_res

@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.cache import catalog_cache, trigger_nextjs_revalidation
 from app.core.errors import ApiError
 from app.models.catalog import Destination, DestinationImage
 from app.schemas.admin import (
@@ -120,6 +121,8 @@ def add_destination_image(
         },
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("destinations")
     return serialize_destination_image(image)
 
 
@@ -195,6 +198,8 @@ def update_destination_image(
         metadata={"destination_id": str(destination_id), "changes": changes},
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("destinations")
     return serialize_destination_image(image)
 
 
@@ -232,3 +237,5 @@ def delete_destination_image(
     )
     db.delete(image)
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("destinations")

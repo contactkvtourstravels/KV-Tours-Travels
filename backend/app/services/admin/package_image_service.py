@@ -7,6 +7,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.cache import catalog_cache, trigger_nextjs_revalidation
 from app.core.errors import ApiError
 from app.models.catalog import Package, PackageImage
 from app.schemas.admin import (
@@ -114,6 +115,8 @@ def add_package_image(
         },
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
     return serialize_package_image(image)
 
 
@@ -188,6 +191,8 @@ def update_package_image(
         metadata={"package_id": str(package_id), "changes": changes},
     )
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")
     return serialize_package_image(image)
 
 
@@ -225,3 +230,5 @@ def delete_package_image(
     )
     db.delete(image)
     db.commit()
+    catalog_cache.clear()
+    trigger_nextjs_revalidation("packages")

@@ -111,27 +111,41 @@ def trigger_nextjs_revalidation(tag: str = "catalog") -> None:
     Runs in a non-blocking background daemon thread to ensure database transactions
     complete with zero delay.
     """
+    import os
+    if os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("TESTING") == "1":
+        return
+
     def _ping():
+        import json
         import urllib.request
         from app.core.config import get_settings
         try:
             settings = get_settings()
             secret = "kv-tours-secret-revalidate-token"
-            frontend_base = settings.frontend_url.rstrip("/")
-            targets = [f"{frontend_base}/api/revalidate?tag={tag}&secret={secret}"]
-            if "kv-tours" not in frontend_base:
-                targets.append(
-                    f"https://kv-tours-travels.vercel.app/api/revalidate?tag={tag}&secret={secret}"
-                )
+            targets: list[str] = []
+            if settings.frontend_url:
+                frontend_base = settings.frontend_url.rstrip("/")
+                targets.append(f"{frontend_base}/api/revalidate?tag={tag}&secret={secret}")
+            # Always ensure production Vercel edge is notified
+            prod_vercel = f"https://kv-tours-travels.vercel.app/api/revalidate?tag={tag}&secret={secret}"
+            if prod_vercel not in targets:
+                targets.append(prod_vercel)
+
+            payload = json.dumps({"tag": tag, "secret": secret}).encode("utf-8")
             for url in targets:
                 try:
-                    req = urllib.request.Request(url, method="POST")
+                    req = urllib.request.Request(
+                        url,
+                        data=payload,
+                        headers={"Content-Type": "application/json", "User-Agent": "KVToursBackend/1.0"},
+                        method="POST",
+                    )
                     with urllib.request.urlopen(req, timeout=4.0):
                         pass
-                except Exception:
-                    pass
-        except Exception:
-            pass
+                except Exception as ex:
+                    logger.debug("Next.js revalidation ping to %s failed: %s", url, ex)
+        except Exception as e:
+            logger.debug("Next.js revalidation worker error: %s", e)
 
     t = threading.Thread(target=_ping, daemon=True)
     t.start()
@@ -141,45 +155,53 @@ def attach_cache_invalidation_listeners() -> None:
     """Attach SQLAlchemy event listeners to automatically invalidate relevant public catalog cache entries."""
     try:
         from sqlalchemy import event
-        from app.models.catalog import BestOffer, Destination, Package, PackageDeparture
-        from app.models.content import SiteSetting
+        from app.models.catalog import (
+            Activity,
+            BestOffer,
+            Destination,
+            DestinationImage,
+            Hotel,
+            Package,
+            PackageActivity,
+            PackageDay,
+            PackageDayActivity,
+            PackageDeparture,
+            PackageHotel,
+            PackageImage,
+        )
+        from app.models.content import BlogPost, SiteSetting
 
-        @event.listens_for(Destination, "after_insert")
-        @event.listens_for(Destination, "after_update")
-        @event.listens_for(Destination, "after_delete")
-        def _on_destination_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["destinations", "packages", "home_feed"])
-            trigger_nextjs_revalidation("destinations")
+        def _wipe_and_revalidate(tag: str):
+            catalog_cache.clear()
+            trigger_nextjs_revalidation(tag)
 
-        @event.listens_for(Package, "after_insert")
-        @event.listens_for(Package, "after_update")
-        @event.listens_for(Package, "after_delete")
-        def _on_package_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["packages", "destinations", "departures", "offers", "home_feed"])
-            trigger_nextjs_revalidation("packages")
+        # Destinations and Destination Images
+        for model in (Destination, DestinationImage):
+            for action in ("after_insert", "after_update", "after_delete"):
+                event.listen(model, action, lambda _m, _c, _t: _wipe_and_revalidate("destinations"))
 
-        @event.listens_for(PackageDeparture, "after_insert")
-        @event.listens_for(PackageDeparture, "after_update")
-        @event.listens_for(PackageDeparture, "after_delete")
-        def _on_departure_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["departures", "packages", "home_feed"])
-            trigger_nextjs_revalidation("departures")
+        # Packages, Images, Days, Activities, Hotels, Departures, Offers
+        for model in (
+            Package,
+            PackageImage,
+            PackageDay,
+            PackageDayActivity,
+            PackageHotel,
+            PackageActivity,
+            PackageDeparture,
+            BestOffer,
+            Activity,
+            Hotel,
+        ):
+            for action in ("after_insert", "after_update", "after_delete"):
+                event.listen(model, action, lambda _m, _c, _t: _wipe_and_revalidate("packages"))
 
-        @event.listens_for(BestOffer, "after_insert")
-        @event.listens_for(BestOffer, "after_update")
-        @event.listens_for(BestOffer, "after_delete")
-        def _on_offer_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["offers", "home_feed"])
-            trigger_nextjs_revalidation("offers")
+        # Settings and Content
+        for model in (SiteSetting, BlogPost):
+            for action in ("after_insert", "after_update", "after_delete"):
+                event.listen(model, action, lambda _m, _c, _t: _wipe_and_revalidate("settings"))
 
-        @event.listens_for(SiteSetting, "after_insert")
-        @event.listens_for(SiteSetting, "after_update")
-        @event.listens_for(SiteSetting, "after_delete")
-        def _on_setting_mutation(_mapper, _conn, _target):
-            catalog_cache.invalidate(["settings", "offers", "home_feed"])
-            trigger_nextjs_revalidation("settings")
-
-        logger.info("Catalog cache auto-invalidation event listeners attached successfully.")
+        logger.info("Catalog cache auto-invalidation event listeners attached successfully for all models.")
     except Exception as e:
         logger.warning("Could not attach SQLAlchemy cache listeners: %s", e)
 

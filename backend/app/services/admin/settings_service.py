@@ -12,7 +12,7 @@ import httpx
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.core.cache import catalog_cache
+from app.core.cache import catalog_cache, trigger_nextjs_revalidation
 from app.core.config import get_settings
 from app.core.encryption import (
     DecryptionError,
@@ -744,9 +744,10 @@ def update_admin_settings(
             metadata={"changes": changes},
         )
         db.commit()
-        catalog_cache.invalidate(["settings", "offers", "destinations", "packages"])
+        catalog_cache.clear()
+        trigger_nextjs_revalidation("settings")
     else:
-        catalog_cache.invalidate(["settings"])
+        catalog_cache.clear()
 
     return get_admin_settings(db)
 

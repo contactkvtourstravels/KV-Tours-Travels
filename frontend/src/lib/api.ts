@@ -1897,7 +1897,20 @@ export async function apiRequest<T>(
     return await promise;
   }
 
-  return await runWithLatencyTracking(() => executeFetch());
+  const result = await runWithLatencyTracking(() => executeFetch());
+
+  // Real-time synchronization: When admin mutations succeed, flush client caches and notify Next.js edge
+  if (!isServer && ["POST", "PUT", "PATCH", "DELETE"].includes(method) && cleanPath.startsWith("/admin")) {
+    clearClientCatalogCache();
+    try {
+      fetch("/api/revalidate?secret=kv-tours-secret-revalidate-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      }).catch(() => {});
+    } catch {}
+  }
+
+  return result;
 }
 
 /**

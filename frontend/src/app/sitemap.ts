@@ -3,7 +3,7 @@ import { publicCatalogApi } from "@/lib/api";
 import { INITIAL_DESTINATIONS, INITIAL_PACKAGES } from "@/lib/initialCatalog";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
 
   const staticRoutes: MetadataRoute.Sitemap = [
     {

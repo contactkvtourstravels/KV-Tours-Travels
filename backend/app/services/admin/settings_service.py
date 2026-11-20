@@ -847,7 +847,7 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
     if "<" in sender_email and ">" in sender_email:
         sender_email = sender_email.split("<")[1].split(">")[0].strip()
 
-    domain = sender_email.split("@")[-1] if "@" in sender_email else "kvtours.in"
+    domain = sender_email.split("@")[-1] if "@" in sender_email else "kvtourstravels.in"
 
     api_key = get_resend_api_key(db)
     if not api_key:
@@ -887,7 +887,7 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
             status="unverified",
             message=(
                 "Resend sandbox sender (onboarding@resend.dev) detected. Production customer emails cannot be sent from resend.dev. "
-                "Please configure a sender address on your verified domain (e.g. bookings@kvtours.in) and verify the domain at resend.com/domains."
+                "Please configure a sender address on your verified domain (e.g. bookings@kvtourstravels.in) and verify the domain at resend.com/domains."
             ),
             provider="resend",
             api_key_configured=True,

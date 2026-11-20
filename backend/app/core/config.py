@@ -128,6 +128,8 @@ class Settings(BaseSettings):
         ]
         # Always allow production and staging frontend domains
         for prod_domain in (
+            "https://kvtourstravels.in",
+            "https://www.kvtourstravels.in",
             "https://kv-tours-travels.vercel.app",
             "https://the-wild-root.vercel.app",
             "https://kvtours.in",

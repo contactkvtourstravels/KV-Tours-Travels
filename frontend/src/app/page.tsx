@@ -7,7 +7,7 @@ import { PublicLayout } from "@/components/public/PublicLayout";
 export const revalidate = 60; // Cache on Vercel edge for 60 seconds; revalidate in background
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
   const defaultTitle = "KV Tours & Travels | Best Travel Agency in Coimbatore | Tour Packages";
   const defaultDescription =
     "Coimbatore's premier travel agency located at Cross Cut Road, Gandhipuram. Curating bespoke international tour packages (Maldives, Bali, Kazakhstan, Dubai, Japan), domestic group departures, honeymoon escapes, and custom holidays. Contact our concierge today.";

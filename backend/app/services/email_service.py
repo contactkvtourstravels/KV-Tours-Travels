@@ -227,7 +227,7 @@ class EmailService:
         if any(sender_addr.endswith(d) for d in forbidden_domains):
             raise ValueError(
                 f"Resend does not permit sending from '{sender_addr}'. Public webmail domains (@gmail.com, @yahoo.com, etc.) cannot be used as the From address. "
-                f"Please verify your agency domain (e.g. 'kvtours.in') in Resend and use 'bookings@kvtours.in', or use 'onboarding@resend.dev' for sandbox testing."
+                f"Please verify your agency domain (e.g. 'kvtourstravels.in') in Resend and use 'bookings@kvtourstravels.in', or use 'onboarding@resend.dev' for sandbox testing."
             )
 
         # Generate a clean plain-text fallback if not explicitly passed

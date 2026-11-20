@@ -31,7 +31,7 @@ export async function generateMetadata({ params }: DestinationPageProps): Promis
       return { title: "Destination Not Found" };
     }
     const agencyName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
-    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
     const title = dest.seo_title || `${dest.name} Tour Packages | ${agencyName}`;
     const description =
       dest.seo_description ||
@@ -156,7 +156,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
     touristType: ["Luxury", "Adventure", "Couples", "Family"],
   };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
   const breadcrumbData = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",

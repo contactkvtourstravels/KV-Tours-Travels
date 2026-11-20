@@ -2492,7 +2492,7 @@ export default function PackageEditorPage() {
                 {formSeoTitle || `${pkg.name} | KV Tours & Travels`}
               </div>
               <div className="text-xs text-emerald-700 font-mono">
-                https://kv-tours-travels.vercel.app/packages/{formSlug || pkg.slug}
+                https://kvtourstravels.in/packages/{formSlug || pkg.slug}
               </div>
               <div className="text-xs text-[#5F6368] line-clamp-2">
                 {formSeoDesc ||

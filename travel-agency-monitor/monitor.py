@@ -118,7 +118,7 @@ def send_discord_notification(webhook_url: str | None, embed: dict[str, Any]) ->
 
     payload = {
         "username": "KV Tours Render Monitor",
-        "avatar_url": "https://kv-tours-travels.vercel.app/logo.png",
+        "avatar_url": "https://kvtourstravels.in/logo.png",
         "embeds": [embed],
     }
 

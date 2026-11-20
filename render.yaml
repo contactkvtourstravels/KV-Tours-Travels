@@ -21,9 +21,9 @@ services:
       - key: BACKEND_URL
         sync: false
       - key: FRONTEND_URL
-        value: "https://kv-tours-travels.vercel.app"
+        value: "https://kvtourstravels.in"
       - key: FRONTEND_ORIGINS
-        value: "https://kv-tours-travels.vercel.app"
+        value: "https://kvtourstravels.in,https://www.kvtourstravels.in,https://kv-tours-travels.vercel.app"
       - key: AUTH_COOKIE_NAME
         value: travel_session
       - key: AUTH_COOKIE_SECURE

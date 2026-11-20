@@ -41,7 +41,7 @@ export async function generateMetadata(): Promise<Metadata> {
     settings?.business_description ||
     `${displayName} is Coimbatore's premier travel agency located at Cross Cut Road, Gandhipuram. Curating bespoke international tour packages (Maldives, Bali, Kazakhstan, Dubai, Japan), domestic group departures, honeymoon escapes, and custom holidays. Contact our concierge today.`;
 
-  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
 
   return {
     metadataBase: new URL(siteUrl),
@@ -139,7 +139,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const settings = await getCachedSettings();
 
   const displayName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
-  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+  const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
   const phone = settings?.contact_phone || settings?.whatsapp_number || DEFAULT_BUSINESS_PHONE;
   const email = settings?.contact_email || "contact.kvtourstravels@gmail.com";
   const street = settings?.office_address || "Cross Cut Road, Gandhipuram";

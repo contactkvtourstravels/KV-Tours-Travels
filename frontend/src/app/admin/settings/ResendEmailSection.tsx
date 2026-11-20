@@ -114,7 +114,7 @@ export default function ResendEmailSection({
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Derive target sender domain
-  const senderDomain = senderEmail.includes("@") ? senderEmail.split("@")[1].trim() : "kvtours.in";
+  const senderDomain = senderEmail.includes("@") ? senderEmail.split("@")[1].trim() : "kvtourstravels.in";
 
   // Production Webhook URL
   const productionWebhookUrl =

@@ -32,7 +32,7 @@ jobs:
 
       - name: Ping Frontend Keep-Alive
         run: |
-          echo "Pinging https://kv-tours-travels.vercel.app/api/keep-alive..."
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 50 "https://kv-tours-travels.vercel.app/api/keep-alive" || true)
+          echo "Pinging https://kvtourstravels.in/api/keep-alive..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 50 "https://kvtourstravels.in/api/keep-alive" || true)
           echo "Received frontend status code: $STATUS"
 

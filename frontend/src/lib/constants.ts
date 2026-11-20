@@ -9,6 +9,8 @@ export const AGENCY_LOCATION = process.env.NEXT_PUBLIC_AGENCY_LOCATION || "Coimb
 export const AGENCY_OFFICE_ADDRESS =
   process.env.NEXT_PUBLIC_AGENCY_OFFICE_ADDRESS ||
   "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012";
+export const DEFAULT_WEBSITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
 
 export const DEFAULT_CONTACT_EMAIL =
   process.env.NEXT_PUBLIC_CONTACT_EMAIL || "contact.kvtourstravels@gmail.com";

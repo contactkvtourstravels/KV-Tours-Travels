@@ -7,7 +7,7 @@ import { CustomTripClient } from "./CustomTripClient";
 export const revalidate = 60; // Cache on Vercel edge for 60s; revalidate in background
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
   return {
     title: "Custom Trip Planner Coimbatore | Bespoke Holiday Itineraries | KV Tours & Travels",
     description:

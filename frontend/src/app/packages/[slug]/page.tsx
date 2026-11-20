@@ -47,7 +47,7 @@ export async function generateMetadata({ params }: PackagePageProps): Promise<Me
       return { title: "Package Not Found" };
     }
     const agencyName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
-    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+    const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
     const title = pkg.seo_title || `${pkg.name} | ${agencyName}`;
     const description =
       pkg.seo_description ||
@@ -161,7 +161,7 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
     getDestinationFallback(pkg.slug || pkg.destination_slug || pkg.destination_name);
   const heroImg = getSafeImageUrl(rawHero);
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
 
   // Schema.org structured data (Product & TouristTrip)
   const structuredData = {

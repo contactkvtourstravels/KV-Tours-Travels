@@ -10,4 +10,7 @@ def test_health_endpoint_returns_ok() -> None:
         response = client.get("/api/v1/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    data = response.json()
+    assert data["status"] == "ok"
+    assert "service" in data
+    assert "timestamp" in data

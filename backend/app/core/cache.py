@@ -126,10 +126,13 @@ def trigger_nextjs_revalidation(tag: str = "catalog") -> None:
             if settings.frontend_url:
                 frontend_base = settings.frontend_url.rstrip("/")
                 targets.append(f"{frontend_base}/api/revalidate?tag={tag}&secret={secret}")
-            # Always ensure production Vercel edge is notified
-            prod_vercel = f"https://kv-tours-travels.vercel.app/api/revalidate?tag={tag}&secret={secret}"
-            if prod_vercel not in targets:
-                targets.append(prod_vercel)
+            # Always ensure production custom domain and Vercel edge are notified
+            for custom_target in (
+                f"https://kvtourstravels.in/api/revalidate?tag={tag}&secret={secret}",
+                f"https://kv-tours-travels.vercel.app/api/revalidate?tag={tag}&secret={secret}",
+            ):
+                if custom_target not in targets:
+                    targets.append(custom_target)
 
             payload = json.dumps({"tag": tag, "secret": secret}).encode("utf-8")
             for url in targets:

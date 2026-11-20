@@ -10,7 +10,7 @@ import { DestinationsClient } from "./DestinationsClient";
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
   return {
     title: "Holiday Destinations from Coimbatore | International & Domestic | KV Tours & Travels",
     description:

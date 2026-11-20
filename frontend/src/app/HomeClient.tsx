@@ -423,7 +423,7 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
   }, [pageContent?.trust_indicators]);
 
   return (
-    <PublicLayout transparentHeader>
+    <PublicLayout transparentHeader hideWakeUpBanner>
       {/* =========================================================================
           1. CINEMATIC HERO SECTION
          ========================================================================= */}

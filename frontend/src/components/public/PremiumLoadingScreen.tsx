@@ -14,7 +14,11 @@ import {
 import { subscribeToBackendWakeUp, type BackendWakeUpState } from "@/lib/api";
 import { useBranding } from "@/context/BrandingContext";
 
-export function PremiumLoadingScreen() {
+export function PremiumLoadingScreen({
+  hideMinimizedPill = false,
+}: {
+  hideMinimizedPill?: boolean;
+} = {}) {
   const pathname = usePathname();
   const { displayName, tagline, logoUrl } = useBranding();
   const [state, setState] = useState<BackendWakeUpState>({ isWakingUp: false });
@@ -65,8 +69,15 @@ export function PremiumLoadingScreen() {
 
   // Minimized floating pill mode
   if (isMinimized) {
+    const isHome =
+      hideMinimizedPill ||
+      !pathname ||
+      pathname === "/" ||
+      pathname === "" ||
+      (typeof window !== "undefined" && (window.location.pathname === "/" || window.location.pathname === ""));
+
     // Suppress small popup loading pill on public home screen ("/") per design requirement
-    if (pathname === "/") {
+    if (isHome) {
       return null;
     }
 

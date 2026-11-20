@@ -9,9 +9,14 @@ import { BackendKeepAliveBeacon } from "./BackendKeepAliveBeacon";
 interface PublicLayoutProps {
   children: ReactNode;
   transparentHeader?: boolean;
+  hideWakeUpBanner?: boolean;
 }
 
-export function PublicLayout({ children, transparentHeader = false }: PublicLayoutProps) {
+export function PublicLayout({
+  children,
+  transparentHeader = false,
+  hideWakeUpBanner = false,
+}: PublicLayoutProps) {
   return (
     <div className="min-h-screen flex flex-col bg-white text-[#202124] selection:bg-[#24292F]/15 selection:text-[#202124]">
       <div className="print:hidden">
@@ -27,8 +32,8 @@ export function PublicLayout({ children, transparentHeader = false }: PublicLayo
         <FloatingWhatsApp />
       </div>
       <div className="print:hidden">
-        <BackendWakeUpBanner />
-        <PremiumLoadingScreen />
+        {!hideWakeUpBanner && <BackendWakeUpBanner />}
+        <PremiumLoadingScreen hideMinimizedPill={hideWakeUpBanner} />
         <BackendKeepAliveBeacon />
       </div>
     </div>

@@ -53,7 +53,7 @@ export default async function HomePage() {
   return (
     <Suspense
       fallback={
-        <PublicLayout transparentHeader>
+        <PublicLayout transparentHeader hideWakeUpBanner>
           <div className="min-h-screen bg-[#0E1311] flex items-center justify-center">
             <div className="w-8 h-8 rounded-full border-2 border-[#DFBA73] border-t-transparent animate-spin" />
           </div>

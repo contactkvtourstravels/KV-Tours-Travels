@@ -21,7 +21,13 @@ export function BackendWakeUpBanner() {
   }, []);
 
   // Suppress small popup notification on the public home screen ("/") per design requirement
-  if (pathname === "/" || !state.isWakingUp || dismissed) {
+  const isHome =
+    !pathname ||
+    pathname === "/" ||
+    pathname === "" ||
+    (typeof window !== "undefined" && (window.location.pathname === "/" || window.location.pathname === ""));
+
+  if (isHome || !state.isWakingUp || dismissed) {
     return null;
   }
 

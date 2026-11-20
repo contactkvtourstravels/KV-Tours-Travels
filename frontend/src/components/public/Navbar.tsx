@@ -97,9 +97,13 @@ export function Navbar() {
                 </span>
                 {city ? (
                   <span className="text-[9px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-[#6B7280] font-semibold leading-none mt-0.5 whitespace-nowrap">
-                    {city}
+                    {city.includes("Luxury Escapes") ? city : `${city} • Luxury Escapes`}
                   </span>
-                ) : null}
+                ) : (
+                  <span className="text-[9px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-[#6B7280] font-semibold leading-none mt-0.5 whitespace-nowrap">
+                    Coimbatore • Luxury Escapes
+                  </span>
+                )}
               </div>
             </Link>
 
@@ -219,30 +223,27 @@ export function Navbar() {
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-2.5 min-w-0"
                 >
-                  {logoUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
+                  <div className="relative w-8 h-8 rounded-full overflow-hidden bg-[#1B1E22] ring-1 ring-[#DFBA73]/50 shadow-xs flex items-center justify-center shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={logoUrl}
+                      src={logoUrl || "/logo.png"}
                       alt={displayName}
-                      className="h-8 w-auto max-w-[100px] object-contain rounded-lg"
+                      className="w-full h-full object-cover rounded-full"
                     />
-                  ) : (
-                    <div className="h-8 px-2.5 rounded-full bg-[#24292F] text-white flex items-center justify-center gap-1.5 shadow-xs border border-[#3D4450] shrink-0">
-                      <Compass className="w-3 h-3 text-[#ECEFF3]" />
-                      <span className="font-serif font-bold text-xs tracking-wider">
-                        {shortName || displayName}
-                      </span>
-                    </div>
-                  )}
+                  </div>
                   <div className="min-w-0">
                     <div className="text-[#202124] font-serif font-bold text-sm tracking-wider uppercase truncate">
                       {displayName}
                     </div>
                     {city ? (
                       <div className="text-[9px] uppercase tracking-widest text-[#6B7280] font-semibold truncate">
-                        {city}
+                        {city.includes("Luxury Escapes") ? city : `${city} • Luxury Escapes`}
                       </div>
-                    ) : null}
+                    ) : (
+                      <div className="text-[9px] uppercase tracking-widest text-[#6B7280] font-semibold truncate">
+                        Coimbatore • Luxury Escapes
+                      </div>
+                    )}
                   </div>
                 </Link>
                 <button

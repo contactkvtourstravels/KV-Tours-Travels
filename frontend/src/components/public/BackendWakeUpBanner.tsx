@@ -1,10 +1,12 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Cloud, Loader2, RefreshCw, X } from "lucide-react";
 import { subscribeToBackendWakeUp, type BackendWakeUpState } from "@/lib/api";
 
 export function BackendWakeUpBanner() {
+  const pathname = usePathname();
   const [state, setState] = useState<BackendWakeUpState>({ isWakingUp: false });
   const [dismissed, setDismissed] = useState(false);
 
@@ -18,7 +20,8 @@ export function BackendWakeUpBanner() {
     return unsubscribe;
   }, []);
 
-  if (!state.isWakingUp || dismissed) {
+  // Suppress small popup notification on the public home screen ("/") per design requirement
+  if (pathname === "/" || !state.isWakingUp || dismissed) {
     return null;
   }
 

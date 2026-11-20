@@ -1014,8 +1014,8 @@ export const INITIAL_DEPARTURES: PublicDepartureListItem[] = [
 
 export const INITIAL_HOME_CONTENT: HomePageContent = {
   "hero": {
-    "eyebrow": "KV TOURS & TRAVELS \u2022 SIGNATURE ESCAPES",
-    "heading": "Discover Extraordinary Journeys Across India & Beyond",
+    "eyebrow": "KV TOURS & TRAVELS \u2022 COIMBATORE",
+    "heading": "Your Journey. Our Expertise.",
     "description": "Curating bespoke international escapes, breathtaking domestic expeditions, and signature group departures from Coimbatore.",
     "media_type": "image",
     "image_url": "/images/hero/hero-4k.webp",
@@ -1026,14 +1026,12 @@ export const INITIAL_HOME_CONTENT: HomePageContent = {
     "secondary_cta_link": "/custom-trip",
     "whatsapp_cta_text": "WhatsApp Us",
     "popular_tags": [
-      "Gokarna",
-      "Nilgiris",
-      "Meghalaya",
+      "Maldives",
+      "Lakshadweep",
+      "Bali",
+      "Manali",
       "Kazakhstan",
-      "Sri Lanka",
-      "Nagaland",
-      "Agumbe",
-      "Wayanad"
+      "Japan"
     ]
   },
   "intro_eyebrow": "Bespoke Travel",

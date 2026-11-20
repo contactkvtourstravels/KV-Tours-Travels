@@ -66,7 +66,7 @@ export interface BrandingContextValue {
   refresh: () => Promise<PublicSiteSettings | null>;
 }
 
-const DEFAULT_SETTINGS: PublicSiteSettings = {
+export const DEFAULT_SETTINGS: PublicSiteSettings = {
   agency_name: "KV Tours & Travels",
   public_display_name: "KV Tours & Travels",
   short_name: "KV Tours",
@@ -75,7 +75,7 @@ const DEFAULT_SETTINGS: PublicSiteSettings = {
   favicon_url: "/logo.png",
   agency_location: "Coimbatore, Tamil Nadu, India",
   office_address: "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
-  city: "Coimbatore",
+  city: "Coimbatore • Luxury Escapes",
   state: "Tamil Nadu",
   contact_email: "contact.kvtourstravels@gmail.com",
   contact_phone: "",

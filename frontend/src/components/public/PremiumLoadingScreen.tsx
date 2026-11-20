@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   Loader2,
   ShieldCheck,
@@ -14,6 +15,7 @@ import { subscribeToBackendWakeUp, type BackendWakeUpState } from "@/lib/api";
 import { useBranding } from "@/context/BrandingContext";
 
 export function PremiumLoadingScreen() {
+  const pathname = usePathname();
   const { displayName, tagline, logoUrl } = useBranding();
   const [state, setState] = useState<BackendWakeUpState>({ isWakingUp: false });
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -63,6 +65,11 @@ export function PremiumLoadingScreen() {
 
   // Minimized floating pill mode
   if (isMinimized) {
+    // Suppress small popup loading pill on public home screen ("/") per design requirement
+    if (pathname === "/") {
+      return null;
+    }
+
     return (
       <aside
         aria-label="Cloud connection status"

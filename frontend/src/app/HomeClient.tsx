@@ -40,6 +40,7 @@ import {
   INITIAL_PACKAGES,
   INITIAL_DEPARTURES,
 } from "@/lib/initialCatalog";
+import { DEFAULT_SETTINGS } from "@/context/BrandingContext";
 import { getWhatsAppClickToChatUrl } from "@/lib/constants";
 import { getSafeImageUrl, getDestinationFallback, DESTINATION_FALLBACKS } from "@/lib/images";
 import { TravelImage } from "@/components/public/TravelImage";
@@ -71,7 +72,7 @@ export function HomeClient({ initialFeed, initialError = false }: HomeClientProp
     initialFeed?.departures?.length ? initialFeed.departures : INITIAL_DEPARTURES
   );
   const [settings, setSettings] = useState<PublicSiteSettings | null>(
-    initialFeed?.settings || null
+    initialFeed?.settings || DEFAULT_SETTINGS
   );
   const [pageContent, setPageContent] = useState<HomePageContent>(
     initialFeed?.content && Object.keys(initialFeed.content).length > 0

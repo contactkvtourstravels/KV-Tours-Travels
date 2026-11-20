@@ -11,10 +11,23 @@ import { PackagesClient } from "./PackagesClient";
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
   return {
-    title: "Curated Travel Packages | KV Tours & Travels Coimbatore",
+    title: "Tour Packages from Coimbatore | International & Domestic Holidays | KV Tours & Travels",
     description:
-      "Explore handcrafted luxury holiday packages, private journeys, and bespoke expeditions across India and worldwide destinations.",
+      "Explore handcrafted holiday packages from Coimbatore with KV Tours & Travels. Discover verified boutique stays, private transfers, and customized itineraries for Maldives, Bali, Kazakhstan, Dubai, Gokarna, Wayanad, and beyond.",
+    alternates: {
+      canonical: `${siteUrl}/packages`,
+    },
+    openGraph: {
+      title: "Holiday Tour Packages from Coimbatore | KV Tours & Travels",
+      description:
+        "Handcrafted international escapes and domestic retreats from Coimbatore. Verified 5-star accommodations, private transfers, and 24/7 dedicated travel concierge.",
+      url: `${siteUrl}/packages`,
+      siteName: "KV Tours & Travels",
+      locale: "en_IN",
+      type: "website",
+    },
   };
 }
 

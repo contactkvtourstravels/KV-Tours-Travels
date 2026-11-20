@@ -1036,11 +1036,10 @@ export default function PackageEditorPage() {
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all cursor-pointer ${
-                isActive
-                  ? "bg-white text-[#202124] shadow-xs border border-[#E4E5E7]"
-                  : "text-[#70757A] hover:text-[#202124] hover:bg-white/50"
-              }`}
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl whitespace-nowrap transition-all cursor-pointer ${isActive
+                ? "bg-white text-[#202124] shadow-xs border border-[#E4E5E7]"
+                : "text-[#70757A] hover:text-[#202124] hover:bg-white/50"
+                }`}
             >
               <Icon
                 className={`w-4 h-4 ${isActive ? "text-[#C5A880]" : "text-[#70757A]"}`}
@@ -1048,9 +1047,8 @@ export default function PackageEditorPage() {
               <span>{tab.label}</span>
               {tab.count !== undefined && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
-                    isActive ? "bg-[#24292F] text-white" : "bg-[#E4E5E7] text-[#5F6368]"
-                  }`}
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? "bg-[#24292F] text-white" : "bg-[#E4E5E7] text-[#5F6368]"
+                    }`}
                 >
                   {tab.count}
                 </span>
@@ -1849,14 +1847,12 @@ export default function PackageEditorPage() {
                               <button
                                 onClick={() => handleToggleFeaturedImage(img)}
                                 title={img.is_featured ? "Unmark hero" : "Set as hero photo"}
-                                className={`p-1 rounded-md text-xs cursor-pointer ${
-                                  img.is_featured ? "text-[#C5A880] bg-amber-50" : "text-[#70757A]"
-                                }`}
+                                className={`p-1 rounded-md text-xs cursor-pointer ${img.is_featured ? "text-[#C5A880] bg-amber-50" : "text-[#70757A]"
+                                  }`}
                               >
                                 <Star
-                                  className={`w-3.5 h-3.5 ${
-                                    img.is_featured ? "fill-[#C5A880]" : ""
-                                  }`}
+                                  className={`w-3.5 h-3.5 ${img.is_featured ? "fill-[#C5A880]" : ""
+                                    }`}
                                 />
                               </button>
                               <button
@@ -2289,13 +2285,12 @@ export default function PackageEditorPage() {
                         </td>
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                              d.status === "open"
-                                ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                : d.status === "sold_out"
+                            className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${d.status === "open"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : d.status === "sold_out"
                                 ? "bg-amber-50 text-amber-700 border-amber-200"
                                 : "bg-stone-50 text-stone-600 border-stone-200"
-                            }`}
+                              }`}
                           >
                             {d.status}
                           </span>
@@ -2373,28 +2368,27 @@ export default function PackageEditorPage() {
                   addon.applicability_scope === "all_packages"
                     ? "Global (All Packages)"
                     : addon.applicability_scope === "selected_packages"
-                    ? "Selected Packages"
-                    : addon.applicability_scope === "selected_destinations"
-                    ? "Destination Bound"
-                    : "Single Package Only";
+                      ? "Selected Packages"
+                      : addon.applicability_scope === "selected_destinations"
+                        ? "Destination Bound"
+                        : "Single Package Only";
 
                 const priceTypeLabel =
                   addon.price_type === "per_booking"
                     ? "Per Booking"
                     : addon.price_type === "per_traveller"
-                    ? "Per Traveller"
-                    : addon.price_type === "per_room_night"
-                    ? "Per Room Night"
-                    : "Per Unit";
+                      ? "Per Traveller"
+                      : addon.price_type === "per_room_night"
+                        ? "Per Room Night"
+                        : "Per Unit";
 
                 return (
                   <div
                     key={addon.id}
-                    className={`p-5 rounded-2xl border transition-all space-y-3 ${
-                      isApplicable
-                        ? "bg-white border-[#C5A880] shadow-xs ring-1 ring-[#C5A880]/30"
-                        : "bg-[#F7F7F5] border-[#E4E5E7] opacity-65"
-                    }`}
+                    className={`p-5 rounded-2xl border transition-all space-y-3 ${isApplicable
+                      ? "bg-white border-[#C5A880] shadow-xs ring-1 ring-[#C5A880]/30"
+                      : "bg-[#F7F7F5] border-[#E4E5E7] opacity-65"
+                      }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -2418,11 +2412,10 @@ export default function PackageEditorPage() {
                     <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[#E4E5E7]">
                       {/* Applicability Badge */}
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${
-                          isApplicable
-                            ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                            : "bg-stone-100 text-stone-600 border-stone-200"
-                        }`}
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border ${isApplicable
+                          ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                          : "bg-stone-100 text-stone-600 border-stone-200"
+                          }`}
                       >
                         {isApplicable ? "✓ Applicable at Checkout" : "✕ Not Configured for this Tour"}
                       </span>
@@ -2499,7 +2492,7 @@ export default function PackageEditorPage() {
                 {formSeoTitle || `${pkg.name} | KV Tours & Travels`}
               </div>
               <div className="text-xs text-emerald-700 font-mono">
-                https://the-wild-root.vercel.app/packages/{formSlug || pkg.slug}
+                https://kv-tours-travels.vercel.app/packages/{formSlug || pkg.slug}
               </div>
               <div className="text-xs text-[#5F6368] line-clamp-2">
                 {formSeoDesc ||

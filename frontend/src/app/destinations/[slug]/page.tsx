@@ -156,7 +156,7 @@ export default async function DestinationDetailPage({ params }: DestinationPageP
     touristType: ["Luxury", "Adventure", "Couples", "Family"],
   };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
   const breadcrumbData = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",

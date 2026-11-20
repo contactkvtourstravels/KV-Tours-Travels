@@ -10,10 +10,23 @@ import { DestinationsClient } from "./DestinationsClient";
 export const revalidate = 60;
 
 export async function generateMetadata(): Promise<Metadata> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
   return {
-    title: "Handpicked Luxury Travel Destinations | KV Tours & Travels Coimbatore",
+    title: "Holiday Destinations from Coimbatore | International & Domestic | KV Tours & Travels",
     description:
-      "Explore curated domestic and international travel destinations including pristine beaches, misty hill stations, and cultural wonders.",
+      "Explore trending holiday destinations from Coimbatore with KV Tours & Travels. Pristine island beaches in Maldives & Lakshadweep, mountain retreats in Manali & Kazakhstan, and scenic escapes across South India.",
+    alternates: {
+      canonical: `${siteUrl}/destinations`,
+    },
+    openGraph: {
+      title: "Trending Holiday Destinations from Coimbatore | KV Tours & Travels",
+      description:
+        "Handpicked international escapes and domestic retreats curated by KV Tours & Travels Coimbatore.",
+      url: `${siteUrl}/destinations`,
+      siteName: "KV Tours & Travels",
+      locale: "en_IN",
+      type: "website",
+    },
   };
 }
 

@@ -11,10 +11,23 @@ import { PublicLayout } from "@/components/public/PublicLayout";
 export const revalidate = 60; // Cache on Vercel edge for 60s; revalidate in background
 
 export async function generateMetadata(): Promise<Metadata> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
   return {
-    title: "Upcoming Fixed Departures & Group Trips | KV Tours & Travels",
+    title: "Group Trips & Fixed Departures from Coimbatore | KV Tours & Travels",
     description:
-      "Join like-minded travelers on curated group departures and expeditions led by professional tour leads and naturalists.",
+      "Join curated small-group departures from Coimbatore across India & abroad with KV Tours & Travels. Guaranteed small groups, verified stays, transparent inclusions, and expert trip leads.",
+    alternates: {
+      canonical: `${siteUrl}/group-trips`,
+    },
+    openGraph: {
+      title: "Upcoming Fixed Departures & Group Trips from Coimbatore | KV Tours & Travels",
+      description:
+        "Travel together with fellow adventurers from Coimbatore and across India. Fixed departure dates with guaranteed small-group dynamics.",
+      url: `${siteUrl}/group-trips`,
+      siteName: "KV Tours & Travels",
+      locale: "en_IN",
+      type: "website",
+    },
   };
 }
 

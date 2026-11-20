@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { publicCatalogApi } from "@/lib/api";
+import { INITIAL_DESTINATIONS, INITIAL_PACKAGES } from "@/lib/initialCatalog";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
@@ -12,13 +13,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/destinations`,
+      url: `${baseUrl}/packages`,
       lastModified: new Date(),
       changeFrequency: "daily",
-      priority: 0.9,
+      priority: 0.95,
     },
     {
-      url: `${baseUrl}/packages`,
+      url: `${baseUrl}/destinations`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
@@ -27,33 +28,36 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       url: `${baseUrl}/group-trips`,
       lastModified: new Date(),
       changeFrequency: "daily",
-      priority: 0.85,
+      priority: 0.9,
     },
     {
       url: `${baseUrl}/custom-trip`,
       lastModified: new Date(),
       changeFrequency: "weekly",
-      priority: 0.8,
+      priority: 0.85,
     },
     {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
       changeFrequency: "monthly",
-      priority: 0.7,
+      priority: 0.75,
     },
     {
       url: `${baseUrl}/contact`,
       lastModified: new Date(),
       changeFrequency: "monthly",
-      priority: 0.7,
+      priority: 0.75,
     },
   ];
 
   try {
-    const [destinations, packages] = await Promise.all([
+    const [liveDests, livePkgs] = await Promise.all([
       publicCatalogApi.getDestinations().catch(() => []),
       publicCatalogApi.getPackages().catch(() => []),
     ]);
+
+    const destinations = liveDests.length > 0 ? liveDests : INITIAL_DESTINATIONS;
+    const packages = livePkgs.length > 0 ? livePkgs : INITIAL_PACKAGES;
 
     const destinationRoutes: MetadataRoute.Sitemap = destinations.map((d) => ({
       url: `${baseUrl}/destinations/${d.slug}`,
@@ -69,8 +73,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.85,
     }));
 
-    return [...staticRoutes, ...destinationRoutes, ...packageRoutes];
+    return [...staticRoutes, ...packageRoutes, ...destinationRoutes];
   } catch {
-    return staticRoutes;
+    const destinationRoutes: MetadataRoute.Sitemap = INITIAL_DESTINATIONS.map((d) => ({
+      url: `${baseUrl}/destinations/${d.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "weekly",
+      priority: 0.8,
+    }));
+
+    const packageRoutes: MetadataRoute.Sitemap = INITIAL_PACKAGES.map((p) => ({
+      url: `${baseUrl}/packages/${p.slug}`,
+      lastModified: new Date(),
+      changeFrequency: "daily",
+      priority: 0.85,
+    }));
+
+    return [...staticRoutes, ...packageRoutes, ...destinationRoutes];
   }
 }

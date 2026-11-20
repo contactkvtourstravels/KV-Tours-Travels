@@ -161,22 +161,43 @@ export default async function PackageDetailPage({ params }: PackagePageProps) {
     getDestinationFallback(pkg.slug || pkg.destination_slug || pkg.destination_name);
   const heroImg = getSafeImageUrl(rawHero);
 
-  // Schema.org structured data
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+
+  // Schema.org structured data (Product & TouristTrip)
   const structuredData = {
     "@context": "https://schema.org",
-    "@type": "Product",
+    "@type": ["Product", "TouristTrip"],
     name: pkg.name,
     description: pkg.short_description || pkg.description,
     image: heroImg,
+    touristType: ["Family", "Couples", "Solo", "Group"],
+    itinerary: pkg.itinerary?.length
+      ? {
+          "@type": "ItemList",
+          numberOfItems: pkg.itinerary.length,
+          itemListElement: pkg.itinerary.map((day, idx) => ({
+            "@type": "ListItem",
+            position: idx + 1,
+            name: day.title || `Day ${idx + 1}`,
+            description: day.description || "",
+          })),
+        }
+      : undefined,
     offers: {
       "@type": "Offer",
+      url: `${siteUrl}/packages/${slug}`,
       price: pkg.base_price,
       priceCurrency: pkg.currency || "INR",
+      priceValidUntil: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
       availability: "https://schema.org/InStock",
+      seller: {
+        "@type": "TravelAgency",
+        name: agencyName,
+        url: siteUrl,
+      },
     },
   };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://the-wild-root.vercel.app";
   const breadcrumbData = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",

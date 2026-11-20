@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import type { Metadata } from "next";
 import {
   publicCatalogApi,
   AboutPageContent as AboutPageContentType,
@@ -9,6 +10,27 @@ import { AboutClient } from "./AboutClient";
 import { PublicLayout } from "@/components/public/PublicLayout";
 
 export const revalidate = 60; // Cache on Vercel edge for 60s; revalidate in background
+
+export async function generateMetadata(): Promise<Metadata> {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
+  return {
+    title: "About Us | KV Tours & Travels Coimbatore | Premier Travel Agency",
+    description:
+      "Learn about KV Tours & Travels, Coimbatore's leading travel concierge. Hand-crafting unforgettable international journeys, domestic expeditions, verified luxury stays, and 24/7 dedicated support.",
+    alternates: {
+      canonical: `${siteUrl}/about`,
+    },
+    openGraph: {
+      title: "About KV Tours & Travels Coimbatore",
+      description:
+        "Learn about KV Tours & Travels, Coimbatore's leading travel concierge. Hand-crafting unforgettable international journeys, domestic expeditions, and verified luxury stays.",
+      url: `${siteUrl}/about`,
+      siteName: "KV Tours & Travels",
+      locale: "en_IN",
+      type: "website",
+    },
+  };
+}
 
 interface PageProps {
   searchParams: Promise<{ preview?: string }>;

@@ -35,12 +35,11 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getCachedSettings();
 
   const displayName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
-  const tagline = settings?.tagline || "Luxury & Adventure Journeys";
-  const siteTitle = `${displayName} | ${tagline}`;
+  const siteTitle = settings?.seo_website_title || `${displayName} | Best Travel Agency in Coimbatore | Tour Packages`;
   const siteDescription =
     settings?.seo_meta_description ||
     settings?.business_description ||
-    `${displayName} is your premier travel curator designing bespoke international escapes, breathtaking domestic expeditions, and signature group departures.`;
+    `${displayName} is Coimbatore's premier travel agency located at Cross Cut Road, Gandhipuram. Curating bespoke international tour packages (Maldives, Bali, Kazakhstan, Dubai, Japan), domestic group departures, honeymoon escapes, and custom holidays. Contact our concierge today.`;
 
   const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
 
@@ -53,19 +52,46 @@ export async function generateMetadata(): Promise<Metadata> {
     description: siteDescription,
     keywords: [
       displayName,
-      `${displayName} Travels`,
+      `${displayName} Coimbatore`,
+      `${displayName} Gandhipuram`,
       `${displayName} Holidays`,
-      "Travel Agency",
-      "Tour packages",
-      "Bespoke international travel",
-      "Luxury holiday packages",
+      "best travel agency in Coimbatore",
+      "tours and travels in Coimbatore",
+      "travel agents in Coimbatore",
+      "tours and travels Gandhipuram Coimbatore",
+      "international tour packages from Coimbatore",
+      "group tours from Coimbatore",
+      "fixed departure trips Coimbatore",
+      "honeymoon packages Coimbatore",
+      "holiday packages from Coimbatore",
+      "vacation packages Coimbatore",
+      "Maldives tour packages from Coimbatore",
+      "Bali holiday packages from Coimbatore",
+      "Kazakhstan tour package from Coimbatore",
+      "Dubai tour packages from Coimbatore",
+      "Japan tour packages from Coimbatore",
+      "Kerala tour packages from Coimbatore",
+      "Gokarna trip from Coimbatore",
+      "Wayanad tour packages from Coimbatore",
+      "Himachal tour packages Coimbatore",
+      "Kashmir tour packages Coimbatore",
+      "custom travel planner Coimbatore",
+      "corporate tour packages Coimbatore",
+      "Tamil Nadu travel agency",
     ],
     authors: [
       { name: displayName },
     ],
     creator: displayName,
     publisher: displayName,
+    alternates: {
+      canonical: siteUrl,
+    },
     other: {
+      "geo.region": "IN-TN",
+      "geo.placename": "Coimbatore",
+      "geo.position": "11.0183;76.9682",
+      "ICBM": "11.0183, 76.9682",
       "copyright": `© ${displayName}. All rights reserved.`,
     },
     icons: {
@@ -86,20 +112,25 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: "en_IN",
       type: "website",
       images: settings?.seo_og_image_url
-        ? [{ url: settings.seo_og_image_url, width: 1200, height: 630, alt: displayName }]
-        : settings?.logo_url
-          ? [{ url: settings.logo_url, alt: displayName }]
-          : undefined,
+        ? [{ url: settings.seo_og_image_url, width: 1200, height: 630, alt: `${displayName} Coimbatore` }]
+        : [{ url: "/images/hero/hero-4k.webp", width: 1200, height: 630, alt: `${displayName} Coimbatore` }],
     },
     twitter: {
       card: "summary_large_image",
       title: siteTitle,
       description: siteDescription,
-      images: settings?.seo_og_image_url ? [settings.seo_og_image_url] : undefined,
+      images: settings?.seo_og_image_url ? [settings.seo_og_image_url] : ["/images/hero/hero-4k.webp"],
     },
     robots: {
       index: true,
       follow: true,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
     },
   };
 }
@@ -109,21 +140,23 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
 
   const displayName = settings?.public_display_name || settings?.agency_name || "KV Tours & Travels";
   const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kv-tours-travels.vercel.app";
-  const phone = settings?.contact_phone || DEFAULT_BUSINESS_PHONE;
+  const phone = settings?.contact_phone || settings?.whatsapp_number || DEFAULT_BUSINESS_PHONE;
   const email = settings?.contact_email || "contact.kvtourstravels@gmail.com";
-  const street = settings?.office_address || "Main Road";
-  const city = settings?.city || "";
-  const state = settings?.state || "";
-  const postalCode = settings?.postal_code || "";
+  const street = settings?.office_address || "Cross Cut Road, Gandhipuram";
+  const city = (settings?.city || "Coimbatore").replace(/\s*[•\-–|]?\s*luxury\s*escapes?/gi, "").trim();
+  const state = settings?.state || "Tamil Nadu";
+  const postalCode = settings?.postal_code || "641012";
   const country = settings?.country || "India";
-  const logo = settings?.logo_url || "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80";
+  const logo = `${siteUrl}/logo.png`;
 
   const structuredData = [
     {
       "@context": "https://schema.org",
-      "@type": "TravelAgency",
+      "@type": ["TravelAgency", "LocalBusiness"],
       "@id": `${siteUrl}/#travelagency`,
       name: displayName,
+      alternateName: ["KV Tours and Travels Coimbatore", "KV Tours Coimbatore"],
+      description: "Coimbatore's premier travel agency at Cross Cut Road, Gandhipuram. Curating bespoke international tour packages, domestic group departures, honeymoon escapes, and customized holiday itineraries.",
       image: logo,
       telephone: phone,
       email: email,
@@ -137,13 +170,19 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       },
       geo: {
         "@type": "GeoCoordinates",
-        latitude: settings?.google_maps_latitude || 10.7867,
-        longitude: settings?.google_maps_longitude || 76.6548,
+        latitude: settings?.google_maps_latitude || 11.0183,
+        longitude: settings?.google_maps_longitude || 76.9682,
       },
       url: siteUrl,
       priceRange: "₹₹₹",
       currenciesAccepted: settings?.currency || "INR",
-      paymentAccepted: "Credit Card, Debit Card, Net Banking, UPI",
+      paymentAccepted: "Credit Card, Debit Card, Net Banking, UPI, Cash",
+      areaServed: [
+        { "@type": "City", name: "Coimbatore" },
+        { "@type": "AdministrativeArea", name: "Tamil Nadu" },
+        { "@type": "AdministrativeArea", name: "Kerala" },
+        { "@type": "Country", name: "India" },
+      ],
       openingHoursSpecification: [
         {
           "@type": "OpeningHoursSpecification",
@@ -159,6 +198,33 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
           closes: "19:30",
         },
       ],
+      hasOfferCatalog: {
+        "@type": "OfferCatalog",
+        name: "Travel Services & Tour Packages",
+        itemListElement: [
+          {
+            "@type": "OfferCatalog",
+            name: "International Tour Packages",
+            itemListElement: [
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "Maldives Luxury Holiday Packages" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "Bali Island Leisure & Cultural Tours" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "Kazakhstan Winter & Alpine Tours" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "Dubai Desert & City Tours" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "Japan Cherry Blossom & Cultural Tours" } },
+            ],
+          },
+          {
+            "@type": "OfferCatalog",
+            name: "Domestic & Group Trips",
+            itemListElement: [
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "Fixed Departure Group Tours" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "Kerala Backwater & Hill Station Escapes" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "Gokarna Surf & Coastal Road Trips" } },
+              { "@type": "Offer", itemOffered: { "@type": "Service", name: "Agumbe Rainforest & Western Ghats Treks" } },
+            ],
+          },
+        ],
+      },
     },
     {
       "@context": "https://schema.org",
@@ -172,7 +238,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         telephone: phone,
         contactType: "customer service",
         areaServed: "IN",
-        availableLanguage: ["English", "Malayalam", "Tamil", "Hindi"],
+        availableLanguage: ["English", "Tamil", "Malayalam", "Hindi"],
       },
     },
     {
@@ -181,6 +247,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       "@id": `${siteUrl}/#website`,
       name: displayName,
       url: siteUrl,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: `${siteUrl}/packages?search={search_term_string}`,
+        "query-input": "required name=search_term_string",
+      },
       publisher: {
         "@id": `${siteUrl}/#organization`,
       },

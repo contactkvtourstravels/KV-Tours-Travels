@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import logging
 import os
 from datetime import datetime, timezone
@@ -1043,6 +1044,17 @@ def send_test_email(
     now_iso = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # Branded luxury HTML content
+    notes_html = (
+        f"""<div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px 16px; margin: 16px 0;">
+            <p style="margin: 0 0 4px; font-size: 11px; color: #6B7280; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Admin Notes</p>
+            <p style="margin: 0; font-size: 13.5px; color: #111827; line-height: 1.5;">{html.escape(notes)}</p>
+        </div>"""
+        if notes
+        else ""
+    )
+
+    logo_url = "https://kvtourstravels.in/logo.png"
+
     html_content = f"""<!DOCTYPE html>
 <html>
 <head>
@@ -1050,59 +1062,66 @@ def send_test_email(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{subject}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0A0A0A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #E5E5E5; line-height: 1.6;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0A0A0A; padding: 40px 16px;">
+<body style="margin: 0; padding: 0; background-color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1F2937; line-height: 1.65; -webkit-font-smoothing: antialiased;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F3F4F6; padding: 36px 12px;">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background: #141414; border: 1px solid #262626; border-radius: 8px; overflow: hidden;">
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);">
+                    <!-- Brand Header -->
                     <tr>
-                        <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid #262626; background: #0A0A0A;">
+                        <td style="padding: 36px 32px 28px; text-align: center; background: #0A0A0A; border-bottom: 2px solid {accent_color};">
+                            <div style="margin-bottom: 16px; text-align: center;">
+                                <img src="{logo_url}" alt="{html.escape(agency_name)}" width="70" height="70" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; display: inline-block; border: 2px solid {accent_color}; box-shadow: 0 4px 12px rgba(0,0,0,0.25);" />
+                            </div>
                             <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.15em; color: {accent_color}; text-transform: uppercase;">
                                 {agency_name}
                             </h1>
-                            <p style="margin: 6px 0 0; font-size: 12px; color: #737373; letter-spacing: 0.08em; text-transform: uppercase;">
+                            <p style="margin: 6px 0 0; font-size: 11.5px; color: #A3A3A3; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;">
                                 System Delivery Verification • Production Engine
                             </p>
                         </td>
                     </tr>
+                    <!-- Main Body Card -->
                     <tr>
-                        <td style="padding: 36px 32px;">
-                            <h2 style="margin: 0 0 16px; font-size: 18px; font-weight: 700; color: #FFFFFF; border-left: 3px solid {accent_color}; padding-left: 12px;">
+                        <td style="padding: 36px 32px; background: #FFFFFF;">
+                            <h2 style="margin: 0 0 16px; font-size: 19px; font-weight: 700; color: #111827; border-left: 3px solid {accent_color}; padding-left: 12px; letter-spacing: -0.01em;">
                                 Email Configuration Test
                             </h2>
-                            <p style="margin: 0 0 20px; font-size: 14px; color: #D4D4D4;">
+                            <p style="margin: 0 0 20px; font-size: 14.5px; color: #374151; line-height: 1.6;">
                                 This is an automated test message dispatched by an authorized administrator to verify that your Resend transactional email integration is operational.
                             </p>
-                            <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; background: #0A0A0A; border-radius: 6px; overflow: hidden; border: 1px solid #262626;">
-                                <tr style="border-bottom: 1px solid #1F1F1F;">
-                                    <td style="padding: 10px 16px; color: #737373; width: 120px;">Recipient</td>
-                                    <td style="padding: 10px 16px; color: #E5E5E5; font-weight: 600;">{clean_recipient}</td>
+                            <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border-radius: 8px; overflow: hidden; border: 1px solid #E5E7EB;">
+                                <tr style="border-bottom: 1px solid #E5E7EB;">
+                                    <td style="padding: 10px 14px; color: #4B5563; font-weight: 500; width: 120px;">Recipient</td>
+                                    <td style="padding: 10px 14px; color: #111827; font-weight: 600;">{clean_recipient}</td>
                                 </tr>
-                                <tr style="border-bottom: 1px solid #1F1F1F;">
-                                    <td style="padding: 10px 16px; color: #737373;">Sender</td>
-                                    <td style="padding: 10px 16px; color: #E5E5E5;">{from_header}</td>
+                                <tr style="border-bottom: 1px solid #E5E7EB;">
+                                    <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Sender</td>
+                                    <td style="padding: 10px 14px; color: #111827; font-weight: 600;">{from_header}</td>
                                 </tr>
-                                <tr style="border-bottom: 1px solid #1F1F1F;">
-                                    <td style="padding: 10px 16px; color: #737373;">Reply-To</td>
-                                    <td style="padding: 10px 16px; color: #E5E5E5;">{reply_to}</td>
+                                <tr style="border-bottom: 1px solid #E5E7EB;">
+                                    <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Reply-To</td>
+                                    <td style="padding: 10px 14px; color: #111827; font-weight: 600;">{reply_to}</td>
                                 </tr>
-                                <tr style="border-bottom: 1px solid #1F1F1F;">
-                                    <td style="padding: 10px 16px; color: #737373;">Timestamp</td>
-                                    <td style="padding: 10px 16px; color: #A3A3A3;">{now_iso}</td>
+                                <tr>
+                                    <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Timestamp</td>
+                                    <td style="padding: 10px 14px; color: #6B7280; font-weight: 500;">{now_iso}</td>
                                 </tr>
-                                {f'<tr><td style="padding: 10px 16px; color: #737373;">Admin Notes</td><td style="padding: 10px 16px; color: #E5E5E5;">{notes}</td></tr>' if notes else ''}
                             </table>
-                            <div style="background: rgba(212, 175, 55, 0.08); border: 1px solid rgba(212, 175, 55, 0.2); border-radius: 6px; padding: 14px 16px; margin-top: 24px;">
-                                <p style="margin: 0; font-size: 12px; color: #E5E5E5; line-height: 1.5;">
-                                    <strong style="color: {accent_color};">Status: Verified & Operational.</strong><br>
+                            {notes_html}
+                            <div style="background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 8px; padding: 14px 16px; margin-top: 24px;">
+                                <p style="margin: 0; font-size: 13px; color: #166534; line-height: 1.5;">
+                                    <strong style="color: #15803D;">Status: Verified & Operational.</strong><br>
                                     Transactional emails (booking confirmations, payment receipts, inquiries) are active.
                                 </p>
                             </div>
                         </td>
                     </tr>
+                    <!-- Footer -->
                     <tr>
-                        <td style="padding: 20px 32px; background: #0A0A0A; border-top: 1px solid #262626; font-size: 11px; color: #525252; text-align: center;">
-                            &copy; {datetime.now(timezone.utc).year} {agency_name}. Authoritative Notification Engine.
+                        <td style="padding: 24px 32px; background: #F9FAFB; border-top: 1px solid #E5E7EB; font-size: 11.5px; color: #6B7280; text-align: center; line-height: 1.6;">
+                            &copy; {datetime.now(timezone.utc).year} {agency_name}. Authoritative Notification Engine.<br>
+                            Coimbatore, Tamil Nadu, India.
                         </td>
                     </tr>
                 </table>

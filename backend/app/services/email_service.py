@@ -38,6 +38,16 @@ from app.models.user import User
 logger = logging.getLogger(__name__)
 
 
+def _format_traveler_name(name: str | None) -> str:
+    """Format customer name into a clean, respectful greeting without single-letter fragments."""
+    if not name:
+        return "Valued Traveler"
+    clean = str(name).strip()
+    if len(clean) <= 1 or not any(c.isalpha() for c in clean):
+        return "Valued Traveler"
+    return html.escape(clean.title())
+
+
 def _render_base_email(
     title: str,
     content_html: str,
@@ -64,15 +74,23 @@ def _render_base_email(
         except Exception as exc:  # noqa: BLE001
             logger.debug("Could not read dynamic agency profile in email template: %s", exc)
 
-    logo_html = ""
-    if logo_url:
-        logo_html = f'<div style="margin-bottom: 12px;"><img src="{logo_url}" alt="{agency_name}" style="max-height: 48px; max-width: 180px; object-fit: contain;" /></div>'
+    canonical_logo = "https://kvtourstravels.in/logo.png"
+    if logo_url and str(logo_url).strip().startswith("http"):
+        resolved_logo = str(logo_url).strip()
+    else:
+        resolved_logo = canonical_logo
+
+    logo_html = f"""
+    <div style="margin-bottom: 16px; text-align: center;">
+        <img src="{resolved_logo}" alt="{html.escape(agency_name)}" width="70" height="70" style="width: 70px; height: 70px; border-radius: 50%; object-fit: cover; display: inline-block; border: 2px solid {brand_accent_color}; box-shadow: 0 4px 12px rgba(0,0,0,0.25);" />
+    </div>
+    """
 
     button_html = ""
     if action_url and action_label:
         button_html = f"""
-        <div style="margin: 28px 0; text-align: center;">
-            <a href="{action_url}" style="background: {brand_accent_color}; color: #0A0A0A; padding: 12px 28px; text-decoration: none; font-weight: 700; border-radius: 4px; display: inline-block; letter-spacing: 0.05em; font-size: 14px; text-transform: uppercase;">
+        <div style="margin: 32px 0 20px; text-align: center;">
+            <a href="{action_url}" style="background: {brand_accent_color}; color: #0A0A0A; padding: 14px 32px; text-decoration: none; font-weight: 800; border-radius: 6px; display: inline-block; letter-spacing: 0.08em; font-size: 13px; text-transform: uppercase; box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);">
                 {action_label}
             </a>
         </div>
@@ -86,30 +104,30 @@ def _render_base_email(
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{title}</title>
 </head>
-<body style="margin: 0; padding: 0; background-color: #0A0A0A; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #E5E5E5; line-height: 1.6;">
-    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0A0A0A; padding: 40px 16px;">
+<body style="margin: 0; padding: 0; background-color: #F3F4F6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1F2937; line-height: 1.65; -webkit-font-smoothing: antialiased;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #F3F4F6; padding: 36px 12px;">
         <tr>
             <td align="center">
-                <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background: #141414; border: 1px solid #262626; border-radius: 8px; overflow: hidden;">
+                <table width="600" cellpadding="0" cellspacing="0" style="max-width: 600px; width: 100%; background: #FFFFFF; border: 1px solid #E5E7EB; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);">
                     <!-- Brand Header -->
                     <tr>
-                        <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid #262626; background: #0A0A0A;">
+                        <td style="padding: 36px 32px 28px; text-align: center; background: #0A0A0A; border-bottom: 2px solid {brand_accent_color};">
                             {logo_html}
-                            <h1 style="margin: 0; font-size: 20px; font-weight: 800; letter-spacing: 0.15em; color: {brand_accent_color}; text-transform: uppercase;">
+                            <h1 style="margin: 0; font-size: 21px; font-weight: 800; letter-spacing: 0.16em; color: {brand_accent_color}; text-transform: uppercase;">
                                 {agency_name}
                             </h1>
-                            <p style="margin: 6px 0 0; font-size: 12px; color: #737373; letter-spacing: 0.08em; text-transform: uppercase;">
+                            <p style="margin: 6px 0 0; font-size: 12px; color: #D1D5DB; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500;">
                                 {agency_location}
                             </p>
                         </td>
                     </tr>
-                    <!-- Main Body -->
+                    <!-- Main Body with High Contrast & Sharp Typography -->
                     <tr>
-                        <td style="padding: 36px 32px;">
-                            <h2 style="margin: 0 0 20px; font-size: 18px; font-weight: 700; color: #FFFFFF; border-left: 3px solid {brand_accent_color}; padding-left: 12px;">
+                        <td style="padding: 36px 32px 28px; background: #FFFFFF; color: #1F2937;">
+                            <h2 style="margin: 0 0 20px; font-size: 19px; font-weight: 800; color: #111827; border-left: 4px solid {brand_accent_color}; padding-left: 14px; letter-spacing: -0.01em;">
                                 {title}
                             </h2>
-                            <div style="font-size: 14px; color: #D4D4D4; line-height: 1.7;">
+                            <div style="font-size: 14.5px; color: #374151; line-height: 1.75;">
                                 {content_html}
                             </div>
                             {button_html}
@@ -117,11 +135,11 @@ def _render_base_email(
                     </tr>
                     <!-- Footer -->
                     <tr>
-                        <td style="padding: 24px 32px; background: #0A0A0A; border-top: 1px solid #262626; font-size: 12px; color: #737373; text-align: center;">
-                            <p style="margin: 0 0 8px;">
+                        <td style="padding: 24px 32px; background: #111827; border-top: 1px solid #1F2937; font-size: 12.5px; color: #9CA3AF; text-align: center; line-height: 1.6;">
+                            <p style="margin: 0 0 8px; color: #E5E7EB;">
                                 Need immediate assistance? Contact our concierge on WhatsApp at <strong style="color: {brand_accent_color};">{whatsapp_number}</strong>
                             </p>
-                            <p style="margin: 0;">
+                            <p style="margin: 0; color: #9CA3AF; font-size: 11.5px;">
                                 &copy; {current_year} {agency_name}. All rights reserved.
                             </p>
                         </td>
@@ -449,28 +467,28 @@ class EmailService:
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         agency_name = self._get_agency_name(db)
         content = f"""
-        <p>Dear {user.first_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {_format_traveler_name(user.first_name)},</p>
         <p>Thank you for choosing {agency_name}. Your booking reservation has been created successfully.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Booking Reference</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #D4AF37;">{booking.booking_reference}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Booking Reference</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #937446;">{booking.booking_reference}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Package</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.package.title}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Package</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.package.title}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Departure Date</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.departure.departure_date}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Departure Date</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.departure.departure_date}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Travellers</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.number_of_travellers}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Travellers</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.number_of_travellers}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 0; color: #A3A3A3;">Total Payable</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #FFFFFF;">INR {booking.total:,.2f}</td>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Total Payable</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #111827;">INR {booking.total:,.2f}</td>
             </tr>
         </table>
         <p>Please complete payment to secure your group departure seats.</p>
@@ -499,24 +517,23 @@ class EmailService:
         )
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         content = f"""
-        <p>Dear {user.first_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {_format_traveler_name(user.first_name)},</p>
         <p>We have successfully received your payment via {payment.provider.title()}.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Payment ID</td>
-                <td style="padding: 8px 0; text-align: right; font-family: monospace; color: #FFFFFF;">{payment.provider_payment_id or str(payment.id)[:12]}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Payment ID</td>
+                <td style="padding: 10px 14px; text-align: right; font-family: monospace; color: #111827; font-weight: 600;">{payment.provider_payment_id or str(payment.id)[:12]}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Amount Paid</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #22C55E;">INR {payment.amount:,.2f}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Amount Paid</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #16A34A;">INR {payment.amount:,.2f}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Booking Reference</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #D4AF37;">{booking.booking_reference}</td>
+            <tr>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Booking Reference</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #937446;">{booking.booking_reference}</td>
             </tr>
         </table>
-        <p>Your payment receipt is now accessible in your customer dashboard.</p>
+        <p>Your official tax payment receipt is now accessible in your customer dashboard.</p>
         """
         html = _render_base_email(
             "Payment Successful", content, action_url, "Download Receipt", db=db
@@ -553,25 +570,25 @@ class EmailService:
         )
         subject = f"Deposit Received: INR {amount:,.2f} — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
-        user_name = user.first_name if user else "Traveller"
+        user_name = _format_traveler_name(user.first_name if user else None)
         to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         content = f"""
-        <p>Dear {user_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {user_name},</p>
         <p>We have successfully received your deposit payment of <strong>INR {amount:,.2f}</strong> for booking <strong>{booking.booking_reference}</strong>.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Deposit Paid</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #22C55E;">INR {amount:,.2f}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Deposit Paid</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #16A34A;">INR {amount:,.2f}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Total Package Amount</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">INR {booking.total:,.2f}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Total Package Amount</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">INR {booking.total:,.2f}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Outstanding Balance</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #EAB308;">INR {balance:,.2f}</td>
+            <tr>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Outstanding Balance</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #D97706;">INR {balance:,.2f}</td>
             </tr>
         </table>
         <p>Your seats are securely reserved. You can pay the remaining balance before the departure date via your customer portal or direct bank transfer.</p>
@@ -605,25 +622,25 @@ class EmailService:
         amount = submitted_amount if submitted_amount is not None else payment.amount
         subject = f"Bank Transfer Awaiting Verification — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
-        user_name = user.first_name if user else "Traveller"
+        user_name = _format_traveler_name(user.first_name if user else None)
         to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         content = f"""
-        <p>Dear {user_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {user_name},</p>
         <p>Thank you for submitting your bank transfer reference for booking <strong>{booking.booking_reference}</strong>.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Transfer Reference / UTR</td>
-                <td style="padding: 8px 0; text-align: right; font-family: monospace; color: #FFFFFF;">{ref}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Transfer Reference / UTR</td>
+                <td style="padding: 10px 14px; text-align: right; font-family: monospace; color: #111827; font-weight: 600;">{ref}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Submitted Amount</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #EAB308;">INR {amount:,.2f}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Submitted Amount</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #D97706;">INR {amount:,.2f}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Verification Status</td>
-                <td style="padding: 8px 0; text-align: right; color: #F59E0B; font-weight: 700;">Awaiting Verification</td>
+            <tr>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Verification Status</td>
+                <td style="padding: 10px 14px; text-align: right; color: #B45309; font-weight: 700;">Awaiting Verification</td>
             </tr>
         </table>
         <p>Our accounts team in Coimbatore will reconcile your transfer within 2–4 business hours and update your booking status.</p>
@@ -663,27 +680,27 @@ class EmailService:
         )
         subject = f"Payment Verified: INR {amount:,.2f} — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
-        user_name = user.first_name if user else "Traveller"
+        user_name = _format_traveler_name(user.first_name if user else None)
         to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         status_text = "Paid in Full" if balance <= Decimal("0.00") else f"Partially Paid (INR {balance:,.2f} remaining)"
 
         content = f"""
-        <p>Dear {user_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {user_name},</p>
         <p>Your bank transfer has been <strong>successfully verified</strong> by our accounts desk.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Verified Amount</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #22C55E;">INR {amount:,.2f}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Verified Amount</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #16A34A;">INR {amount:,.2f}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">UTR / Transaction Ref</td>
-                <td style="padding: 8px 0; text-align: right; font-family: monospace; color: #FFFFFF;">{payment.provider_payment_id}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">UTR / Transaction Ref</td>
+                <td style="padding: 10px 14px; text-align: right; font-family: monospace; color: #111827; font-weight: 600;">{payment.provider_payment_id}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Payment Status</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #D4AF37;">{status_text}</td>
+            <tr>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Payment Status</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #937446;">{status_text}</td>
             </tr>
         </table>
         <p>Your official tax invoice and payment receipt are now available in your portal.</p>
@@ -714,16 +731,16 @@ class EmailService:
         user = user or booking.user
         subject = f"Bank Transfer Not Verified — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/booking/payment/{booking.booking_reference}"
-        user_name = user.first_name if user else "Traveller"
+        user_name = _format_traveler_name(user.first_name if user else None)
         to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         content = f"""
-        <p>Dear {user_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {user_name},</p>
         <p>We could not verify the bank transfer reference submitted for booking <strong>{booking.booking_reference}</strong>.</p>
-        <p style="color: #EF4444; background: #261111; padding: 12px; border-radius: 4px; font-size: 13px;">
-            Reason: {reason}
-        </p>
+        <div style="color: #991B1B; background: #FEF2F2; border: 1px solid #FCA5A5; padding: 14px 16px; border-radius: 8px; font-size: 13.5px; margin: 20px 0;">
+            <strong>Reason:</strong> {html.escape(reason)}
+        </div>
         <p>Please double-check your bank transfer UTR and re-submit the correct reference, or contact our accounts desk directly.</p>
         """
         html = _render_base_email("Transfer Rejected", content, action_url, "Update Transfer Details", db=db)
@@ -750,16 +767,26 @@ class EmailService:
         user = booking.user
         subject = f"Balance Due: INR {outstanding_balance:,.2f} — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/booking/payment/{booking.booking_reference}"
-        user_name = user.first_name if user else "Traveller"
+        user_name = _format_traveler_name(user.first_name if user else None)
         to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
-        deadline_str = f"<p>Payment Deadline: <strong>{payment_deadline}</strong></p>" if payment_deadline else ""
+        deadline_str = f'<tr style="border-bottom: 1px solid #E5E7EB;"><td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Payment Deadline</td><td style="padding: 10px 14px; text-align: right; color: #DC2626; font-weight: 700;">{payment_deadline}</td></tr>' if payment_deadline else ""
 
         content = f"""
-        <p>Dear {user_name},</p>
-        <p>This is a gentle reminder that an outstanding balance of <strong>INR {outstanding_balance:,.2f}</strong> is due for your upcoming journey (Booking: {booking.booking_reference}).</p>
-        {deadline_str}
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {user_name},</p>
+        <p>This is a gentle reminder that an outstanding balance of <strong>INR {outstanding_balance:,.2f}</strong> is due for your upcoming journey.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Booking Reference</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #937446;">{booking.booking_reference}</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Balance Due</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #D97706;">INR {outstanding_balance:,.2f}</td>
+            </tr>
+            {deadline_str}
+        </table>
         <p>Please complete your payment online or via bank transfer to confirm final vouchers and travel documents.</p>
         """
         html = _render_base_email("Balance Due", content, action_url, "Pay Balance Now", db=db)
@@ -787,21 +814,21 @@ class EmailService:
         user = user or booking.user
         subject = f"Journey Paid in Full! Booking Confirmed — {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
-        user_name = user.first_name if user else "Traveller"
+        user_name = _format_traveler_name(user.first_name if user else None)
         to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
 
         content = f"""
-        <p>Dear {user_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {user_name},</p>
         <p>We are delighted to confirm that your booking <strong>{booking.booking_reference}</strong> is now <strong>PAID IN FULL</strong>!</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Total Paid</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #22C55E;">INR {booking.total:,.2f}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Total Paid</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #16A34A;">INR {booking.total:,.2f}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Outstanding Balance</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #22C55E;">INR 0.00</td>
+            <tr>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Outstanding Balance</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #16A34A;">INR 0.00</td>
             </tr>
         </table>
         <p>Our concierge team is finalizing your hotel vouchers, itinerary guide, and driver allocation.</p>
@@ -829,17 +856,17 @@ class EmailService:
     ) -> NotificationLog:
         """Template 3: Payment failed."""
         user = user or booking.user
-        user_name = user.first_name if user else "Traveller"
+        user_name = _format_traveler_name(user.first_name if user else None)
         to_email = user.email if user else self._get_fallback_concierge_email(db)
         user_id = user.id if user else None
         subject = f"Payment Unsuccessful for Booking {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/booking/payment/{booking.booking_reference}"
         content = f"""
-        <p>Dear {user_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {user_name},</p>
         <p>We were unable to process your payment for booking <strong>{booking.booking_reference}</strong>.</p>
-        <p style="color: #EF4444; background: #261111; padding: 12px; border-radius: 4px; font-size: 13px;">
-            Reason: {reason or "Transaction declined or expired by bank."}
-        </p>
+        <div style="color: #991B1B; background: #FEF2F2; border: 1px solid #FCA5A5; padding: 14px 16px; border-radius: 8px; font-size: 13.5px; margin: 20px 0;">
+            <strong>Reason:</strong> {html.escape(reason or "Transaction declined or expired by bank.")}
+        </div>
         <p>No funds were deducted from your account. You can retry checkout or reach out to our concierge on WhatsApp.</p>
         """
         html = _render_base_email(
@@ -867,36 +894,36 @@ class EmailService:
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         agency_name = self._get_agency_name(db)
         content = f"""
-        <p>Dear {user.first_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {_format_traveler_name(user.first_name)},</p>
         <p>Pack your bags! Your journey with {agency_name} is officially confirmed.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Booking Reference</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #D4AF37;">{booking.booking_reference}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Booking Reference</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #937446;">{booking.booking_reference}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Package</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.package.title}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Package</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.package.title}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Destination</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.package.destination.name if booking.package.destination else "Travel Destination"}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Destination</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.package.destination.name if booking.package.destination else "Travel Destination"}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Departure Date</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.departure.departure_date}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Departure Date</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.departure.departure_date}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Travellers Count</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.number_of_travellers}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Travellers Count</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.number_of_travellers}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Amount Paid</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #22C55E;">INR {payment.amount:,.2f}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Amount Paid</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #16A34A;">INR {payment.amount:,.2f}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 0; color: #A3A3A3;">Payment ID</td>
-                <td style="padding: 8px 0; text-align: right; font-family: monospace; color: #FFFFFF;">{payment.provider_payment_id or str(payment.id)[:12]}</td>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Payment ID</td>
+                <td style="padding: 10px 14px; text-align: right; font-family: monospace; color: #111827; font-weight: 600;">{payment.provider_payment_id or str(payment.id)[:12]}</td>
             </tr>
         </table>
         <p>Your official <strong>Travel Voucher</strong> is ready for download in your customer dashboard.</p>
@@ -923,11 +950,11 @@ class EmailService:
         subject = f"Cancellation Request Received: {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         content = f"""
-        <p>Dear {user.first_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {_format_traveler_name(user.first_name)},</p>
         <p>We have received your cancellation request for booking <strong>{booking.booking_reference}</strong> ({booking.package.title}).</p>
-        <p style="background: #1C1917; border-left: 3px solid #F59E0B; padding: 12px; margin: 16px 0; font-size: 13px;">
-            <strong>Reason Submitted:</strong> {req.reason}
-        </p>
+        <div style="background: #FFFBEB; border-left: 3px solid #D97706; padding: 14px 16px; margin: 20px 0; font-size: 13.5px; border-radius: 4px; color: #92400E;">
+            <strong>Reason Submitted:</strong> {html.escape(req.reason)}
+        </div>
         <p><strong>Next Steps:</strong> Our team will review your request against the booking terms and hotel/airline fare rules. Submitting a cancellation request does not automatically grant a refund. You will be updated once reviewed.</p>
         """
         html = _render_base_email(
@@ -951,10 +978,15 @@ class EmailService:
         """Template 6: Cancellation approved."""
         subject = f"Cancellation Approved: {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
+        notes_block = (
+            f'<div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 14px 16px; margin: 16px 0; font-size: 13px; color: #4B5563;"><strong>Staff Notes:</strong> {html.escape(req.admin_notes)}</div>'
+            if req.admin_notes
+            else ""
+        )
         content = f"""
-        <p>Dear {user.first_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {_format_traveler_name(user.first_name)},</p>
         <p>Your cancellation request for booking <strong>{booking.booking_reference}</strong> has been <strong>approved</strong> by our operations team.</p>
-        {f'<p style="color: #A3A3A3; font-size: 13px;">Notes: {req.admin_notes}</p>' if req.admin_notes else ""}
+        {notes_block}
         <p>If applicable under our refund policy, our finance desk will process the refund to your original payment method.</p>
         """
         html = _render_base_email(
@@ -978,10 +1010,15 @@ class EmailService:
         """Template 7: Cancellation rejected."""
         subject = f"Update on Cancellation Request: {booking.booking_reference}"
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
+        notes_block = (
+            f'<div style="background: #FEF2F2; border: 1px solid #FCA5A5; color: #991B1B; padding: 14px 16px; border-radius: 8px; font-size: 13.5px; margin: 16px 0;"><strong>Reason:</strong> {html.escape(req.admin_notes)}</div>'
+            if req.admin_notes
+            else ""
+        )
         content = f"""
-        <p>Dear {user.first_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {_format_traveler_name(user.first_name)},</p>
         <p>Regarding your cancellation request for booking <strong>{booking.booking_reference}</strong>: our team was unable to approve this request under the non-refundable fare/supplier policies.</p>
-        {f'<p style="background: #261111; color: #FCA5A5; padding: 12px; border-radius: 4px; font-size: 13px;">Reason: {req.admin_notes}</p>' if req.admin_notes else ""}
+        {notes_block}
         <p>Your booking remains confirmed. If you have questions, please reach out to our concierge team directly.</p>
         """
         html = _render_base_email(
@@ -1008,26 +1045,26 @@ class EmailService:
         )
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         content = f"""
-        <p>Dear {user.first_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {_format_traveler_name(user.first_name)},</p>
         <p>A refund has been initiated for booking <strong>{booking.booking_reference}</strong>.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Refund Amount</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #22C55E;">INR {refund.amount:,.2f}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Refund Amount</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #16A34A;">INR {refund.amount:,.2f}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Refund Reference</td>
-                <td style="padding: 8px 0; text-align: right; font-family: monospace; color: #FFFFFF;">{refund.provider_refund_id or str(refund.id)[:12]}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Refund Reference</td>
+                <td style="padding: 10px 14px; text-align: right; font-family: monospace; color: #111827; font-weight: 600;">{refund.provider_refund_id or str(refund.id)[:12]}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 0; color: #A3A3A3;">Reason</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{refund.reason or "Approved cancellation"}</td>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Reason</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{html.escape(refund.reason or "Approved cancellation")}</td>
             </tr>
         </table>
         <p>The funds typically reflect in your original payment method within 5–7 business days.</p>
         """
         html = _render_base_email(
-            "Refund Processed", content, action_url, "View Booking"
+            "Refund Processed", content, action_url, "View Booking", db=db
         )
         idempotency_key = f"email:refund_processed:{refund.id}"
         return self.dispatch(
@@ -1051,20 +1088,20 @@ class EmailService:
         action_url = f"{self.settings.frontend_url}/dashboard/bookings/{booking.booking_reference}"
         agency_name = self._get_agency_name(db)
         content = f"""
-        <p>Dear {user.first_name},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {_format_traveler_name(user.first_name)},</p>
         <p>Your journey with {agency_name} to <strong>{booking.package.title}</strong> is just <strong>{days_left} days away</strong>!</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Departure Date</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #D4AF37;">{booking.departure.departure_date}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Departure Date</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #937446;">{booking.departure.departure_date}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Booking Reference</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.booking_reference}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Booking Reference</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.booking_reference}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 0; color: #A3A3A3;">Travellers Count</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.number_of_travellers}</td>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Travellers Count</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.number_of_travellers}</td>
             </tr>
         </table>
         <p>Please review your itinerary and make sure your travel vouchers and identity proofs are downloaded and ready.</p>
@@ -1107,33 +1144,33 @@ class EmailService:
             else f"Inquiry Received — {agency_name}"
         )
 
-        safe_name = html.escape(inquiry.name)
+        safe_name = _format_traveler_name(inquiry.name)
         safe_msg = html.escape(inquiry.message)
         phone_html = (
-            f'<tr style="border-bottom: 1px solid #262626;"><td style="padding: 8px 0; color: #A3A3A3;">Contact Phone</td><td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{html.escape(inquiry.phone)}</td></tr>'
+            f'<tr style="border-bottom: 1px solid #E5E7EB;"><td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Contact Phone</td><td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{html.escape(inquiry.phone)}</td></tr>'
             if inquiry.phone
             else ""
         )
 
         content = f"""
-        <p>Dear {safe_name},</p>
-        <p>Thank you for reaching out to <strong>{agency_name}</strong>. We have received your inquiry and our travel concierge team has begun reviewing your details.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Inquiry Reference</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #D4AF37;">INQ-{str(inquiry.id)[:8].upper()}</td>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {safe_name},</p>
+        <p>Thank you for reaching out to <strong>{agency_name}</strong>. We have received your travel inquiry and our dedicated destination concierge has begun curating your recommendations.</p>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Inquiry Reference</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #937446;">INQ-{str(inquiry.id)[:8].upper()}</td>
             </tr>
             {phone_html}
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Channel / Source</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF; text-transform: capitalize;">{inquiry.source.replace('_', ' ')}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Channel / Source</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600; text-transform: capitalize;">{inquiry.source.replace('_', ' ')}</td>
             </tr>
         </table>
-        <div style="background: #141414; border: 1px solid #262626; border-radius: 6px; padding: 14px 16px; margin: 20px 0;">
-            <p style="margin: 0 0 6px; font-size: 12px; color: #737373; text-transform: uppercase; letter-spacing: 0.05em;">Your Message</p>
-            <p style="margin: 0; font-size: 13px; color: #E5E5E5; white-space: pre-wrap;">{safe_msg}</p>
+        <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 24px 0;">
+            <p style="margin: 0 0 8px; font-size: 11.5px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Your Message / Request</p>
+            <p style="margin: 0; font-size: 13.5px; color: #111827; line-height: 1.65; white-space: pre-wrap;">{safe_msg}</p>
         </div>
-        <p>A dedicated destination specialist will respond to you within 24 hours with custom options and recommendations.</p>
+        <p>A destination specialist will respond to your registered email and phone within 24 hours with custom itineraries and pricing.</p>
         """
         html_email = _render_base_email(
             "Inquiry Received",
@@ -1177,28 +1214,29 @@ class EmailService:
         safe_phone = html.escape(inquiry.phone) if inquiry.phone else "Not provided"
 
         content = f"""
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">New Customer Inquiry Received</p>
         <p>A new customer inquiry has been received through the public website.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Guest Name</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #FFFFFF;">{safe_name}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Guest Name</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #111827;">{safe_name}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Guest Email</td>
-                <td style="padding: 8px 0; text-align: right; color: #D4AF37;">{safe_email}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Guest Email</td>
+                <td style="padding: 10px 14px; text-align: right; color: #937446; font-weight: 600;">{safe_email}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Phone</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{safe_phone}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Phone / WhatsApp</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{safe_phone}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Channel</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF; text-transform: capitalize;">{inquiry.source.replace('_', ' ')}</td>
+            <tr>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Channel</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600; text-transform: capitalize;">{inquiry.source.replace('_', ' ')}</td>
             </tr>
         </table>
-        <div style="background: #141414; border: 1px solid #262626; border-radius: 6px; padding: 14px 16px; margin: 20px 0;">
-            <p style="margin: 0 0 6px; font-size: 12px; color: #737373; text-transform: uppercase;">Message</p>
-            <p style="margin: 0; font-size: 13px; color: #E5E5E5; white-space: pre-wrap;">{safe_msg}</p>
+        <div style="background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; padding: 16px; margin: 24px 0;">
+            <p style="margin: 0 0 8px; font-size: 11.5px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700;">Customer Message</p>
+            <p style="margin: 0; font-size: 13.5px; color: #111827; line-height: 1.65; white-space: pre-wrap;">{safe_msg}</p>
         </div>
         """
         html_email = _render_base_email(
@@ -1240,31 +1278,32 @@ class EmailService:
         subject = f"New Booking Reserved: {booking.booking_reference} — {package_title}"
 
         content = f"""
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">New Booking Reserved</p>
         <p>A new booking reservation has been created on {agency_name}.</p>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px;">
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Booking Reference</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #D4AF37;">{booking.booking_reference}</td>
+        <table style="width: 100%; border-collapse: collapse; margin: 24px 0; font-size: 13.5px; background: #F9FAFB; border: 1px solid #E5E7EB; border-radius: 8px; overflow: hidden;">
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Booking Reference</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #937446;">{booking.booking_reference}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Customer</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{user.first_name} {user.last_name or ''} ({user.email})</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Customer</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{_format_traveler_name(user.first_name)} {html.escape(user.last_name or '')} ({html.escape(user.email)})</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Package</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{package_title}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Package</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{html.escape(package_title)}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Departure Date</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{dep_date}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Departure Date</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{dep_date}</td>
             </tr>
-            <tr style="border-bottom: 1px solid #262626;">
-                <td style="padding: 8px 0; color: #A3A3A3;">Travellers</td>
-                <td style="padding: 8px 0; text-align: right; color: #FFFFFF;">{booking.number_of_travellers}</td>
+            <tr style="border-bottom: 1px solid #E5E7EB;">
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Travellers</td>
+                <td style="padding: 10px 14px; text-align: right; color: #111827; font-weight: 600;">{booking.number_of_travellers}</td>
             </tr>
             <tr>
-                <td style="padding: 8px 0; color: #A3A3A3;">Total Amount</td>
-                <td style="padding: 8px 0; text-align: right; font-weight: 700; color: #22C55E;">INR {booking.total:,.2f}</td>
+                <td style="padding: 10px 14px; color: #4B5563; font-weight: 500;">Total Amount</td>
+                <td style="padding: 10px 14px; text-align: right; font-weight: 700; color: #16A34A;">INR {booking.total:,.2f}</td>
             </tr>
         </table>
         """
@@ -1295,13 +1334,13 @@ class EmailService:
         """Authentication notification: Password reset instructions."""
         agency_name = self._get_agency_name(db)
         subject = f"Reset Your Password — {agency_name}"
-        user_name = user.first_name if user.first_name else "Valued Guest"
+        user_name = _format_traveler_name(user.first_name)
 
         content = f"""
-        <p>Dear {html.escape(user_name)},</p>
+        <p style="margin-top: 0; font-size: 15px; font-weight: 600; color: #111827;">Dear {user_name},</p>
         <p>We received a request to reset the password for your account on <strong>{agency_name}</strong>.</p>
         <p>Click the button below to choose a secure new password. For your security, this password reset link is valid for <strong>30 minutes</strong> only.</p>
-        <p style="color: #737373; font-size: 12px; margin-top: 24px;">
+        <p style="color: #6B7280; font-size: 12.5px; margin-top: 24px; line-height: 1.5;">
             If you did not initiate this request, no action is needed. Your account remains completely secure and your current password has not been changed.
         </p>
         """

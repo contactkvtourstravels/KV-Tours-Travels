@@ -10,6 +10,7 @@ import {
   Maximize2,
   Minimize2,
   Globe,
+  X,
 } from "lucide-react";
 import { subscribeToBackendWakeUp, type BackendWakeUpState } from "@/lib/api";
 import { useBranding } from "@/context/BrandingContext";
@@ -24,6 +25,7 @@ export function PremiumLoadingScreen({
   const [state, setState] = useState<BackendWakeUpState>({ isWakingUp: false });
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isMinimized, setIsMinimized] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     const unsubscribe = subscribeToBackendWakeUp((newState) => {
@@ -32,6 +34,7 @@ export function PremiumLoadingScreen({
         setIsMinimized(true);
       } else if (newState.isWakingUp) {
         setIsMinimized(false);
+        setDismissed(false);
       }
     });
     return unsubscribe;
@@ -63,7 +66,7 @@ export function PremiumLoadingScreen({
 
   const isVisible = state.isWakingUp || state.isLagging;
 
-  if (!isVisible) {
+  if (!isVisible || dismissed) {
     return null;
   }
 
@@ -101,11 +104,20 @@ export function PremiumLoadingScreen({
           <button
             type="button"
             onClick={() => setIsMinimized(false)}
-            className="ml-1 p-1 text-white/50 hover:text-white transition-colors"
+            className="ml-1 p-1 text-white/50 hover:text-white transition-colors cursor-pointer"
             title="Expand to full loading screen"
             aria-label="Expand"
           >
             <Maximize2 className="w-3.5 h-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => setDismissed(true)}
+            className="p-1 text-white/40 hover:text-white transition-colors cursor-pointer"
+            title="Dismiss notification"
+            aria-label="Dismiss"
+          >
+            <X className="w-3.5 h-3.5" />
           </button>
         </div>
       </aside>

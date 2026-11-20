@@ -37,7 +37,6 @@ import {
 import { AdminProvider, useAdmin, AdminRole } from "./AdminContext";
 import { useBranding } from "@/context/BrandingContext";
 import { BackendWakeUpBanner } from "@/components/public/BackendWakeUpBanner";
-import { PremiumLoadingScreen } from "@/components/public/PremiumLoadingScreen";
 
 interface NavItem {
   name: string;

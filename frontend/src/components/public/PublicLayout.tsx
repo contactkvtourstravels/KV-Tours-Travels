@@ -2,7 +2,6 @@ import type { ReactNode } from "react";
 import { Navbar } from "./Navbar";
 import { Footer } from "./Footer";
 import { FloatingWhatsApp } from "./FloatingWhatsApp";
-import { BackendWakeUpBanner } from "./BackendWakeUpBanner";
 import { PremiumLoadingScreen } from "./PremiumLoadingScreen";
 import { BackendKeepAliveBeacon } from "./BackendKeepAliveBeacon";
 
@@ -32,7 +31,6 @@ export function PublicLayout({
         <FloatingWhatsApp />
       </div>
       <div className="print:hidden">
-        {!hideWakeUpBanner && <BackendWakeUpBanner />}
         <PremiumLoadingScreen hideMinimizedPill={hideWakeUpBanner} />
         <BackendKeepAliveBeacon />
       </div>

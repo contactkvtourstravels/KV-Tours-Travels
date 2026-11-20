@@ -139,6 +139,14 @@ export default function ResendEmailSection({
     }
   }, [showAdvancedWebhooks, loadWebhookStats]);
 
+  // Proactively discover verified custom domains on mount if API key is configured
+  useEffect(() => {
+    if (keyConfigured) {
+      handleVerifyDomain();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keyConfigured]);
+
   // Track dirty state
   useEffect(() => {
     const isDirty =
@@ -257,6 +265,18 @@ export default function ResendEmailSection({
       return;
     }
 
+    if (senderEmail.toLowerCase().includes("@gmail.com")) {
+      setTestResult({
+        success: false,
+        provider: "resend",
+        recipient: recipient,
+        message: "Outbound Sender Email Address cannot be an @gmail.com address with Resend. Please change Outbound Sender to your verified custom domain address (e.g. contact@yourdomain.com or bookings@yourdomain.com) and click 'Save Configuration' before sending a test email.",
+        timestamp: new Date().toISOString(),
+      });
+      setLastTestStatus("failed");
+      return;
+    }
+
     try {
       setSendingTest(true);
       setTestResult(null);
@@ -313,6 +333,8 @@ export default function ResendEmailSection({
 
     if (!senderEmail.trim() || !senderEmail.includes("@")) {
       validationErrors.email_sender_email = "Valid sender email address is required.";
+    } else if (senderEmail.toLowerCase().includes("@gmail.com")) {
+      validationErrors.email_sender_email = "Resend does not permit outbound sending from @gmail.com. Please enter an address using your verified custom domain (e.g. contact@yourdomain.com).";
     }
 
     if (apiKey.trim() && !apiKey.trim().startsWith("re_")) {
@@ -806,6 +828,59 @@ export default function ResendEmailSection({
           )}
         </div>
 
+        {/* Discovered Verified Custom Domain Banner */}
+        {domainResult?.verified_domains && domainResult.verified_domains.length > 0 && (
+          <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs animate-fadeIn">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-emerald-950 flex items-center gap-1.5 flex-wrap">
+                  <span>Verified Domain Detected on Resend:</span>
+                  <span className="font-mono bg-emerald-100 text-emerald-900 px-2 py-0.5 rounded border border-emerald-300">
+                    {domainResult.verified_domains[0]}
+                  </span>
+                </p>
+                <p className="text-[11px] text-emerald-700 mt-0.5">
+                  DNS records are confirmed active in Resend. Click below to use this domain for outbound emails:
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                type="button"
+                onClick={() => {
+                  setSenderEmail(`contact@${domainResult.verified_domains![0]}`);
+                  setErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.email_sender_email;
+                    return next;
+                  });
+                }}
+                className="px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer flex items-center gap-1.5"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>Use contact@{domainResult.verified_domains[0]}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setSenderEmail(`bookings@${domainResult.verified_domains![0]}`);
+                  setErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.email_sender_email;
+                    return next;
+                  });
+                }}
+                className="px-3 py-1.5 bg-white border border-emerald-300 hover:bg-emerald-100 text-emerald-950 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer"
+              >
+                <span>Use bookings@{domainResult.verified_domains[0]}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Sender and Routing Configuration Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#E4E5E7]">
           {/* Sender Display Name */}
@@ -824,6 +899,8 @@ export default function ResendEmailSection({
             <p className="text-[11px] text-[#5F6368]">Shown as the sender name in the customer&apos;s email client.</p>
           </div>
 
+          {/* Outbound Sender Email Address */}
+          <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <label className="block text-xs font-bold text-[#202124]">
                 Outbound Sender Email Address <span className="text-rose-500">*</span>
@@ -831,20 +908,36 @@ export default function ResendEmailSection({
               {canEdit && (
                 <button
                   type="button"
-                  onClick={() => setSenderEmail("onboarding@resend.dev")}
+                  onClick={() => {
+                    setSenderEmail("onboarding@resend.dev");
+                    setErrors((prev) => {
+                      const next = { ...prev };
+                      delete next.email_sender_email;
+                      return next;
+                    });
+                  }}
                   className="text-[11px] font-semibold text-[#0D7A53] hover:underline cursor-pointer"
                   title="Use Resend Sandbox (no DNS required)"
                 >
-                  Use onboarding@resend.dev (No DNS)
+                  Use onboarding@resend.dev (Sandbox)
                 </button>
               )}
             </div>
             <input
               type="email"
               value={senderEmail}
-              onChange={(e) => setSenderEmail(e.target.value)}
+              onChange={(e) => {
+                setSenderEmail(e.target.value);
+                if (errors.email_sender_email) {
+                  setErrors((prev) => {
+                    const next = { ...prev };
+                    delete next.email_sender_email;
+                    return next;
+                  });
+                }
+              }}
               disabled={!canEdit}
-              placeholder="onboarding@resend.dev"
+              placeholder="contact@yourdomain.com"
               className={`w-full text-xs px-3.5 py-2.5 bg-white border rounded-xl text-[#202124] focus:ring-2 focus:ring-[#C5A880] focus:border-[#C5A880] outline-hidden ${
                 errors.email_sender_email ? "border-rose-400 bg-rose-50/20" : "border-[#D3D8DF]"
               }`}
@@ -853,20 +946,24 @@ export default function ResendEmailSection({
               <p className="text-[11px] text-rose-600">{errors.email_sender_email}</p>
             )}
             <p className="text-[11px] text-[#5F6368]">
-              Verified custom domain address or <code className="font-mono text-[#202124]">onboarding@resend.dev</code> for testing without DNS.
+              Your verified custom domain address (e.g. <code className="font-mono text-[#202124]">contact@yourdomain.com</code>) or <code className="font-mono text-[#202124]">onboarding@resend.dev</code> for testing.
             </p>
 
             {senderEmail.toLowerCase().includes("@gmail.com") && (
-              <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-[11px] text-amber-900 flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold">Resend does not permit outbound delivery from @gmail.com.</p>
-                  <p className="text-[#5F6368] mt-0.5">
-                    For transactional emails, switch outbound sender to <button type="button" onClick={() => setSenderEmail("onboarding@resend.dev")} className="font-bold underline text-amber-950">onboarding@resend.dev</button> (free instant testing) or a verified custom domain. Replies will still be routed to your Gmail inbox.
-                  </p>
+              <div className="p-3 bg-amber-50 border border-amber-300 rounded-xl text-xs text-amber-950 space-y-1.5 animate-fadeIn">
+                <div className="flex items-center gap-2 font-bold text-amber-900">
+                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                  <span>Resend does not permit outbound sending from @gmail.com</span>
                 </div>
+                <p className="text-[11px] text-amber-900 leading-relaxed">
+                  Because you have bought a domain and verified DNS on Resend, replace <code className="font-mono bg-amber-100 px-1 py-0.5 rounded text-amber-950">@gmail.com</code> with your verified domain address (e.g. <code className="font-mono font-bold bg-white border border-amber-300 px-1.5 py-0.5 rounded text-amber-950">contact@yourdomain.com</code> or <code className="font-mono font-bold bg-white border border-amber-300 px-1.5 py-0.5 rounded text-amber-950">bookings@yourdomain.com</code>).
+                </p>
+                <p className="text-[11px] text-amber-900 leading-relaxed">
+                  Keep <strong>Customer Reply-To Address</strong> set to <code className="font-mono bg-amber-100 px-1 py-0.5 rounded text-amber-950">contact.kvtourstravels@gmail.com</code> below so that all customer replies come straight into your Gmail inbox!
+                </p>
               </div>
             )}
+          </div>
 
           {/* Customer Reply-To */}
           <div className="space-y-1.5">
@@ -965,6 +1062,15 @@ export default function ResendEmailSection({
               >
                 {adminNotificationEmail}
               </button>
+            </div>
+          )}
+
+          {senderEmail.toLowerCase().includes("@gmail.com") && (
+            <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-center gap-2 animate-fadeIn">
+              <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+              <span>
+                To send a test email, update <strong>Outbound Sender Email Address</strong> above to your verified custom domain (e.g. <code className="font-mono font-bold bg-white px-1 py-0.5 rounded border border-amber-300">contact@yourdomain.com</code>) and click <strong>Save Configuration</strong>.
+              </span>
             </div>
           )}
 

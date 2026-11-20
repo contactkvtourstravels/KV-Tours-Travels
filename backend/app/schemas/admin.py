@@ -1291,6 +1291,8 @@ class EmailTestConnectionResponse(BaseModel):
     permitted_recipients_note: str | None = None
     dns_records: list[dict[str, Any]] | None = None
     details: dict[str, Any] | None = None
+    verified_domains: list[str] | None = None
+    available_domains: list[str] | None = None
 
 
 class EmailSendTestRequest(BaseModel):

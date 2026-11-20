@@ -905,6 +905,12 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
             )
             if resp.status_code == 200:
                 domains = resp.json().get("data", [])
+                account_domains = [d.get("name") for d in domains if isinstance(d, dict) and d.get("name")]
+                verified_domains = [
+                    d.get("name")
+                    for d in domains
+                    if isinstance(d, dict) and d.get("name") and d.get("status") == "verified"
+                ]
                 matching = next((d for d in domains if d.get("name") == domain), None)
                 if matching:
                     domain_id = matching.get("id")
@@ -937,20 +943,30 @@ def verify_resend_sender(db: Session) -> EmailTestConnectionResponse:
                         is_sandbox=False,
                         dns_records=matching.get("records") if isinstance(matching.get("records"), list) else None,
                         details=matching,
+                        verified_domains=verified_domains,
+                        available_domains=account_domains,
+                    )
+                not_found_msg = (
+                    f"Domain '{domain}' was not found in your Resend account. "
+                    f"Please visit https://resend.com/domains, add '{domain}', "
+                    "and configure the required DNS records at your domain registrar."
+                )
+                if verified_domains:
+                    not_found_msg += (
+                        f" Detected verified domain '{verified_domains[0]}' in your Resend account! "
+                        f"Please set Outbound Sender Email Address to 'contact@{verified_domains[0]}' or 'bookings@{verified_domains[0]}' and save configuration."
                     )
                 return EmailTestConnectionResponse(
                     success=False,
                     status="not_found",
-                    message=(
-                        f"Domain '{domain}' was not found in your Resend account. "
-                        f"Please visit https://resend.com/domains, add '{domain}', "
-                        "and configure the required DNS records at your domain registrar."
-                    ),
+                    message=not_found_msg,
                     provider="resend",
                     api_key_configured=True,
                     sender_domain=domain,
                     sender_status="not_found",
                     is_sandbox=False,
+                    verified_domains=verified_domains,
+                    available_domains=account_domains,
                 )
             return EmailTestConnectionResponse(
                 success=False,
@@ -1141,10 +1157,17 @@ Status: Verified & Operational
                 except ValueError:
                     pass
                 if resp.status_code == 403:
+                    hint = ""
+                    if "gmail.com" in err_msg.lower() or "not verified" in err_msg.lower():
+                        hint = (
+                            " Since you have verified your custom domain in Resend, please update "
+                            "'Outbound Sender Email Address' above to an address on your domain "
+                            "(e.g. 'contact@yourdomain.com' or 'bookings@yourdomain.com') and click 'Save Configuration'."
+                        )
                     raise ValueError(
                         f"Resend Sandbox Restriction: {err_msg}. "
                         "In Development Mode without a verified domain, Resend only permits sending to your Resend account owner email "
-                        "or official test sinks 'delivered@resend.dev' and 'bounced@resend.dev'."
+                        f"or official test sinks 'delivered@resend.dev' and 'bounced@resend.dev'.{hint}"
                     )
                 raise ValueError(f"Resend rejected test email (HTTP {resp.status_code}): {err_msg}")
 

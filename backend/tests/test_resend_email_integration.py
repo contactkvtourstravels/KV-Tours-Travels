@@ -319,6 +319,8 @@ def test_verify_resend_sender_verified_domain(db_session, monkeypatch) -> None:
         assert res.status == "verified"
         assert res.sender_domain == "thewildroute.in"
         assert "verified and active in Resend" in res.message
+        assert res.verified_domains == ["thewildroute.in"]
+        assert res.available_domains == ["thewildroute.in"]
 
 
 def test_verify_resend_sender_unverified_domain(db_session, monkeypatch) -> None:

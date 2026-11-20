@@ -281,6 +281,8 @@ export interface EmailTestConnectionResponse {
   permitted_recipients_note?: string | null;
   dns_records?: Array<{ record: string; name: string; type: string; value: string; status: string; priority?: number }> | null;
   details?: Record<string, unknown> | null;
+  verified_domains?: string[] | null;
+  available_domains?: string[] | null;
 }
 
 export interface EmailSendTestResponse {

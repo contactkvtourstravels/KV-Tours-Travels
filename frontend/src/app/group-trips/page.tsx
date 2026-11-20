@@ -8,9 +8,7 @@ import {
 import { GroupTripsClient } from "./GroupTripsClient";
 import { PublicLayout } from "@/components/public/PublicLayout";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+export const revalidate = 60; // Cache on Vercel edge for 60s; revalidate in background
 
 export async function generateMetadata(): Promise<Metadata> {
   return {
@@ -27,8 +25,8 @@ export default async function GroupTripsPage() {
 
   try {
     const [deps, contentRes] = await Promise.all([
-      publicCatalogApi.getAllDepartures(),
-      publicCatalogApi.getPageContent<GroupTripsPageContent>("group-trips", false).catch(() => null),
+      publicCatalogApi.getAllDepartures({ timeoutMs: 1500 }),
+      publicCatalogApi.getPageContent<GroupTripsPageContent>("group-trips", false, { timeoutMs: 1500 }).catch(() => null),
     ]);
     departures = Array.isArray(deps) ? deps : [];
     content = contentRes?.content || null;

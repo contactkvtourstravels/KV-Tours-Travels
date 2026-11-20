@@ -1889,7 +1889,12 @@ export async function apiRequest<T>(
     }
   };
 
-  if (!isServer && canCache) {
+  // Deduplicate identical concurrent in-flight GET requests on the client
+  if (!isServer && method === "GET") {
+    const inFlight = inFlightApiRequests.get(cleanPath);
+    if (inFlight) {
+      return (await inFlight) as T;
+    }
     const promise = runWithLatencyTracking(() => executeFetch()).finally(() => {
       inFlightApiRequests.delete(cleanPath);
     });
@@ -3026,8 +3031,8 @@ export const publicCatalogApi = {
     return await apiRequest<PublicDepartureSummary[]>(`/packages/${slug}/departures`);
   },
 
-  getAllDepartures: async (): Promise<PublicDepartureListItem[]> => {
-    return await apiRequest<PublicDepartureListItem[]>("/departures");
+  getAllDepartures: async (options?: ApiRequestOptions): Promise<PublicDepartureListItem[]> => {
+    return await apiRequest<PublicDepartureListItem[]>("/departures", options);
   },
 
   getSettings: async (options?: ApiRequestOptions): Promise<PublicSiteSettings> => {

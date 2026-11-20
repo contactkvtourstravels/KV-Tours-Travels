@@ -30,6 +30,10 @@ export function Navbar() {
     whatsappShowHeaderButton,
   } = useBranding();
 
+  const cleanCity = (city || "Coimbatore")
+    .replace(/\s*[•\-–|]?\s*luxury\s*escapes?/gi, "")
+    .trim();
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 15);
@@ -95,15 +99,11 @@ export function Navbar() {
                 <span className="text-[#202124] font-serif tracking-[0.06em] sm:tracking-[0.10em] text-xs sm:text-sm md:text-base uppercase font-bold leading-tight group-hover:text-[#A88045] transition-colors whitespace-nowrap">
                   {displayName}
                 </span>
-                {city ? (
+                {cleanCity ? (
                   <span className="text-[9px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-[#6B7280] font-semibold leading-none mt-0.5 whitespace-nowrap">
-                    {city.includes("Luxury Escapes") ? city : `${city} • Luxury Escapes`}
+                    {cleanCity}
                   </span>
-                ) : (
-                  <span className="text-[9px] uppercase tracking-[0.18em] sm:tracking-[0.22em] text-[#6B7280] font-semibold leading-none mt-0.5 whitespace-nowrap">
-                    Coimbatore • Luxury Escapes
-                  </span>
-                )}
+                ) : null}
               </div>
             </Link>
 
@@ -235,15 +235,11 @@ export function Navbar() {
                     <div className="text-[#202124] font-serif font-bold text-sm tracking-wider uppercase truncate">
                       {displayName}
                     </div>
-                    {city ? (
+                    {cleanCity ? (
                       <div className="text-[9px] uppercase tracking-widest text-[#6B7280] font-semibold truncate">
-                        {city.includes("Luxury Escapes") ? city : `${city} • Luxury Escapes`}
+                        {cleanCity}
                       </div>
-                    ) : (
-                      <div className="text-[9px] uppercase tracking-widest text-[#6B7280] font-semibold truncate">
-                        Coimbatore • Luxury Escapes
-                      </div>
-                    )}
+                    ) : null}
                   </div>
                 </Link>
                 <button

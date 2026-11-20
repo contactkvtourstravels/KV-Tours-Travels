@@ -17,6 +17,7 @@ import {
   type PublicDepartureListItem,
   type GroupTripsPageContent,
 } from "@/lib/api";
+import { INITIAL_DEPARTURES } from "@/lib/initialCatalog";
 import { PublicLayout } from "@/components/public/PublicLayout";
 import { TravelImage } from "@/components/public/TravelImage";
 import { getSafeImageUrl } from "@/lib/images";
@@ -51,12 +52,12 @@ export function GroupTripsClient({
   const hasServerData = Boolean(initialDepartures?.length);
 
   const [departures, setDepartures] = useState<PublicDepartureListItem[]>(
-    initialDepartures?.length ? initialDepartures : []
+    initialDepartures?.length ? initialDepartures : INITIAL_DEPARTURES
   );
   const [pageContent, setPageContent] = useState<GroupTripsPageContent | null>(
     initialContent || null
   );
-  const [loading, setLoading] = useState(!hasServerData && !initialError);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(
     initialError ? "Unable to connect to live departures catalog. Please check your connection or retry." : null
   );
@@ -86,10 +87,16 @@ export function GroupTripsClient({
   };
 
   useEffect(() => {
-    if (initialDepartures?.length && !initialError && !isPreview) {
-      return;
-    }
-    loadData();
+    // Keep initial departures instantly visible at 0ms.
+    // Silently revalidate fresh database data in the background to reflect admin edits.
+    publicCatalogApi
+      .getAllDepartures()
+      .then((fresh) => {
+        if (Array.isArray(fresh) && fresh.length > 0) {
+          setDepartures(fresh);
+        }
+      })
+      .catch(() => {});
   }, [isPreview]);
 
   const getImg = (dep: PublicDepartureListItem) => {

@@ -8,9 +8,7 @@ import {
 import { ContactClient } from "./ContactClient";
 import { PublicLayout } from "@/components/public/PublicLayout";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
-export const fetchCache = "force-no-store";
+export const revalidate = 60; // Cache on Vercel edge for 60s; revalidate in background
 
 interface PageProps {
   searchParams: Promise<{ preview?: string }>;
@@ -26,8 +24,8 @@ export default async function ContactPage({ searchParams }: PageProps) {
 
   try {
     const [pageRes, settingsRes] = await Promise.all([
-      publicCatalogApi.getPageContent<ContactPageContentType>("contact", isPreview),
-      publicCatalogApi.getSettings(),
+      publicCatalogApi.getPageContent<ContactPageContentType>("contact", isPreview, { timeoutMs: 1500 }),
+      publicCatalogApi.getSettings({ timeoutMs: 1500 }),
     ]);
     pageData = pageRes;
     settings = settingsRes;

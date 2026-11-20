@@ -16,18 +16,27 @@ export async function GET() {
     "https://travel-agency-kdrs.onrender.com";
 
   const backendUrl = rawBackendUrl.replace(/\/+$/, "");
-  const healthEndpoint = `${backendUrl}/api/v1/health/ready`;
+  const healthEndpoint = `${backendUrl}/health`;
 
   try {
     const startTime = Date.now();
-    const res = await fetch(healthEndpoint, {
+    let res = await fetch(healthEndpoint, {
       cache: "no-store",
       headers: {
         Accept: "application/json",
         "User-Agent": "KV-KeepAlive-Probe/1.0",
       },
-      signal: AbortSignal.timeout(12000),
+      signal: AbortSignal.timeout(8000),
     });
+
+    if (!res.ok) {
+      // Fallback probe to api/v1/health/ready
+      res = await fetch(`${backendUrl}/api/v1/health/ready`, {
+        cache: "no-store",
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(6000),
+      });
+    }
 
     const elapsedMs = Date.now() - startTime;
     const isOk = res.ok;

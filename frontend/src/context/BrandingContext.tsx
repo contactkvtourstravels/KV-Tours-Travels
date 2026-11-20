@@ -75,7 +75,7 @@ export const DEFAULT_SETTINGS: PublicSiteSettings = {
   favicon_url: "/logo.png",
   agency_location: "Coimbatore, Tamil Nadu, India",
   office_address: "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
-  city: "Coimbatore • Luxury Escapes",
+  city: "Coimbatore",
   state: "Tamil Nadu",
   contact_email: "contact.kvtourstravels@gmail.com",
   contact_phone: "",
@@ -424,7 +424,10 @@ export function BrandingProvider({
   }, [settings?.office_address, settings?.public_office_address]);
 
   const city = useMemo(() => {
-    return settings?.city || "Coimbatore";
+    const raw = settings?.city || "Coimbatore";
+    return raw
+      .replace(/\s*[•\-–|]?\s*luxury\s*escapes?/gi, "")
+      .trim();
   }, [settings?.city]);
 
   const state = useMemo(() => {

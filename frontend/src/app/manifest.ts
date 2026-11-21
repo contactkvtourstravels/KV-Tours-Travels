@@ -12,14 +12,20 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#DFBA73",
     icons: [
       {
-        src: "/logo.png",
-        sizes: "825x825",
+        src: "/icon-192.png",
+        sizes: "192x192",
         type: "image/png",
         purpose: "any",
       },
       {
-        src: "/icon-192.png",
-        sizes: "192x192",
+        src: "/icon-96.png",
+        sizes: "96x96",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
+        src: "/icon-48.png",
+        sizes: "48x48",
         type: "image/png",
         purpose: "any",
       },
@@ -30,13 +36,19 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "any",
       },
       {
+        src: "/logo.png",
+        sizes: "825x825",
+        type: "image/png",
+        purpose: "any",
+      },
+      {
         src: "/apple-touch-icon.png",
         sizes: "180x180",
         type: "image/png",
       },
       {
         src: "/favicon.ico",
-        sizes: "any",
+        sizes: "48x48 32x32 16x16",
         type: "image/x-icon",
       },
     ],

@@ -51,6 +51,13 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description: siteDescription,
     keywords: [
+      "KV Tours",
+      "KV Tours & Travels",
+      "KV Tours Coimbatore",
+      "KV Tours Gandhipuram",
+      "KV Tours Travels",
+      "KV Tours Holidays",
+      "KV Tours Packages",
       displayName,
       `${displayName} Coimbatore`,
       `${displayName} Gandhipuram`,
@@ -96,12 +103,15 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     icons: {
       icon: [
+        { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-96.png", sizes: "96x96", type: "image/png" },
+        { url: "/icon-48.png", sizes: "48x48", type: "image/png" },
+        { url: "/favicon.ico", sizes: "48x48 32x32 16x16" },
         { url: settings?.favicon_url || "/logo.png", type: "image/png" },
-        { url: settings?.favicon_url || "/favicon.ico", sizes: "any" },
       ],
-      shortcut: [settings?.favicon_url || "/logo.png"],
+      shortcut: ["/favicon.ico"],
       apple: [
-        { url: settings?.favicon_url || "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+        { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
       ],
     },
     openGraph: {
@@ -155,9 +165,21 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       "@type": ["TravelAgency", "LocalBusiness"],
       "@id": `${siteUrl}/#travelagency`,
       name: displayName,
-      alternateName: ["KV Tours and Travels Coimbatore", "KV Tours Coimbatore"],
+      alternateName: [
+        "KV Tours",
+        "KV Tours & Travels",
+        "KV Tours and Travels",
+        "KV Tours Coimbatore",
+        "KV Tours Travels",
+      ],
       description: "Coimbatore's premier travel agency at Cross Cut Road, Gandhipuram. Curating bespoke international tour packages, domestic group departures, honeymoon escapes, and customized holiday itineraries.",
       image: logo,
+      logo: logo,
+      sameAs: [
+        "https://www.instagram.com/kvtourstravels.in/",
+        "https://www.facebook.com/kvtourstravels",
+        siteUrl,
+      ],
       telephone: phone,
       email: email,
       address: {
@@ -231,8 +253,13 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       "@type": "Organization",
       "@id": `${siteUrl}/#organization`,
       name: displayName,
+      alternateName: ["KV Tours", "KV Tours & Travels"],
       url: siteUrl,
       logo: logo,
+      sameAs: [
+        "https://www.instagram.com/kvtourstravels.in/",
+        "https://www.facebook.com/kvtourstravels",
+      ],
       contactPoint: {
         "@type": "ContactPoint",
         telephone: phone,
@@ -246,6 +273,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       "@type": "WebSite",
       "@id": `${siteUrl}/#website`,
       name: displayName,
+      alternateName: [
+        "KV Tours",
+        "KV Tours & Travels",
+        "KV Tours Coimbatore",
+        "KV Tours Travels",
+        "KV Tours and Travels",
+        "kvtourstravels.in",
+      ],
       url: siteUrl,
       potentialAction: {
         "@type": "SearchAction",
@@ -272,6 +307,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="en" className="h-full antialiased scroll-smooth" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <meta name="copyright" content={`© ${displayName}. All rights reserved.`} />
+        {/* Google Search Favicon explicit high-res links (Google requires min 48px square or multiple: 48, 96, 192) */}
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="icon" type="image/png" sizes="96x96" href="/icon-96.png" />
+        <link rel="icon" type="image/png" sizes="48x48" href="/icon-48.png" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <script
           id="schema-structured-data"
           type="application/ld+json"

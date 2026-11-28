@@ -314,14 +314,14 @@ def get_admin_settings(db: Session) -> AdminSiteSettingsResponse:
         office_address=str(
             overrides.get(
                 "office_address",
-                "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
+                "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004",
             )
         ),
         public_office_address=str(overrides.get("public_office_address")) if overrides.get("public_office_address") else None,
         agency_location=str(overrides.get("agency_location", settings.agency_location)),
         city=str(overrides.get("city", "Coimbatore")),
         state=str(overrides.get("state", "Tamil Nadu")),
-        postal_code=str(overrides.get("postal_code", "641012")),
+        postal_code=str(overrides.get("postal_code", "641004")),
         country=str(overrides.get("country", "India")),
         time_zone=str(overrides.get("time_zone", "Asia/Kolkata")),
         currency=str(overrides.get("currency", "INR")),

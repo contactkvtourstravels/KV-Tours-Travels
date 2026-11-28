@@ -37,7 +37,7 @@ def get_default_about_content(agency_name: str, city: str, address: str) -> dict
     clean_address = (
         address.strip()
         if address and address.strip() and "Headquarters" not in address
-        else "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+        else "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004"
     )
     return {
         "hero": {
@@ -153,7 +153,7 @@ def get_default_contact_content(agency_name: str, city: str, address: str, phone
     clean_address = (
         address.strip()
         if address and address.strip() and "Headquarters" not in address
-        else "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+        else "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004"
     )
     clean_phone = phone.strip() if phone and not ("94420" in phone or "00000" in phone) else ""
     return {
@@ -399,7 +399,7 @@ def _get_agency_context(db: Session) -> dict[str, Any]:
         "tagline": pub.tagline,
         "city": pub.city or "Coimbatore",
         "state": pub.state or "Tamil Nadu",
-        "office_address": pub.office_address or "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
+        "office_address": pub.office_address or "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004",
         "contact_phone": pub.contact_phone if pub.contact_phone and not ("94420" in pub.contact_phone or "00000" in pub.contact_phone) else "",
         "secondary_phone": pub.secondary_phone,
         "emergency_phone": pub.emergency_phone,

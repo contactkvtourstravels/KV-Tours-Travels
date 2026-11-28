@@ -123,7 +123,7 @@ def seed_site_settings_and_cms(engine) -> None:
         set_setting("whatsapp_number", "", "Official WhatsApp")
         set_setting("contact_phone", "", "Phone")
         set_setting("agency_location", "Coimbatore, Tamil Nadu, India", "Location")
-        set_setting("office_address", "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012", "Office Address")
+        set_setting("office_address", "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004", "Office Address")
         set_setting("city", "Coimbatore", "City")
         set_setting("state", "Tamil Nadu", "State")
         set_setting("country", "India", "Country")

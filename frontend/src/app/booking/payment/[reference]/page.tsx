@@ -799,7 +799,7 @@ function PaymentContent() {
                       <span>{displayName} — {city || "Concierge"} Office</span>
                     </div>
                     <p className="text-[#5F6368] leading-relaxed">
-                      Visit our registered concierge office at Cross Cut Road, Gandhipuram, Coimbatore. Quote booking reference <strong>{booking.booking_reference}</strong> to our finance team to complete payment and collect your physical stamped tax invoice.
+                      Visit our registered concierge office at Uffizi Building, 338 Avinashi Road, Peelamedu, Coimbatore. Quote booking reference <strong>{booking.booking_reference}</strong> to our finance team to complete payment and collect your physical stamped tax invoice.
                     </p>
                     <p className="text-[#70757A] text-[11px]">
                       Desk Helpline: {bankDetails.payment_contact_phone || "+91 98422 12345"}

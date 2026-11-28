@@ -8,7 +8,7 @@ export const AGENCY_SHORT_NAME = process.env.NEXT_PUBLIC_AGENCY_SHORT_NAME || "K
 export const AGENCY_LOCATION = process.env.NEXT_PUBLIC_AGENCY_LOCATION || "Coimbatore, Tamil Nadu, India";
 export const AGENCY_OFFICE_ADDRESS =
   process.env.NEXT_PUBLIC_AGENCY_OFFICE_ADDRESS ||
-  "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012";
+  "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004";
 export const DEFAULT_WEBSITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
 

@@ -334,7 +334,7 @@ export default function CustomerDashboardPage() {
           <HelpCircle className="w-6 h-6 text-[#24292F] mb-3 group-hover:scale-105 transition-transform" />
           <h3 className="text-sm font-bold text-[#202124] mb-1">Support & Office</h3>
           <p className="text-xs text-[#70757A]">
-            Visit our office in Gandhipuram, Coimbatore, or request assistance.
+            Visit our office in Peelamedu, Coimbatore, or request assistance.
           </p>
         </Link>
       </section>

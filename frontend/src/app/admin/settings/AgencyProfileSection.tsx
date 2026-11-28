@@ -129,7 +129,7 @@ export default function AgencyProfileSection({
   const [officeAddress, setOfficeAddress] = useState(settings.office_address || "");
   const [city, setCity] = useState(settings.city || "Coimbatore");
   const [state, setState] = useState(settings.state || "Tamil Nadu");
-  const [postalCode, setPostalCode] = useState(settings.postal_code || "641012");
+  const [postalCode, setPostalCode] = useState(settings.postal_code || "641004");
   const [country, setCountry] = useState(settings.country || "India");
   const [timeZone, setTimeZone] = useState(settings.time_zone || "Asia/Kolkata");
   const [currency, setCurrency] = useState(settings.currency || "INR");
@@ -209,7 +209,7 @@ export default function AgencyProfileSection({
     setRegisteredAddress(settings.registered_office_address || "");
     setCity(settings.city || "Coimbatore");
     setState(settings.state || "Tamil Nadu");
-    setPostalCode(settings.postal_code || "641012");
+    setPostalCode(settings.postal_code || "641004");
     setCountry(settings.country || "India");
     setTimeZone(settings.time_zone || "Asia/Kolkata");
     setCurrency(settings.currency || "INR");
@@ -274,7 +274,7 @@ export default function AgencyProfileSection({
       officeAddress !== (settings.office_address || "") ||
       city !== (settings.city || "Coimbatore") ||
       state !== (settings.state || "Tamil Nadu") ||
-      postalCode !== (settings.postal_code || "641012") ||
+      postalCode !== (settings.postal_code || "641004") ||
       country !== (settings.country || "India") ||
       timeZone !== (settings.time_zone || "Asia/Kolkata") ||
       currency !== (settings.currency || "INR") ||
@@ -394,7 +394,7 @@ export default function AgencyProfileSection({
     setRegisteredAddress(settings.registered_office_address || "");
     setCity(settings.city || "Coimbatore");
     setState(settings.state || "Tamil Nadu");
-    setPostalCode(settings.postal_code || "641012");
+    setPostalCode(settings.postal_code || "641004");
     setCountry(settings.country || "India");
     setTimeZone(settings.time_zone || "Asia/Kolkata");
     setCurrency(settings.currency || "INR");
@@ -1332,7 +1332,7 @@ export default function AgencyProfileSection({
                   value={officeAddress}
                   onChange={(e) => setOfficeAddress(e.target.value)}
                   disabled={!canEdit}
-                  placeholder="e.g. 124 Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+                  placeholder="e.g. Uffizi Building, 338 Avinashi Road, Peelamedu, Coimbatore, Tamil Nadu 641004"
                   className={`w-full px-3.5 py-2.5 rounded-xl border text-xs text-[#202124] focus:outline-none focus:ring-2 focus:ring-[#24292F] ${
                     errors.officeAddress ? "border-red-500 bg-red-50/20" : "border-[#D3D8DF] bg-white"
                   }`}
@@ -2101,7 +2101,7 @@ export default function AgencyProfileSection({
                 <div className="text-xs text-white/90 space-y-2" style={{ fontFamily: secondaryFont }}>
                   <p className="flex items-center gap-2">
                     <MapPin className="w-3.5 h-3.5 shrink-0" style={{ color: brandSecondaryColor }} />
-                    <span>{officeAddress || "Cross Cut Road, Gandhipuram, Coimbatore"}</span>
+                    <span>{officeAddress || "Uffizi Building, 338 Avinashi Road, Peelamedu, Coimbatore"}</span>
                   </p>
                   <p className="flex items-center gap-2">
                     <Phone className="w-3.5 h-3.5 shrink-0" style={{ color: brandSecondaryColor }} />

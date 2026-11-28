@@ -121,7 +121,7 @@ export function ContactClient({
     "";
   const officeAddress =
     !rawOfficeAddress || rawOfficeAddress.includes("Headquarters, India")
-      ? "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+      ? "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004"
       : rawOfficeAddress;
 
   const operatingHours =

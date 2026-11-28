@@ -39,7 +39,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const siteDescription =
     settings?.seo_meta_description ||
     settings?.business_description ||
-    `${displayName} is Coimbatore's premier travel agency located at Cross Cut Road, Gandhipuram. Curating bespoke international tour packages (Maldives, Bali, Kazakhstan, Dubai, Japan), domestic group departures, honeymoon escapes, and custom holidays. Contact our concierge today.`;
+    `${displayName} is Coimbatore's premier travel agency located at Uffizi Building, 338 Avinashi Road, Peelamedu. Curating bespoke international tour packages (Maldives, Bali, Kazakhstan, Dubai, Japan), domestic group departures, honeymoon escapes, and custom holidays. Contact our concierge today.`;
 
   const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
 
@@ -54,18 +54,21 @@ export async function generateMetadata(): Promise<Metadata> {
       "KV Tours",
       "KV Tours & Travels",
       "KV Tours Coimbatore",
-      "KV Tours Gandhipuram",
+      "KV Tours Peelamedu",
+      "KV Tours Avinashi Road",
       "KV Tours Travels",
       "KV Tours Holidays",
       "KV Tours Packages",
       displayName,
       `${displayName} Coimbatore`,
-      `${displayName} Gandhipuram`,
+      `${displayName} Peelamedu`,
+      `${displayName} Avinashi Road`,
       `${displayName} Holidays`,
       "best travel agency in Coimbatore",
       "tours and travels in Coimbatore",
       "travel agents in Coimbatore",
-      "tours and travels Gandhipuram Coimbatore",
+      "tours and travels Peelamedu Coimbatore",
+      "tours and travels Avinashi Road Coimbatore",
       "international tour packages from Coimbatore",
       "group tours from Coimbatore",
       "fixed departure trips Coimbatore",
@@ -96,15 +99,23 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     other: {
       "geo.region": "IN-TN",
-      "geo.placename": "Coimbatore",
-      "geo.position": "11.0183;76.9682",
-      "ICBM": "11.0183, 76.9682",
+      "geo.placename": "Peelamedu, Coimbatore",
+      "geo.position": "11.0267;77.0068",
+      "ICBM": "11.0267, 77.0068",
+      "business:contact_data:street_address": "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony",
+      "business:contact_data:locality": "Coimbatore",
+      "business:contact_data:region": "Tamil Nadu",
+      "business:contact_data:postal_code": "641004",
+      "business:contact_data:country_name": "India",
+      "application-name": displayName,
+      "apple-mobile-web-app-title": displayName,
       "copyright": `© ${displayName}. All rights reserved.`,
     },
     icons: {
       icon: [
         { url: "/favicon.ico", sizes: "any" },
         { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+        { url: "/icon-96.png", sizes: "96x96", type: "image/png" },
         { url: "/icon-48.png", sizes: "48x48", type: "image/png" },
       ],
       shortcut: ["/favicon.ico"],
@@ -150,10 +161,12 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   const siteUrl = settings?.website_url || process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
   const phone = settings?.contact_phone || settings?.whatsapp_number || DEFAULT_BUSINESS_PHONE;
   const email = settings?.contact_email || "contact.kvtourstravels@gmail.com";
-  const street = settings?.office_address || "Cross Cut Road, Gandhipuram";
+  const street =
+    settings?.office_address ||
+    "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony";
   const city = (settings?.city || "Coimbatore").replace(/\s*[•\-–|]?\s*luxury\s*escapes?/gi, "").trim();
   const state = settings?.state || "Tamil Nadu";
-  const postalCode = settings?.postal_code || "641012";
+  const postalCode = settings?.postal_code || "641004";
   const country = settings?.country || "India";
   const logo = `${siteUrl}/logo.png`;
 
@@ -168,9 +181,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         "KV Tours & Travels",
         "KV Tours and Travels",
         "KV Tours Coimbatore",
+        "KV Tours Peelamedu",
         "KV Tours Travels",
+        "KV Tours and Travels Coimbatore",
       ],
-      description: "Coimbatore's premier travel agency at Cross Cut Road, Gandhipuram. Curating bespoke international tour packages, domestic group departures, honeymoon escapes, and customized holiday itineraries.",
+      description: "Coimbatore's premier travel agency located at Uffizi Building, 338 Avinashi Road, Peelamedu. Curating bespoke international tour packages, domestic group departures, honeymoon escapes, and customized holiday itineraries.",
       image: logo,
       logo: logo,
       sameAs: [
@@ -183,15 +198,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       address: {
         "@type": "PostalAddress",
         streetAddress: street,
-        addressLocality: city,
+        addressLocality: "Peelamedu, Coimbatore",
         addressRegion: state,
         postalCode: postalCode,
         addressCountry: country === "India" ? "IN" : country,
       },
       geo: {
         "@type": "GeoCoordinates",
-        latitude: settings?.google_maps_latitude || 11.0183,
-        longitude: settings?.google_maps_longitude || 76.9682,
+        latitude: settings?.google_maps_latitude || 11.0267,
+        longitude: settings?.google_maps_longitude || 77.0068,
       },
       url: siteUrl,
       priceRange: "₹₹₹",
@@ -275,8 +290,10 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         "KV Tours",
         "KV Tours & Travels",
         "KV Tours Coimbatore",
+        "KV Tours Peelamedu",
         "KV Tours Travels",
         "KV Tours and Travels",
+        "KV Tours and Travels Coimbatore",
         "kvtourstravels.in",
       ],
       url: siteUrl,
@@ -305,6 +322,15 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="en" className="h-full antialiased scroll-smooth" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <meta name="copyright" content={`© ${displayName}. All rights reserved.`} />
+        <meta property="og:site_name" content={displayName} />
+        <meta name="application-name" content={displayName} />
+        <meta name="apple-mobile-web-app-title" content={displayName} />
+        {/* Google-compliant static icons (no dynamic query strings) */}
+        <link rel="icon" href={`${siteUrl}/favicon.ico`} sizes="any" />
+        <link rel="icon" type="image/png" sizes="192x192" href={`${siteUrl}/icon-192.png`} />
+        <link rel="icon" type="image/png" sizes="96x96" href={`${siteUrl}/icon-96.png`} />
+        <link rel="icon" type="image/png" sizes="48x48" href={`${siteUrl}/icon-48.png`} />
+        <link rel="apple-touch-icon" sizes="180x180" href={`${siteUrl}/apple-touch-icon.png`} />
         <script
           id="schema-structured-data"
           type="application/ld+json"

@@ -251,7 +251,7 @@ class PublicSiteSettings(BaseModel):
     agency_location: str
     city: str | None = "Coimbatore"
     state: str | None = "Tamil Nadu"
-    postal_code: str | None = "641012"
+    postal_code: str | None = "641004"
     country: str | None = "India"
     time_zone: str = "Asia/Kolkata"
     currency: str

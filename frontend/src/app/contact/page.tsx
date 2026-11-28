@@ -14,16 +14,16 @@ export const revalidate = 60; // Cache on Vercel edge for 60s; revalidate in bac
 export async function generateMetadata(): Promise<Metadata> {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://kvtourstravels.in";
   return {
-    title: "Contact KV Tours & Travels Coimbatore | Gandhipuram Office & WhatsApp",
+    title: "Contact KV Tours & Travels Coimbatore | Peelamedu Office & WhatsApp",
     description:
-      "Get in touch with KV Tours & Travels at Cross Cut Road, Gandhipuram, Coimbatore. Reach our travel concierge via phone or WhatsApp for instant flight, holiday package, and customized trip inquiries.",
+      "Get in touch with KV Tours & Travels at Uffizi Building, Avinashi Road, Peelamedu, Coimbatore. Reach our travel concierge via phone or WhatsApp for instant flight, holiday package, and customized trip inquiries.",
     alternates: {
       canonical: `${siteUrl}/contact`,
     },
     openGraph: {
       title: "Contact KV Tours & Travels Coimbatore",
       description:
-        "Visit our office at Cross Cut Road, Gandhipuram, Coimbatore or chat directly on WhatsApp with our bespoke travel concierge.",
+        "Visit our office at Uffizi Building, Avinashi Road, Peelamedu, Coimbatore or chat directly on WhatsApp with our bespoke travel concierge.",
       url: `${siteUrl}/contact`,
       siteName: "KV Tours & Travels",
       locale: "en_IN",

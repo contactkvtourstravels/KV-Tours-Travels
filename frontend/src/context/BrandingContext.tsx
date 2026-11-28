@@ -74,7 +74,7 @@ export const DEFAULT_SETTINGS: PublicSiteSettings = {
   logo_url: "/logo.png",
   favicon_url: "/logo.png",
   agency_location: "Coimbatore, Tamil Nadu, India",
-  office_address: "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012",
+  office_address: "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004",
   city: "Coimbatore",
   state: "Tamil Nadu",
   contact_email: "contact.kvtourstravels@gmail.com",
@@ -418,7 +418,7 @@ export function BrandingProvider({
   const address = useMemo(() => {
     const raw = settings?.office_address || settings?.public_office_address;
     if (!raw || raw.includes("Headquarters, India")) {
-      return "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012";
+      return "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004";
     }
     return raw;
   }, [settings?.office_address, settings?.public_office_address]);

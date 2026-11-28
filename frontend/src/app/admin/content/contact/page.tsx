@@ -504,7 +504,7 @@ export default function AdminContactContentPage() {
                       cards: { ...content.cards, office_address: e.target.value },
                     })
                   }
-                  placeholder="Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+                  placeholder="Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004"
                   className="w-full px-3 py-2 rounded-xl border border-[#E4E5E7] bg-white text-sm text-[#202124]"
                 />
               </div>

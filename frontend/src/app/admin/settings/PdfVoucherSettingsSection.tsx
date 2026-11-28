@@ -55,7 +55,7 @@ export default function PdfVoucherSettingsSection({
     settings.pdf_office_address ||
       settings.office_address ||
       settings.registered_office_address ||
-      "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+      "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004"
   );
 
   const [contactInfo, setContactInfo] = useState(
@@ -144,7 +144,7 @@ export default function PdfVoucherSettingsSection({
       settings.office_address ||
         settings.registered_office_address ||
         settings.public_office_address ||
-        "Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012"
+        "Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004"
     );
 
     const deskPhone = settings.contact_phone || "Contact via Website";
@@ -176,7 +176,7 @@ export default function PdfVoucherSettingsSection({
   const handleResetDefaults = () => {
     setHeaderTitle("KV TOURS & TRAVELS");
     setHeaderSubtitle("BESPOKE LUXURY & ADVENTURE JOURNEYS • OPERATIONS HUB");
-    setOfficeAddress("Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012");
+    setOfficeAddress("Uffizi Building, Vserve building, 2 nd floor, Above yamaha showroom 338, Avinashi Rd, Peelamedu, HUDCO Colony, Coimbatore, Tamil Nadu 641004");
     setContactInfo("Concierge Desk: contact.kvtourstravels@gmail.com | www.kvtours.in");
     setBadgeLabel("Official Travel Voucher & Receipt");
     setLogoUrl("");
@@ -380,7 +380,7 @@ export default function PdfVoucherSettingsSection({
                   type="text"
                   value={officeAddress}
                   onChange={(e) => setOfficeAddress(e.target.value)}
-                  placeholder="e.g. Cross Cut Road, Gandhipuram, Coimbatore, Tamil Nadu 641012, India"
+                  placeholder="e.g. Uffizi Building, 338 Avinashi Road, Peelamedu, Coimbatore, Tamil Nadu 641004, India"
                   disabled={!canEdit}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#D3D8DF] text-xs text-[#202124] focus:outline-hidden focus:ring-2 focus:ring-[#8C6D3B]/20 focus:border-[#8C6D3B] transition-all"
                 />
